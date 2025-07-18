@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
   HardHat, 
@@ -8,11 +9,15 @@ import {
   Settings, 
   Menu, 
   X,
-  Home
+  Home,
+  LogOut,
+  User
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
 
   const navItems = [
     { icon: Home, label: "Dashboard", href: "#dashboard" },
@@ -54,9 +59,24 @@ const Navigation = () => {
 
           {/* CTA Button */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="construction" size="sm">
-              Start Research
-            </Button>
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground hidden md:inline">
+                  Welcome, {user.email}
+                </span>
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-1" />
+                  Sign Out
+                </Button>
+              </div>
+            ) : (
+              <Link to="/auth">
+                <Button variant="construction" size="sm">
+                  <User className="h-4 w-4 mr-1" />
+                  Sign In
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -86,9 +106,24 @@ const Navigation = () => {
                 </Button>
               ))}
               <div className="pt-2">
-                <Button variant="construction" className="w-full">
-                  Start Research
-                </Button>
+          {user ? (
+            <div className="space-y-2">
+              <div className="text-sm text-muted-foreground px-2">
+                {user.email}
+              </div>
+              <Button variant="outline" className="w-full" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Link to="/auth" className="w-full">
+              <Button variant="construction" className="w-full">
+                <User className="h-4 w-4 mr-2" />
+                Sign In
+              </Button>
+            </Link>
+          )}
               </div>
             </div>
           </div>
