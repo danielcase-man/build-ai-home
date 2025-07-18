@@ -20,10 +20,10 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
 
   const navItems = [
-    { icon: Home, label: "Dashboard", href: "#dashboard" },
+    { icon: Home, label: "Dashboard", href: "/" },
     { icon: Search, label: "AI Research", href: "#research" },
     { icon: FileText, label: "Documents", href: "#documents" },
-    { icon: BarChart3, label: "Projects", href: "#projects" },
+    { icon: BarChart3, label: "Projects", href: "/project" },
     { icon: Settings, label: "Settings", href: "#settings" }
   ];
 
@@ -45,15 +45,16 @@ const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
             {navItems.map((item) => (
-              <Button
-                key={item.label}
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </Button>
+              <Link key={item.label} to={item.href}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center space-x-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <item.icon className="w-4 h-4" />
+                  <span>{item.label}</span>
+                </Button>
+              </Link>
             ))}
           </div>
 
@@ -95,15 +96,16 @@ const Navigation = () => {
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <div className="flex flex-col space-y-2">
               {navItems.map((item) => (
-                <Button
-                  key={item.label}
-                  variant="ghost"
-                  className="justify-start space-x-3 text-muted-foreground hover:text-foreground"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <item.icon className="w-4 h-4" />
-                  <span>{item.label}</span>
-                </Button>
+                <Link key={item.label} to={item.href}>
+                  <Button
+                    variant="ghost"
+                    className="justify-start space-x-3 text-muted-foreground hover:text-foreground w-full"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <item.icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                  </Button>
+                </Link>
               ))}
               <div className="pt-2">
           {user ? (
