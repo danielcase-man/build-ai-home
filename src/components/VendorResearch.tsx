@@ -73,6 +73,15 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
       setProgress(30);
 
       // Call the AI vendor research edge function
+      console.log('Calling edge function with data:', {
+        projectId,
+        location,
+        zipCode: zipCode.trim(),
+        categoryId,
+        categoryName: subcategoryName,
+        phase: 'Pre-Construction Planning & Design'
+      });
+
       const { data, error } = await supabase.functions.invoke('ai-vendor-research', {
         body: {
           projectId,
@@ -86,12 +95,16 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
 
       setProgress(80);
 
+      console.log('Edge function response:', { data, error });
+
       if (error) {
+        console.error('Edge function error:', error);
         throw error;
       }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to research vendors');
+      if (!data?.success) {
+        console.error('Edge function returned unsuccessful:', data);
+        throw new Error(data?.error || 'Failed to research vendors');
       }
 
       setProgress(100);
@@ -102,7 +115,8 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
 
     } catch (error) {
       console.error('Error researching vendors:', error);
-      toast.error('Failed to research vendors. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to research vendors. Please try again.';
+      toast.error(`Research failed: ${errorMessage}`);
     } finally {
       setIsResearching(false);
       setTimeout(() => setProgress(0), 2000);
