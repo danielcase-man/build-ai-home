@@ -275,8 +275,8 @@ serve(async (req) => {
     // Research vendors using Firecrawl (non-streaming fallback)
     const baseSearchTermFallback = specialization || categoryName;
     
-    const contextInfo = customContext ? ` ${customContext}` : '';
-    const searchQueryFallback = `${baseSearchTermFallback} near ${location} ${zipCode}${contextInfo}`;
+    const contextInfoFallback = customContext ? ` ${customContext}` : '';
+    const searchQueryFallback = `${baseSearchTermFallback} near ${location} ${zipCode}${contextInfoFallback}`;
     
     // Define search URLs for comprehensive vendor discovery
     const searchUrls = [
