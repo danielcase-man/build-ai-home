@@ -49,28 +49,28 @@ serve(async (req) => {
             
             const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
             
-            const prompt = `Given the following:
-- Vendor type: ${baseSearchTerm} (${phase})${contextInfo}
-- Zip code: ${zipCode}
-- Location: ${location}
+            const prompt = `Research actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
 
-Please:
-- Research and list the top 10 ${baseSearchTerm} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
-- For each, provide:
-  • Business Name
-  • Contact Information (phone, email if available)
-  • Address
-  • Website (if available)
-  • Estimated cost range for typical ${baseSearchTerm} services in ${phase}
-  • Ratings/reviews (with source platform, if available)
-  • Specializations within ${baseSearchTerm} services
-  • Licensing and insurance status
-  • Company size (small, mid, large)
-  • Years in business
-- Clearly identify which vendor is the best value, considering cost, reputation, and specialization.
-- Format the data as a structured list ready for import into a vendor database.
+IMPORTANT: Return ONLY real businesses with complete contact information. Do not create fictional data.
 
-Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.${contextInfo ? ` Pay special attention to vendors that ${customContext.toLowerCase()}.` : ''}`;
+For each business found, provide this EXACT format:
+
+**Business Name:** [Actual business name]
+**Contact Name:** [Person's name if available]  
+**Phone:** [Phone number]
+**Email:** [Email if available]
+**Website:** [Website URL if available]
+**Address:** [Complete street address]
+**City:** ${location}
+**State:** TX
+**Rating:** [Numerical rating 1-5]
+**Review Count:** [Number of reviews]
+**Specialization:** [What they specialize in]
+**Notes:** [Additional relevant information]
+
+---
+
+Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Include established firms and smaller local businesses. Verify all contact information and only include businesses that actually exist.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}`;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -240,28 +240,28 @@ Focus on licensed, insured contractors with good reviews. Include both local sma
     
     const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
     
-    const prompt = `Given the following:
-- Vendor type: ${baseSearchTerm} (${phase})${contextInfo}
-- Zip code: ${zipCode}
-- Location: ${location}
+    const prompt = `Research actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
 
-Please:
-- Research and list the top 10 ${baseSearchTerm} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
-- For each, provide:
-  • Business Name
-  • Contact Information (phone, email if available)
-  • Address
-  • Website (if available)
-  • Estimated cost range for typical ${baseSearchTerm} services in ${phase}
-  • Ratings/reviews (with source platform, if available)
-  • Specializations within ${baseSearchTerm} services
-  • Licensing and insurance status
-  • Company size (small, mid, large)
-  • Years in business
-- Clearly identify which vendor is the best value, considering cost, reputation, and specialization.
-- Format the data as a structured list ready for import into a vendor database.
+IMPORTANT: Return ONLY real businesses with complete contact information. Do not create fictional data.
 
-Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.${contextInfo ? ` Pay special attention to vendors that ${customContext.toLowerCase()}.` : ''}`;
+For each business found, provide this EXACT format:
+
+**Business Name:** [Actual business name]
+**Contact Name:** [Person's name if available]  
+**Phone:** [Phone number]
+**Email:** [Email if available]
+**Website:** [Website URL if available]
+**Address:** [Complete street address]
+**City:** ${location}
+**State:** TX
+**Rating:** [Numerical rating 1-5]
+**Review Count:** [Number of reviews]
+**Specialization:** [What they specialize in]
+**Notes:** [Additional relevant information]
+
+---
+
+Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Include established firms and smaller local businesses. Verify all contact information and only include businesses that actually exist.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}`;
 
     console.log('Sending request to Perplexity with prompt:', prompt);
 
