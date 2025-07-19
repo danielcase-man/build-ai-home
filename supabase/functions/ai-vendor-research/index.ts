@@ -28,9 +28,7 @@ serve(async (req) => {
     }
 
     // Build search query
-    const baseSearchTerm = specialization ? 
-      getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
-      categoryName;
+    const baseSearchTerm = specialization || categoryName;
     
     const contextInfo = customContext ? ` ${customContext}` : '';
     const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
@@ -74,20 +72,18 @@ serve(async (req) => {
             })}\n\n`));
 
             // Research vendors using Firecrawl with streaming
-            const baseSearchTerm = specialization ? 
-              getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
-              categoryName;
+            const baseSearchTermStream = specialization || categoryName;
             
             const contextInfo = customContext ? ` ${customContext}` : '';
-            const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
+            const searchQueryStream = `${baseSearchTermStream} near ${location} ${zipCode}${contextInfo}`;
             
             // Define search URLs for comprehensive vendor discovery
             const searchUrls = [
-              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yelp.com')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yellowpages.com')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:bbb.org')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' contractor directory')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' reviews ratings')}`
+              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' site:yelp.com')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' site:yellowpages.com')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' site:bbb.org')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' contractor directory')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' reviews ratings')}`
             ];
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -261,20 +257,18 @@ serve(async (req) => {
     }
 
     // Research vendors using Firecrawl (non-streaming fallback)
-    const baseSearchTerm = specialization ? 
-      getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
-      categoryName;
+    const baseSearchTermFallback = specialization || categoryName;
     
     const contextInfo = customContext ? ` ${customContext}` : '';
-    const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
+    const searchQueryFallback = `${baseSearchTermFallback} near ${location} ${zipCode}${contextInfo}`;
     
     // Define search URLs for comprehensive vendor discovery
     const searchUrls = [
-      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yelp.com')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yellowpages.com')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:bbb.org')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' contractor directory')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' reviews ratings')}`
+      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' site:yelp.com')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' site:yellowpages.com')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' site:bbb.org')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' contractor directory')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' reviews ratings')}`
     ];
 
     console.log('Starting Firecrawl vendor search with URLs:', searchUrls);
