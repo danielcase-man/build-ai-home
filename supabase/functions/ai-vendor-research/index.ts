@@ -170,10 +170,10 @@ Focus on licensed, insured contractors with good reviews. Include both local sma
 
             console.log('Perplexity streaming complete, parsing vendors...');
 
-            // Parse the AI response to extract vendor information
-            const vendors = parseVendorsFromAI(aiResponse, categoryId, projectId, location, zipCode);
+            // Use OpenAI structured extraction to clean and parse vendor data
+            const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
             
-            console.log('Parsed vendors:', vendors);
+            console.log('Structured vendors:', vendors);
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -293,10 +293,10 @@ Focus on licensed, insured contractors with good reviews. Include both local sma
     
     console.log('Perplexity response received, parsing vendors...');
 
-    // Parse the AI response to extract vendor information
-    const vendors = parseVendorsFromAI(aiResponse, categoryId, projectId, location, zipCode);
+    // Use OpenAI structured extraction to clean and parse vendor data
+    const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
     
-    console.log('Parsed vendors:', vendors);
+    console.log('Structured vendors:', vendors);
 
     // Insert vendors into database
     const { data: insertedVendors, error: insertError } = await supabase
@@ -332,6 +332,169 @@ Focus on licensed, insured contractors with good reviews. Include both local sma
   }
 });
 
+// OpenAI structured extraction for vendor data
+async function extractStructuredVendorData(rawData: string, categoryId: string, projectId: string, location: string, zipCode: string) {
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+  if (!openaiApiKey) {
+    console.log('OpenAI API key not found, falling back to regex parsing');
+    return parseVendorsFromAI(rawData, categoryId, projectId, location, zipCode);
+  }
+
+  try {
+    console.log('Using OpenAI structured extraction for vendor data...');
+    
+    // Preprocess the data to remove common artifacts
+    const cleanedData = preprocessVendorData(rawData);
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `You are a data extraction specialist. Extract vendor information from unstructured research data and return it as a structured JSON array. Each vendor should have these fields:
+- business_name (required): The company name
+- contact_name: Primary contact person if mentioned
+- phone: Phone number (clean format)
+- email: Email address
+- website: Website URL
+- address: Street address
+- city: City name
+- state: State abbreviation  
+- rating: Numeric rating (1-5 scale)
+- review_count: Number of reviews as integer
+- cost_estimate_low: Lowest cost estimate as number
+- cost_estimate_avg: Average cost estimate as number  
+- cost_estimate_high: Highest cost estimate as number
+- notes: Any additional relevant information
+
+Important: Only extract real vendor data that appears in the text. Do not invent or hallucinate information. Return empty array if no valid vendors found.`
+          },
+          {
+            role: 'user',
+            content: `Extract vendor information from this research data:\n\n${cleanedData}`
+          }
+        ],
+        response_format: {
+          type: "json_schema",
+          json_schema: {
+            name: "vendor_extraction",
+            schema: {
+              type: "object",
+              properties: {
+                vendors: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      business_name: { type: "string" },
+                      contact_name: { type: ["string", "null"] },
+                      phone: { type: ["string", "null"] },
+                      email: { type: ["string", "null"] },
+                      website: { type: ["string", "null"] },
+                      address: { type: ["string", "null"] },
+                      city: { type: ["string", "null"] },
+                      state: { type: ["string", "null"] },
+                      rating: { type: ["number", "null"], minimum: 1, maximum: 5 },
+                      review_count: { type: ["integer", "null"], minimum: 0 },
+                      cost_estimate_low: { type: ["number", "null"] },
+                      cost_estimate_avg: { type: ["number", "null"] },
+                      cost_estimate_high: { type: ["number", "null"] },
+                      notes: { type: ["string", "null"] }
+                    },
+                    required: ["business_name"],
+                    additionalProperties: false
+                  }
+                }
+              },
+              required: ["vendors"],
+              additionalProperties: false
+            }
+          }
+        },
+        temperature: 0.1
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('OpenAI API error:', await response.text());
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const extractedData = JSON.parse(data.choices[0].message.content);
+    
+    console.log('OpenAI extracted vendors:', extractedData.vendors?.length || 0);
+    
+    // Transform extracted data to match database schema
+    const vendors = extractedData.vendors?.map((vendor: any) => ({
+      category_id: categoryId,
+      project_id: projectId,
+      business_name: vendor.business_name,
+      contact_name: vendor.contact_name || null,
+      phone: vendor.phone || null,
+      email: vendor.email || null,
+      website: vendor.website || null,
+      address: vendor.address || null,
+      city: vendor.city || extractCity(location),
+      state: vendor.state || extractState(location),
+      zip_code: zipCode,
+      rating: vendor.rating || null,
+      review_count: vendor.review_count || null,
+      cost_estimate_low: vendor.cost_estimate_low || null,
+      cost_estimate_avg: vendor.cost_estimate_avg || null,
+      cost_estimate_high: vendor.cost_estimate_high || null,
+      notes: vendor.notes || null,
+      ai_generated: true,
+      status: 'researched'
+    })) || [];
+
+    // Quality validation
+    const validVendors = vendors.filter(vendor => 
+      vendor.business_name && 
+      vendor.business_name.length > 2 && 
+      !vendor.business_name.toLowerCase().includes('contractor ')
+    );
+
+    console.log(`Validated ${validVendors.length} vendors from ${vendors.length} extracted`);
+
+    // If no valid vendors, fall back to regex parsing
+    if (validVendors.length === 0) {
+      console.log('No valid vendors from structured extraction, falling back to regex');
+      return parseVendorsFromAI(rawData, categoryId, projectId, location, zipCode);
+    }
+
+    return validVendors;
+
+  } catch (error) {
+    console.error('Error in structured extraction:', error);
+    console.log('Falling back to regex parsing');
+    return parseVendorsFromAI(rawData, categoryId, projectId, location, zipCode);
+  }
+}
+
+// Data preprocessing to clean artifacts
+function preprocessVendorData(rawData: string): string {
+  return rawData
+    // Remove citations and AI artifacts
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/AI Research/g, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold formatting
+    // Fix common geographic errors
+    .replace(/Lander,TX/g, 'Leander, TX')
+    .replace(/(\w+),(\w+)/g, '$1, $2') // Add space after commas
+    // Clean excessive whitespace
+    .replace(/\s+/g, ' ')
+    .replace(/\n\s*\n/g, '\n')
+    .trim();
+}
+
+// Fallback regex parsing (original function)
 function parseVendorsFromAI(aiResponse: string, categoryId: string, projectId: string, location: string, zipCode: string) {
   const vendors = [];
   
