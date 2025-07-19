@@ -17,9 +17,9 @@ serve(async (req) => {
     
     console.log('Starting vendor research for:', { projectId, location, categoryName, phase, stream });
 
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY not configured');
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    if (!perplexityApiKey) {
+      throw new Error('PERPLEXITY_API_KEY not configured');
     }
 
     // Create Supabase client
@@ -49,19 +49,27 @@ serve(async (req) => {
             
             const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
             
-            const prompt = `Research and find actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
+            const prompt = `Find real ${baseSearchTerm} businesses in ${location} area (zip code ${zipCode})${contextInfo}.
 
-Your task: Find 8-10 real ${baseSearchTerm} companies with complete details. Research their:
-- Business names and contact information  
-- Phone numbers, emails, websites
-- Physical addresses and locations
-- Customer ratings and review counts
-- Specializations and services offered
-- Pricing ranges when available
+Search for actual businesses with verified contact information:
+- Real business names, addresses, phone numbers
+- Email addresses and websites  
+- Customer ratings from Google, Yelp, BBB
+- Specializations within their field
+- Pricing information if available
 
-Focus on established businesses with good reputations serving zip code ${zipCode}. Include both larger established firms and quality local businesses.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}
+Provide detailed information for 8-10 established businesses that actually serve the ${zipCode} area.${contextInfo ? ` Focus on businesses specializing in ${customContext.toLowerCase()}.` : ''}
 
-Provide comprehensive details for each business found, including all available contact information and business details.`;
+Format: For each business provide:
+Business Name: [actual name]
+Address: [full street address]  
+Phone: [phone number]
+Email: [email address]
+Website: [website URL]
+Rating: [rating out of 5]
+Reviews: [number of reviews]
+Specializes: [what they specialize in]
+Cost Range: $[low] - $[high] per hour/project`;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -70,48 +78,48 @@ Provide comprehensive details for each business found, including all available c
               progress: 20
             })}\n\n`));
 
-            console.log('Sending streaming request to OpenAI...');
+            console.log('Sending streaming request to Perplexity...');
 
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            const response = await fetch('https://api.perplexity.ai/chat/completions', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${openaiApiKey}`,
+                'Authorization': `Bearer ${perplexityApiKey}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: 'llama-3.1-sonar-large-128k-online',
                 stream: true,
                 messages: [
                   {
                     role: 'system',
-                    content: `You are a business research specialist. Your task is to find real ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
+                    content: `You are a business directory researcher. Use real-time web search to find actual ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
 
-Research the area thoroughly and provide detailed information about actual businesses including:
-- Complete business names and contact details
-- Phone numbers, email addresses, websites  
-- Physical addresses and service areas
-- Customer ratings and review counts from platforms like Google, Yelp, BBB
-- Specializations within their field
-- Typical pricing ranges when available
-- Years in business and company size
-- Licensing and insurance status when relevant
+Search Google, Yelp, BBB, and local directories for legitimate businesses. Provide only real, verifiable business information including:
+- Actual business names and contact details
+- Real phone numbers, email addresses, websites  
+- Verified addresses and service areas
+- Current ratings and review counts from Google/Yelp
+- Actual specializations and services
+- Real pricing information when available
 
-Focus on businesses with good reputations that actually serve the ${zipCode} area. Include both established larger firms and quality local businesses.`
+IMPORTANT: Only provide information about businesses that actually exist and can be verified through web search. Do not generate or invent any business information.`
                   },
                   {
                     role: 'user',
                     content: prompt
                   }
                 ],
-                temperature: 0.3,
-                max_tokens: 2000
+                temperature: 0.2,
+                max_tokens: 2000,
+                search_domain_filter: ['google.com', 'yelp.com', 'bbb.org', 'yellowpages.com'],
+                return_related_questions: false
               }),
             });
 
             if (!response.ok) {
               const errorText = await response.text();
-              console.error('OpenAI API error:', errorText);
-              throw new Error(`OpenAI API error: ${response.status}`);
+              console.error('Perplexity API error:', errorText);
+              throw new Error(`Perplexity API error: ${response.status}`);
             }
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -171,7 +179,7 @@ Focus on businesses with good reputations that actually serve the ${zipCode} are
               progress: 85
             })}\n\n`));
 
-            console.log('OpenAI streaming complete, parsing vendors...');
+            console.log('Perplexity streaming complete, parsing vendors...');
 
             // Use OpenAI structured extraction to clean and parse vendor data
             const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
@@ -237,67 +245,75 @@ Focus on businesses with good reputations that actually serve the ${zipCode} are
     
     const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
     
-    const prompt = `Research and find actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
+    const prompt = `Find real ${baseSearchTerm} businesses in ${location} area (zip code ${zipCode})${contextInfo}.
 
-Your task: Find 8-10 real ${baseSearchTerm} companies with complete details. Research their:
-- Business names and contact information  
-- Phone numbers, emails, websites
-- Physical addresses and locations
-- Customer ratings and review counts
-- Specializations and services offered
-- Pricing ranges when available
+Search for actual businesses with verified contact information:
+- Real business names, addresses, phone numbers
+- Email addresses and websites  
+- Customer ratings from Google, Yelp, BBB
+- Specializations within their field
+- Pricing information if available
 
-Focus on established businesses with good reputations serving zip code ${zipCode}. Include both larger established firms and quality local businesses.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}
+Provide detailed information for 8-10 established businesses that actually serve the ${zipCode} area.${contextInfo ? ` Focus on businesses specializing in ${customContext.toLowerCase()}.` : ''}
 
-Provide comprehensive details for each business found, including all available contact information and business details.`;
+Format: For each business provide:
+Business Name: [actual name]
+Address: [full street address]  
+Phone: [phone number]
+Email: [email address]
+Website: [website URL]
+Rating: [rating out of 5]
+Reviews: [number of reviews]
+Specializes: [what they specialize in]
+Cost Range: $[low] - $[high] per hour/project`;
 
-    console.log('Sending request to OpenAI with prompt:', prompt);
+    console.log('Sending request to Perplexity with prompt:', prompt);
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.1-sonar-large-128k-online',
         messages: [
           {
             role: 'system',
-            content: `You are a business research specialist. Your task is to find real ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
+            content: `You are a business directory researcher. Use real-time web search to find actual ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
 
-Research the area thoroughly and provide detailed information about actual businesses including:
-- Complete business names and contact details
-- Phone numbers, email addresses, websites  
-- Physical addresses and service areas
-- Customer ratings and review counts from platforms like Google, Yelp, BBB
-- Specializations within their field
-- Typical pricing ranges when available
-- Years in business and company size
-- Licensing and insurance status when relevant
+Search Google, Yelp, BBB, and local directories for legitimate businesses. Provide only real, verifiable business information including:
+- Actual business names and contact details
+- Real phone numbers, email addresses, websites  
+- Verified addresses and service areas
+- Current ratings and review counts from Google/Yelp
+- Actual specializations and services
+- Real pricing information when available
 
-Focus on businesses with good reputations that actually serve the ${zipCode} area. Include both established larger firms and quality local businesses.`
+IMPORTANT: Only provide information about businesses that actually exist and can be verified through web search. Do not generate or invent any business information.`
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.3,
-        max_tokens: 2000
+        temperature: 0.2,
+        max_tokens: 2000,
+        search_domain_filter: ['google.com', 'yelp.com', 'bbb.org', 'yellowpages.com'],
+        return_related_questions: false
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      console.error('Perplexity API error:', errorText);
+      throw new Error(`Perplexity API error: ${response.status}`);
     }
 
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
     
-    console.log('OpenAI response received, parsing vendors...');
+    console.log('Perplexity response received, parsing vendors...');
 
     // Use OpenAI structured extraction to clean and parse vendor data
     const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
