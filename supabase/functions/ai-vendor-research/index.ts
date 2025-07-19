@@ -85,7 +85,7 @@ serve(async (req) => {
               })}\n\n`));
 
               try {
-                const crawlResponse = await fetch('https://api.firecrawl.dev/v0/crawl', {
+                const crawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
                   method: 'POST',
                   headers: {
                     'Authorization': `Bearer ${firecrawlApiKey}`,
@@ -93,19 +93,15 @@ serve(async (req) => {
                   },
                   body: JSON.stringify({
                     url: url,
-                    limit: 10,
-                    scrapeOptions: {
-                      formats: ['markdown'],
-                      onlyMainContent: true,
-                      includeTags: ['a', 'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-                      removeTags: ['script', 'style', 'nav', 'footer', 'aside'],
-                      extractorOptions: {
-                        mode: 'llm-extraction',
-                        extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area. For each business found, extract:
+                    formats: ['markdown', 'html'],
+                    onlyMainContent: true,
+                    extractorOptions: {
+                      mode: 'llm-extraction',
+                      extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area (zip code ${zipCode}). For each business found, extract:
 
-REQUIRED FIELDS (matching our database schema):
+REQUIRED FIELDS:
 - business_name: Company name
-- contact_name: Primary contact person
+- contact_name: Primary contact person (if mentioned)
 - phone: Phone number (clean format)
 - email: Email address  
 - website: Website URL
@@ -120,20 +116,23 @@ REQUIRED FIELDS (matching our database schema):
 - cost_estimate_high: Highest cost estimate (number)
 - notes: Services, specializations, certifications, licenses, insurance info
 
-Focus on established businesses with verified contact information and positive reviews. Include pricing details when available.`
-                      }
+Return each business as a separate entry with all available information. Focus on established businesses with verified contact information and positive reviews.`
                     }
                   }),
                 });
 
                 if (crawlResponse.ok) {
                   const crawlData = await crawlResponse.json();
+                  console.log('Firecrawl response:', JSON.stringify(crawlData, null, 2));
                   if (crawlData.success && crawlData.data) {
-                    allVendorData.push(...crawlData.data);
-                    console.log(`Successfully crawled ${url}, collected ${crawlData.data.length} data points`);
+                    allVendorData.push(crawlData.data);
+                    console.log(`Successfully scraped ${url}, collected data:`, crawlData.data);
+                  } else {
+                    console.warn(`No data returned from ${url}`);
                   }
                 } else {
-                  console.warn(`Failed to crawl ${url}:`, await crawlResponse.text());
+                  const errorText = await crawlResponse.text();
+                  console.warn(`Failed to scrape ${url}:`, errorText);
                 }
 
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -242,10 +241,10 @@ Focus on established businesses with verified contact information and positive r
 
     let allVendorData: any[] = [];
 
-    // Crawl each search URL for comprehensive vendor data
+    // Crawl each search URL for comprehensive vendor data using scrape API
     for (const url of searchUrls) {
       try {
-        const crawlResponse = await fetch('https://api.firecrawl.dev/v0/crawl', {
+        const crawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${firecrawlApiKey}`,
@@ -253,19 +252,15 @@ Focus on established businesses with verified contact information and positive r
           },
           body: JSON.stringify({
             url: url,
-            limit: 10,
-            scrapeOptions: {
-              formats: ['markdown'],
-              onlyMainContent: true,
-              includeTags: ['a', 'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-              removeTags: ['script', 'style', 'nav', 'footer', 'aside'],
-              extractorOptions: {
-                mode: 'llm-extraction',
-                extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area. For each business found, extract:
+            formats: ['markdown', 'html'],
+            onlyMainContent: true,
+            extractorOptions: {
+              mode: 'llm-extraction',
+              extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area (zip code ${zipCode}). For each business found, extract:
 
-REQUIRED FIELDS (matching our database schema):
+REQUIRED FIELDS:
 - business_name: Company name
-- contact_name: Primary contact person
+- contact_name: Primary contact person (if mentioned)
 - phone: Phone number (clean format)
 - email: Email address  
 - website: Website URL
@@ -280,34 +275,38 @@ REQUIRED FIELDS (matching our database schema):
 - cost_estimate_high: Highest cost estimate (number)
 - notes: Services, specializations, certifications, licenses, insurance info
 
-Focus on established businesses with verified contact information and positive reviews. Include pricing details when available.`
-              }
+Return each business as a separate entry with all available information. Focus on established businesses with verified contact information and positive reviews.`
             }
           }),
         });
 
         if (crawlResponse.ok) {
           const crawlData = await crawlResponse.json();
+          console.log('Firecrawl response:', JSON.stringify(crawlData, null, 2));
           if (crawlData.success && crawlData.data) {
-            allVendorData.push(...crawlData.data);
-            console.log(`Successfully crawled ${url}, collected ${crawlData.data.length} data points`);
+            allVendorData.push(crawlData.data);
+            console.log(`Successfully scraped ${url}, collected data:`, crawlData.data);
+          } else {
+            console.warn(`No data returned from ${url}`);
           }
         } else {
-          console.warn(`Failed to crawl ${url}:`, await crawlResponse.text());
+          const errorText = await crawlResponse.text();
+          console.warn(`Failed to scrape ${url}:`, errorText);
         }
       } catch (error) {
-        console.warn(`Error crawling ${url}:`, error);
+        console.warn(`Error scraping ${url}:`, error);
         // Continue with other URLs
       }
     }
 
-    console.log('Firecrawl crawling complete, parsing vendors...');
-
-    // Combine all crawled data into a single text for processing
+    // Combine all crawled data for processing
     const combinedData = allVendorData.map(item => 
       typeof item === 'string' ? item : 
-      item.markdown || item.content || JSON.stringify(item)
+      item.markdown || item.content || item.extract || JSON.stringify(item)
     ).join('\n\n');
+
+    console.log('Combined Firecrawl data length:', combinedData.length);
+    console.log('Combined data preview:', combinedData.substring(0, 1000));
 
     // Use OpenAI structured extraction to clean and parse vendor data
     const vendors = await extractStructuredVendorData(combinedData, categoryId, projectId, location, zipCode);
@@ -586,22 +585,12 @@ function parseVendorsFromAI(aiResponse: string, categoryId: string, projectId: s
     }
   }
 
-  // If no vendors were parsed, create some fallback vendors
+  // If no vendors were parsed, log the issue and return empty array
   if (vendors.length === 0) {
-    console.log('No vendors parsed, creating fallback vendors');
-    for (let i = 1; i <= 3; i++) {
-      vendors.push({
-        category_id: categoryId,
-        project_id: projectId,
-        business_name: `${getCategoryTypeFromText(aiResponse)} Contractor ${i}`,
-        city: extractCity(location),
-        state: extractState(location),
-        zip_code: zipCode,
-        ai_generated: true,
-        status: 'researched',
-        notes: 'Generated from AI research - contact details to be verified'
-      });
-    }
+    console.log('No vendors parsed from AI response. Raw data length:', aiResponse.length);
+    console.log('AI response preview:', aiResponse.substring(0, 500));
+    // Don't create fallback vendors - return empty array to indicate real failure
+    return [];
   }
 
   return vendors;
