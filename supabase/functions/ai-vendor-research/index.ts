@@ -17,9 +17,9 @@ serve(async (req) => {
     
     console.log('Starting vendor research for:', { projectId, location, categoryName, phase, stream });
 
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    if (!perplexityApiKey) {
-      throw new Error('PERPLEXITY_API_KEY not configured');
+    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
+    if (!firecrawlApiKey) {
+      throw new Error('FIRECRAWL_API_KEY not configured');
     }
 
     // Create Supabase client
@@ -42,34 +42,22 @@ serve(async (req) => {
               progress: 0
             })}\n\n`));
 
-            // Research vendors using Perplexity with streaming
+            // Research vendors using Firecrawl with streaming
             const baseSearchTerm = specialization ? 
               getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
               categoryName;
             
-            const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
+            const contextInfo = customContext ? ` ${customContext}` : '';
+            const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
             
-            const prompt = `Find real ${baseSearchTerm} businesses in ${location} area (zip code ${zipCode})${contextInfo}.
-
-Search for actual businesses with verified contact information:
-- Real business names, addresses, phone numbers
-- Email addresses and websites  
-- Customer ratings from Google, Yelp, BBB
-- Specializations within their field
-- Pricing information if available
-
-Provide detailed information for 8-10 established businesses that actually serve the ${zipCode} area.${contextInfo ? ` Focus on businesses specializing in ${customContext.toLowerCase()}.` : ''}
-
-Format: For each business provide:
-Business Name: [actual name]
-Address: [full street address]  
-Phone: [phone number]
-Email: [email address]
-Website: [website URL]
-Rating: [rating out of 5]
-Reviews: [number of reviews]
-Specializes: [what they specialize in]
-Cost Range: $[low] - $[high] per hour/project`;
+            // Define search URLs for comprehensive vendor discovery
+            const searchUrls = [
+              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yelp.com')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yellowpages.com')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:bbb.org')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' contractor directory')}`,
+              `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' reviews ratings')}`
+            ];
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -78,111 +66,106 @@ Cost Range: $[low] - $[high] per hour/project`;
               progress: 20
             })}\n\n`));
 
-            console.log('Sending streaming request to Perplexity...');
+            console.log('Starting Firecrawl vendor search...');
 
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${perplexityApiKey}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                model: 'llama-3.1-sonar-large-128k-online',
-                stream: true,
-                messages: [
-                  {
-                    role: 'system',
-                    content: `You are a business directory researcher. Use real-time web search to find actual ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
+            let allVendorData: any[] = [];
+            const totalUrls = searchUrls.length;
 
-Search Google, Yelp, BBB, and local directories for legitimate businesses. Provide only real, verifiable business information including:
-- Actual business names and contact details
-- Real phone numbers, email addresses, websites  
-- Verified addresses and service areas
-- Current ratings and review counts from Google/Yelp
-- Actual specializations and services
-- Real pricing information when available
+            // Crawl each search URL for comprehensive vendor data
+            for (let i = 0; i < searchUrls.length; i++) {
+              const url = searchUrls[i];
+              const progressStart = 20 + (i * 50 / totalUrls);
+              const progressEnd = 20 + ((i + 1) * 50 / totalUrls);
 
-IMPORTANT: Only provide information about businesses that actually exist and can be verified through web search. Do not generate or invent any business information.`
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                type: 'progress',
+                stage: 'crawling',
+                message: `Crawling vendor directory ${i + 1} of ${totalUrls}...`,
+                progress: progressStart
+              })}\n\n`));
+
+              try {
+                const crawlResponse = await fetch('https://api.firecrawl.dev/v0/crawl', {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${firecrawlApiKey}`,
+                    'Content-Type': 'application/json',
                   },
-                  {
-                    role: 'user',
-                    content: prompt
-                  }
-                ],
-                temperature: 0.2,
-                max_tokens: 2000,
-                search_domain_filter: ['google.com', 'yelp.com', 'bbb.org', 'yellowpages.com'],
-                return_related_questions: false
-              }),
-            });
+                  body: JSON.stringify({
+                    url: url,
+                    limit: 10,
+                    scrapeOptions: {
+                      formats: ['markdown'],
+                      onlyMainContent: true,
+                      includeTags: ['a', 'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+                      removeTags: ['script', 'style', 'nav', 'footer', 'aside'],
+                      extractorOptions: {
+                        mode: 'llm-extraction',
+                        extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area. For each business found, extract:
 
-            if (!response.ok) {
-              const errorText = await response.text();
-              console.error('Perplexity API error:', errorText);
-              throw new Error(`Perplexity API error: ${response.status}`);
-            }
+REQUIRED FIELDS (matching our database schema):
+- business_name: Company name
+- contact_name: Primary contact person
+- phone: Phone number (clean format)
+- email: Email address  
+- website: Website URL
+- address: Full street address
+- city: City name
+- state: State abbreviation
+- zip_code: Zip code
+- rating: Numeric rating (1-5 scale)
+- review_count: Number of reviews (integer)
+- cost_estimate_low: Lowest cost estimate (number)
+- cost_estimate_avg: Average cost estimate (number)
+- cost_estimate_high: Highest cost estimate (number)
+- notes: Services, specializations, certifications, licenses, insurance info
 
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              type: 'progress',
-              stage: 'analyzing',
-              message: 'Analyzing search results and gathering vendor information...',
-              progress: 40
-            })}\n\n`));
-
-            const reader = response.body?.getReader();
-            const decoder = new TextDecoder();
-            let aiResponse = '';
-            let processedChunks = 0;
-
-            if (reader) {
-              while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = decoder.decode(value);
-                const lines = chunk.split('\n');
-
-                for (const line of lines) {
-                  if (line.startsWith('data: ')) {
-                    const data = line.slice(6);
-                    if (data === '[DONE]') continue;
-                    
-                    try {
-                      const parsed = JSON.parse(data);
-                      if (parsed.choices?.[0]?.delta?.content) {
-                        aiResponse += parsed.choices[0].delta.content;
-                        processedChunks++;
-                        
-                        // Send progress updates
-                        if (processedChunks % 10 === 0) {
-                          const progress = Math.min(40 + (processedChunks * 2), 80);
-                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                            type: 'progress',
-                            stage: 'processing',
-                            message: 'Processing research results...',
-                            progress
-                          })}\n\n`));
-                        }
+Focus on established businesses with verified contact information and positive reviews. Include pricing details when available.`
                       }
-                    } catch (e) {
-                      console.log('Skipping invalid JSON chunk:', data);
                     }
+                  }),
+                });
+
+                if (crawlResponse.ok) {
+                  const crawlData = await crawlResponse.json();
+                  if (crawlData.success && crawlData.data) {
+                    allVendorData.push(...crawlData.data);
+                    console.log(`Successfully crawled ${url}, collected ${crawlData.data.length} data points`);
                   }
+                } else {
+                  console.warn(`Failed to crawl ${url}:`, await crawlResponse.text());
                 }
+
+                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                  type: 'progress',
+                  stage: 'crawling',
+                  message: `Processed directory ${i + 1} of ${totalUrls}...`,
+                  progress: progressEnd
+                })}\n\n`));
+
+              } catch (error) {
+                console.warn(`Error crawling ${url}:`, error);
+                // Continue with other URLs
               }
             }
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
               stage: 'parsing',
-              message: 'Extracting vendor details...',
-              progress: 85
+              message: 'Extracting vendor details from crawled data...',
+              progress: 75
             })}\n\n`));
 
-            console.log('Perplexity streaming complete, parsing vendors...');
+            console.log('Firecrawl crawling complete, parsing vendors...');
+
+            // Combine all crawled data into a single text for processing
+            const combinedData = allVendorData.map(item => 
+              typeof item === 'string' ? item : 
+              item.markdown || item.content || JSON.stringify(item)
+            ).join('\n\n');
 
             // Use OpenAI structured extraction to clean and parse vendor data
-            const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
+            const vendors = await extractStructuredVendorData(combinedData, categoryId, projectId, location, zipCode);
             
             console.log('Structured vendors:', vendors);
 
@@ -238,85 +221,96 @@ IMPORTANT: Only provide information about businesses that actually exist and can
       });
     }
 
-    // Research vendors using Perplexity (non-streaming fallback)
+    // Research vendors using Firecrawl (non-streaming fallback)
     const baseSearchTerm = specialization ? 
       getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
       categoryName;
     
-    const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
+    const contextInfo = customContext ? ` ${customContext}` : '';
+    const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
     
-    const prompt = `Find real ${baseSearchTerm} businesses in ${location} area (zip code ${zipCode})${contextInfo}.
+    // Define search URLs for comprehensive vendor discovery
+    const searchUrls = [
+      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yelp.com')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:yellowpages.com')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' site:bbb.org')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' contractor directory')}`,
+      `https://www.google.com/search?q=${encodeURIComponent(searchQuery + ' reviews ratings')}`
+    ];
 
-Search for actual businesses with verified contact information:
-- Real business names, addresses, phone numbers
-- Email addresses and websites  
-- Customer ratings from Google, Yelp, BBB
-- Specializations within their field
-- Pricing information if available
+    console.log('Starting Firecrawl vendor search with URLs:', searchUrls);
 
-Provide detailed information for 8-10 established businesses that actually serve the ${zipCode} area.${contextInfo ? ` Focus on businesses specializing in ${customContext.toLowerCase()}.` : ''}
+    let allVendorData: any[] = [];
 
-Format: For each business provide:
-Business Name: [actual name]
-Address: [full street address]  
-Phone: [phone number]
-Email: [email address]
-Website: [website URL]
-Rating: [rating out of 5]
-Reviews: [number of reviews]
-Specializes: [what they specialize in]
-Cost Range: $[low] - $[high] per hour/project`;
-
-    console.log('Sending request to Perplexity with prompt:', prompt);
-
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-sonar-large-128k-online',
-        messages: [
-          {
-            role: 'system',
-            content: `You are a business directory researcher. Use real-time web search to find actual ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
-
-Search Google, Yelp, BBB, and local directories for legitimate businesses. Provide only real, verifiable business information including:
-- Actual business names and contact details
-- Real phone numbers, email addresses, websites  
-- Verified addresses and service areas
-- Current ratings and review counts from Google/Yelp
-- Actual specializations and services
-- Real pricing information when available
-
-IMPORTANT: Only provide information about businesses that actually exist and can be verified through web search. Do not generate or invent any business information.`
+    // Crawl each search URL for comprehensive vendor data
+    for (const url of searchUrls) {
+      try {
+        const crawlResponse = await fetch('https://api.firecrawl.dev/v0/crawl', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${firecrawlApiKey}`,
+            'Content-Type': 'application/json',
           },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.2,
-        max_tokens: 2000,
-        search_domain_filter: ['google.com', 'yelp.com', 'bbb.org', 'yellowpages.com'],
-        return_related_questions: false
-      }),
-    });
+          body: JSON.stringify({
+            url: url,
+            limit: 10,
+            scrapeOptions: {
+              formats: ['markdown'],
+              onlyMainContent: true,
+              includeTags: ['a', 'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
+              removeTags: ['script', 'style', 'nav', 'footer', 'aside'],
+              extractorOptions: {
+                mode: 'llm-extraction',
+                extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area. For each business found, extract:
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Perplexity API error:', errorText);
-      throw new Error(`Perplexity API error: ${response.status}`);
+REQUIRED FIELDS (matching our database schema):
+- business_name: Company name
+- contact_name: Primary contact person
+- phone: Phone number (clean format)
+- email: Email address  
+- website: Website URL
+- address: Full street address
+- city: City name
+- state: State abbreviation
+- zip_code: Zip code
+- rating: Numeric rating (1-5 scale)
+- review_count: Number of reviews (integer)
+- cost_estimate_low: Lowest cost estimate (number)
+- cost_estimate_avg: Average cost estimate (number)
+- cost_estimate_high: Highest cost estimate (number)
+- notes: Services, specializations, certifications, licenses, insurance info
+
+Focus on established businesses with verified contact information and positive reviews. Include pricing details when available.`
+              }
+            }
+          }),
+        });
+
+        if (crawlResponse.ok) {
+          const crawlData = await crawlResponse.json();
+          if (crawlData.success && crawlData.data) {
+            allVendorData.push(...crawlData.data);
+            console.log(`Successfully crawled ${url}, collected ${crawlData.data.length} data points`);
+          }
+        } else {
+          console.warn(`Failed to crawl ${url}:`, await crawlResponse.text());
+        }
+      } catch (error) {
+        console.warn(`Error crawling ${url}:`, error);
+        // Continue with other URLs
+      }
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices[0].message.content;
-    
-    console.log('Perplexity response received, parsing vendors...');
+    console.log('Firecrawl crawling complete, parsing vendors...');
+
+    // Combine all crawled data into a single text for processing
+    const combinedData = allVendorData.map(item => 
+      typeof item === 'string' ? item : 
+      item.markdown || item.content || JSON.stringify(item)
+    ).join('\n\n');
 
     // Use OpenAI structured extraction to clean and parse vendor data
-    const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
+    const vendors = await extractStructuredVendorData(combinedData, categoryId, projectId, location, zipCode);
     
     console.log('Structured vendors:', vendors);
 
@@ -336,7 +330,7 @@ IMPORTANT: Only provide information about businesses that actually exist and can
     return new Response(JSON.stringify({ 
       success: true, 
       vendors: insertedVendors,
-      aiResponse,
+      rawData: combinedData,
       count: vendors.length 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

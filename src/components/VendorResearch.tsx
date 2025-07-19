@@ -244,7 +244,7 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
           </Label>
           <Textarea
             id="context"
-            placeholder="e.g., luxury homes, green building, modern design, pool houses, specific certifications..."
+            placeholder="e.g., luxury homes, green building, modern design, pool houses, specific certifications, licensed, insured, BBB accredited..."
             value={customContext}
             onChange={(e) => setCustomContext(e.target.value)}
             disabled={isResearching}
@@ -252,7 +252,7 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
             maxLength={500}
           />
           <p className="text-xs text-muted-foreground">
-            Add any specific requirements or preferences to refine your search results
+            Add specific requirements to find vendors with certifications, licenses, insurance, or specializations that match your project needs
           </p>
         </div>
 
