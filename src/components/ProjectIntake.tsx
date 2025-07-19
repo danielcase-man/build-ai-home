@@ -53,6 +53,9 @@ export const ProjectIntake = () => {
   };
 
   const createProject = async () => {
+    console.log('User object:', user);
+    console.log('User ID:', user?.id);
+    
     if (!user) {
       toast.error('Please sign in to create a project');
       return;
