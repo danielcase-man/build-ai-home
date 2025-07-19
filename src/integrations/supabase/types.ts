@@ -1036,9 +1036,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_bid_completeness: {
+        Args: { bid_uuid: string }
+        Returns: number
+      }
+      calculate_project_completeness: {
+        Args: { project_uuid: string }
+        Returns: number
+      }
       get_user_role: {
         Args: { user_uuid: string }
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_vendor_category_requirements: {
+        Args: { category_uuid: string }
+        Returns: {
+          requirement_name: string
+          requirement_description: string
+          data_type: string
+          is_required: boolean
+          measurement_unit: string
+          selection_options: Json
+          help_text: string
+        }[]
       }
       has_project_access: {
         Args: { project_uuid: string; user_uuid: string }
