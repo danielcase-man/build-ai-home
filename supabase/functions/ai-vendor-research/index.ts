@@ -17,9 +17,9 @@ serve(async (req) => {
     
     console.log('Starting vendor research for:', { projectId, location, categoryName, phase, stream });
 
-    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
-    if (!perplexityApiKey) {
-      throw new Error('PERPLEXITY_API_KEY not configured');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
 
     // Create Supabase client
@@ -49,28 +49,19 @@ serve(async (req) => {
             
             const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
             
-            const prompt = `Research actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
+            const prompt = `Research and find actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
 
-IMPORTANT: Return ONLY real businesses with complete contact information. Do not create fictional data.
+Your task: Find 8-10 real ${baseSearchTerm} companies with complete details. Research their:
+- Business names and contact information  
+- Phone numbers, emails, websites
+- Physical addresses and locations
+- Customer ratings and review counts
+- Specializations and services offered
+- Pricing ranges when available
 
-For each business found, provide this EXACT format:
+Focus on established businesses with good reputations serving zip code ${zipCode}. Include both larger established firms and quality local businesses.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}
 
-**Business Name:** [Actual business name]
-**Contact Name:** [Person's name if available]  
-**Phone:** [Phone number]
-**Email:** [Email if available]
-**Website:** [Website URL if available]
-**Address:** [Complete street address]
-**City:** ${location}
-**State:** TX
-**Rating:** [Numerical rating 1-5]
-**Review Count:** [Number of reviews]
-**Specialization:** [What they specialize in]
-**Notes:** [Additional relevant information]
-
----
-
-Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Include established firms and smaller local businesses. Verify all contact information and only include businesses that actually exist.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}`;
+Provide comprehensive details for each business found, including all available contact information and business details.`;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -79,21 +70,33 @@ Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Inclu
               progress: 20
             })}\n\n`));
 
-            console.log('Sending streaming request to Perplexity...');
+            console.log('Sending streaming request to OpenAI...');
 
-            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${perplexityApiKey}`,
+                'Authorization': `Bearer ${openaiApiKey}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                model: 'sonar-deep-research',
+                model: 'gpt-4o-mini',
                 stream: true,
                 messages: [
                   {
                     role: 'system',
-                    content: 'You are a vendor research agent supporting a home build management platform. For a given vendor type and zip code, your task is to identify the top 10 vendors, evaluate and rank "best value", and return complete metadata. Thoroughly fact-check all included metadata and provide results as a structured list suitable for direct database import.'
+                    content: `You are a business research specialist. Your task is to find real ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
+
+Research the area thoroughly and provide detailed information about actual businesses including:
+- Complete business names and contact details
+- Phone numbers, email addresses, websites  
+- Physical addresses and service areas
+- Customer ratings and review counts from platforms like Google, Yelp, BBB
+- Specializations within their field
+- Typical pricing ranges when available
+- Years in business and company size
+- Licensing and insurance status when relevant
+
+Focus on businesses with good reputations that actually serve the ${zipCode} area. Include both established larger firms and quality local businesses.`
                   },
                   {
                     role: 'user',
@@ -101,20 +104,14 @@ Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Inclu
                   }
                 ],
                 temperature: 0.3,
-                top_p: 0.9,
-                max_tokens: 2000,
-                return_images: false,
-                return_related_questions: false,
-                search_recency_filter: 'month',
-                frequency_penalty: 1,
-                presence_penalty: 0
+                max_tokens: 2000
               }),
             });
 
             if (!response.ok) {
               const errorText = await response.text();
-              console.error('Perplexity API error:', errorText);
-              throw new Error(`Perplexity API error: ${response.status}`);
+              console.error('OpenAI API error:', errorText);
+              throw new Error(`OpenAI API error: ${response.status}`);
             }
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
@@ -174,7 +171,7 @@ Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Inclu
               progress: 85
             })}\n\n`));
 
-            console.log('Perplexity streaming complete, parsing vendors...');
+            console.log('OpenAI streaming complete, parsing vendors...');
 
             // Use OpenAI structured extraction to clean and parse vendor data
             const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
@@ -240,43 +237,46 @@ Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Inclu
     
     const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
     
-    const prompt = `Research actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
+    const prompt = `Research and find actual ${baseSearchTerm} businesses in ${location} (zip code ${zipCode})${contextInfo}.
 
-IMPORTANT: Return ONLY real businesses with complete contact information. Do not create fictional data.
+Your task: Find 8-10 real ${baseSearchTerm} companies with complete details. Research their:
+- Business names and contact information  
+- Phone numbers, emails, websites
+- Physical addresses and locations
+- Customer ratings and review counts
+- Specializations and services offered
+- Pricing ranges when available
 
-For each business found, provide this EXACT format:
+Focus on established businesses with good reputations serving zip code ${zipCode}. Include both larger established firms and quality local businesses.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}
 
-**Business Name:** [Actual business name]
-**Contact Name:** [Person's name if available]  
-**Phone:** [Phone number]
-**Email:** [Email if available]
-**Website:** [Website URL if available]
-**Address:** [Complete street address]
-**City:** ${location}
-**State:** TX
-**Rating:** [Numerical rating 1-5]
-**Review Count:** [Number of reviews]
-**Specialization:** [What they specialize in]
-**Notes:** [Additional relevant information]
+Provide comprehensive details for each business found, including all available contact information and business details.`;
 
----
+    console.log('Sending request to OpenAI with prompt:', prompt);
 
-Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Include established firms and smaller local businesses. Verify all contact information and only include businesses that actually exist.${contextInfo ? ` Prioritize businesses that ${customContext.toLowerCase()}.` : ''}`;
-
-    console.log('Sending request to Perplexity with prompt:', prompt);
-
-    const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${perplexityApiKey}`,
+        'Authorization': `Bearer ${openaiApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'sonar-deep-research',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: 'You are a vendor research agent supporting a home build management platform. For a given vendor type and zip code, your task is to identify the top 10 vendors, evaluate and rank "best value", and return complete metadata. Thoroughly fact-check all included metadata and provide results as a structured list suitable for direct database import.'
+            content: `You are a business research specialist. Your task is to find real ${baseSearchTerm} businesses in ${location}, zip code ${zipCode}. 
+
+Research the area thoroughly and provide detailed information about actual businesses including:
+- Complete business names and contact details
+- Phone numbers, email addresses, websites  
+- Physical addresses and service areas
+- Customer ratings and review counts from platforms like Google, Yelp, BBB
+- Specializations within their field
+- Typical pricing ranges when available
+- Years in business and company size
+- Licensing and insurance status when relevant
+
+Focus on businesses with good reputations that actually serve the ${zipCode} area. Include both established larger firms and quality local businesses.`
           },
           {
             role: 'user',
@@ -284,26 +284,20 @@ Find 8-10 actual ${baseSearchTerm} businesses serving zip code ${zipCode}. Inclu
           }
         ],
         temperature: 0.3,
-        top_p: 0.9,
-        max_tokens: 2000,
-        return_images: false,
-        return_related_questions: false,
-        search_recency_filter: 'month',
-        frequency_penalty: 1,
-        presence_penalty: 0
+        max_tokens: 2000
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Perplexity API error:', errorText);
-      throw new Error(`Perplexity API error: ${response.status}`);
+      console.error('OpenAI API error:', errorText);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
     const data = await response.json();
     const aiResponse = data.choices[0].message.content;
     
-    console.log('Perplexity response received, parsing vendors...');
+    console.log('OpenAI response received, parsing vendors...');
 
     // Use OpenAI structured extraction to clean and parse vendor data
     const vendors = await extractStructuredVendorData(aiResponse, categoryId, projectId, location, zipCode);
