@@ -62,9 +62,9 @@ export default function VendorResults() {
       const { data: categoryData, error: categoryError } = await supabase
         .from('vendor_categories')
         .select('id')
-        .eq('category', category)
+        .eq('name', category)
         .eq('phase', 'Pre-Construction Planning & Design')
-        .single();
+        .maybeSingle();
 
       if (categoryError && categoryError.code !== 'PGRST116') {
         throw categoryError;
