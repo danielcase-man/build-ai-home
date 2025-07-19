@@ -8,6 +8,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import ProjectTemplate from "./components/ProjectTemplate";
+import { ProjectIntake } from "./components/ProjectIntake";
+import { ProjectDashboard } from "./components/ProjectDashboard";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +23,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/project" element={<ProjectTemplate />} />
+            <Route path="/projects" element={<ProjectDashboard />} />
+            <Route path="/project/new" element={<ProjectIntake />} />
+            <Route path="/project/:id" element={<ProjectTemplate />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

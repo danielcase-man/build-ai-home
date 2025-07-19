@@ -85,6 +85,132 @@ export type Database = {
           },
         ]
       }
+      project_phases: {
+        Row: {
+          created_at: string
+          dependencies: string[] | null
+          end_date: string | null
+          estimated_duration_days: number | null
+          id: string
+          phase_name: string
+          phase_order: number
+          project_id: string
+          start_date: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dependencies?: string[] | null
+          end_date?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          phase_name: string
+          phase_order: number
+          project_id: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dependencies?: string[] | null
+          end_date?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          phase_name?: string
+          phase_order?: number
+          project_id?: string
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_tasks: {
+        Row: {
+          actual_cost: number | null
+          assigned_to: string | null
+          completed_date: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          estimated_cost: number | null
+          id: string
+          phase_id: string | null
+          priority: string | null
+          project_id: string
+          status: string | null
+          task_name: string
+          updated_at: string
+          vendor_id: string | null
+        }
+        Insert: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          phase_id?: string | null
+          priority?: string | null
+          project_id: string
+          status?: string | null
+          task_name: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Update: {
+          actual_cost?: number | null
+          assigned_to?: string | null
+          completed_date?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          estimated_cost?: number | null
+          id?: string
+          phase_id?: string | null
+          priority?: string | null
+          project_id?: string
+          status?: string | null
+          task_name?: string
+          updated_at?: string
+          vendor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_tasks_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_tasks_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget: number | null
@@ -126,6 +252,129 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      vendor_categories: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          phase: string
+          subcategory: string | null
+          typical_cost: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          phase: string
+          subcategory?: string | null
+          typical_cost?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          phase?: string
+          subcategory?: string | null
+          typical_cost?: string | null
+        }
+        Relationships: []
+      }
+      vendors: {
+        Row: {
+          address: string | null
+          ai_generated: boolean | null
+          business_name: string
+          category_id: string
+          city: string | null
+          contact_name: string | null
+          cost_estimate_avg: number | null
+          cost_estimate_high: number | null
+          cost_estimate_low: number | null
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          phone: string | null
+          project_id: string
+          rating: number | null
+          review_count: number | null
+          state: string | null
+          status: string | null
+          updated_at: string
+          website: string | null
+          zip_code: string | null
+        }
+        Insert: {
+          address?: string | null
+          ai_generated?: boolean | null
+          business_name: string
+          category_id: string
+          city?: string | null
+          contact_name?: string | null
+          cost_estimate_avg?: number | null
+          cost_estimate_high?: number | null
+          cost_estimate_low?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          project_id: string
+          rating?: number | null
+          review_count?: number | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          website?: string | null
+          zip_code?: string | null
+        }
+        Update: {
+          address?: string | null
+          ai_generated?: boolean | null
+          business_name?: string
+          category_id?: string
+          city?: string | null
+          contact_name?: string | null
+          cost_estimate_avg?: number | null
+          cost_estimate_high?: number | null
+          cost_estimate_low?: number | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          phone?: string | null
+          project_id?: string
+          rating?: number | null
+          review_count?: number | null
+          state?: string | null
+          status?: string | null
+          updated_at?: string
+          website?: string | null
+          zip_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendors_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

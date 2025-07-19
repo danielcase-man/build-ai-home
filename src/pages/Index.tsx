@@ -1,7 +1,7 @@
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import AIResearchDashboard from "@/components/AIResearchDashboard";
-import ProjectDashboard from "@/components/ProjectDashboard";
+import { ProjectDashboard } from "@/components/ProjectDashboard";
 import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {

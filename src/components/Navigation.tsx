@@ -23,7 +23,7 @@ const Navigation = () => {
     { icon: Home, label: "Dashboard", href: "/" },
     { icon: Search, label: "AI Research", href: "#research" },
     { icon: FileText, label: "Documents", href: "#documents" },
-    { icon: BarChart3, label: "Projects", href: "/project" },
+    { icon: BarChart3, label: "Projects", href: "/projects" },
     { icon: Settings, label: "Settings", href: "#settings" }
   ];
 
