@@ -941,6 +941,45 @@ export type Database = {
           },
         ]
       }
+      vendor_research_staging: {
+        Row: {
+          category_name: string
+          created_at: string
+          extracted_vendors: Json | null
+          id: string
+          processed_at: string | null
+          processing_notes: string | null
+          processing_status: string
+          project_id: string
+          raw_firecrawl_data: Json
+          search_query: string
+        }
+        Insert: {
+          category_name: string
+          created_at?: string
+          extracted_vendors?: Json | null
+          id?: string
+          processed_at?: string | null
+          processing_notes?: string | null
+          processing_status?: string
+          project_id: string
+          raw_firecrawl_data: Json
+          search_query: string
+        }
+        Update: {
+          category_name?: string
+          created_at?: string
+          extracted_vendors?: Json | null
+          id?: string
+          processed_at?: string | null
+          processing_notes?: string | null
+          processing_status?: string
+          project_id?: string
+          raw_firecrawl_data?: Json
+          search_query?: string
+        }
+        Relationships: []
+      }
       vendors: {
         Row: {
           address: string | null

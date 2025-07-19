@@ -300,55 +300,169 @@ serve(async (req) => {
 
         if (crawlResponse.ok) {
           const crawlData = await crawlResponse.json();
-          console.log('Firecrawl response:', JSON.stringify(crawlData, null, 2));
+          console.log('Firecrawl response for', url, ':', JSON.stringify(crawlData, null, 2));
           if (crawlData.success && crawlData.data) {
-            allVendorData.push(crawlData.data);
+            allVendorData.push({
+              url: url,
+              data: crawlData.data,
+              success: true
+            });
             console.log(`Successfully scraped ${url}, collected data:`, crawlData.data);
           } else {
-            console.warn(`No data returned from ${url}`);
+            console.warn(`No data returned from ${url}:`, crawlData);
+            allVendorData.push({
+              url: url,
+              data: crawlData,
+              success: false,
+              error: 'No data returned'
+            });
           }
         } else {
           const errorText = await crawlResponse.text();
           console.warn(`Failed to scrape ${url}:`, errorText);
+          allVendorData.push({
+            url: url,
+            data: null,
+            success: false,
+            error: errorText
+          });
         }
       } catch (error) {
         console.warn(`Error scraping ${url}:`, error);
+        allVendorData.push({
+          url: url,
+          data: null,
+          success: false,
+          error: error.message
+        });
         // Continue with other URLs
       }
     }
 
-    // Combine all crawled data for processing
-    const combinedData = allVendorData.map(item => 
+    console.log('Raw Firecrawl data collected:', JSON.stringify(allVendorData, null, 2));
+
+    // Save raw data to staging table
+    const { data: stagingRecord, error: stagingError } = await supabase
+      .from('vendor_research_staging')
+      .insert({
+        project_id: projectId,
+        category_name: categoryName,
+        search_query: searchQuery,
+        raw_firecrawl_data: allVendorData,
+        processing_status: 'raw_data_collected'
+      })
+      .select()
+      .single();
+
+    if (stagingError) {
+      console.error('Error saving to staging:', stagingError);
+    } else {
+      console.log('Saved raw data to staging:', stagingRecord?.id);
+    }
+
+    // Extract successful crawl data for processing
+    const successfulData = allVendorData
+      .filter(item => item.success && item.data)
+      .map(item => item.data);
+
+    // Combine successful crawled data for processing
+    const combinedData = successfulData.map(item => 
       typeof item === 'string' ? item : 
       item.markdown || item.content || item.extract || JSON.stringify(item)
     ).join('\n\n');
 
-    console.log('Combined Firecrawl data length:', combinedData.length);
+    console.log('Combined successful data length:', combinedData.length);
     console.log('Combined data preview:', combinedData.substring(0, 1000));
+
+    if (!combinedData.trim()) {
+      console.log('No usable data extracted from Firecrawl');
+      
+      // Update staging record
+      if (stagingRecord) {
+        await supabase
+          .from('vendor_research_staging')
+          .update({
+            processing_status: 'no_data_found',
+            processing_notes: 'No usable data extracted from Firecrawl responses',
+            processed_at: new Date().toISOString()
+          })
+          .eq('id', stagingRecord.id);
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true, 
+        vendors: [],
+        rawData: allVendorData,
+        stagingId: stagingRecord?.id,
+        count: 0,
+        message: 'No vendor data found in crawled results'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Use OpenAI structured extraction to clean and parse vendor data
     const vendors = await extractStructuredVendorData(combinedData, categoryId, projectId, location, zipCode);
     
     console.log('Structured vendors:', vendors);
 
-    // Insert vendors into database
-    const { data: insertedVendors, error: insertError } = await supabase
-      .from('vendors')
-      .insert(vendors)
-      .select();
-
-    if (insertError) {
-      console.error('Database insert error:', insertError);
-      throw insertError;
+    // Update staging record with extracted vendors
+    if (stagingRecord) {
+      await supabase
+        .from('vendor_research_staging')
+        .update({
+          extracted_vendors: vendors,
+          processing_status: vendors.length > 0 ? 'vendors_extracted' : 'no_vendors_extracted',
+          processing_notes: `Extracted ${vendors.length} vendors from combined data`,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', stagingRecord.id);
     }
 
-    console.log('Successfully inserted vendors:', insertedVendors);
+    // Only insert vendors if we have valid data
+    let insertedVendors = [];
+    if (vendors.length > 0) {
+      const { data, error: insertError } = await supabase
+        .from('vendors')
+        .insert(vendors)
+        .select();
+
+      if (insertError) {
+        console.error('Database insert error:', insertError);
+        
+        // Update staging with error
+        if (stagingRecord) {
+          await supabase
+            .from('vendor_research_staging')
+            .update({
+              processing_status: 'insert_failed',
+              processing_notes: `Failed to insert vendors: ${insertError.message}`
+            })
+            .eq('id', stagingRecord.id);
+        }
+      } else {
+        insertedVendors = data || [];
+        console.log('Successfully inserted vendors:', insertedVendors);
+        
+        // Update staging with success
+        if (stagingRecord) {
+          await supabase
+            .from('vendor_research_staging')
+            .update({
+              processing_status: 'completed',
+              processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
+            })
+            .eq('id', stagingRecord.id);
+        }
+      }
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
       vendors: insertedVendors,
-      rawData: combinedData,
-      count: vendors.length 
+      rawData: allVendorData,
+      stagingId: stagingRecord?.id,
+      count: insertedVendors.length 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { VendorResearchStaging } from './VendorResearchStaging';
 
 interface VendorResearchProps {
   projectId: string;
@@ -205,130 +206,134 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
   };
 
   return (
-    <Card className="border-border">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Search className="h-5 w-5 text-primary" />
-          Research {subcategoryName}
-        </CardTitle>
-        <CardDescription>
-          Find qualified local vendors in your area
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Specialization Selection */}
-        {specializationOptions.length > 0 && (
+    <div className="space-y-6">
+      <Card className="border-border">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Search className="h-5 w-5 text-primary" />
+            Research {subcategoryName}
+          </CardTitle>
+          <CardDescription>
+            Find qualified local vendors in your area
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Specialization Selection */}
+          {specializationOptions.length > 0 && (
+            <div className="space-y-2">
+              <Label htmlFor="specialization" className="text-sm font-medium">
+                Specialization Type
+              </Label>
+              <Select value={specialization} onValueChange={setSpecialization} disabled={isResearching}>
+                <SelectTrigger id="specialization">
+                  <SelectValue placeholder={`Select ${subcategoryName} type`} />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border border-border z-50">
+                  {specializationOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Custom Context */}
           <div className="space-y-2">
-            <Label htmlFor="specialization" className="text-sm font-medium">
-              Specialization Type
+            <Label htmlFor="context" className="text-sm font-medium">
+              Additional Requirements (Optional)
             </Label>
-            <Select value={specialization} onValueChange={setSpecialization} disabled={isResearching}>
-              <SelectTrigger id="specialization">
-                <SelectValue placeholder={`Select ${subcategoryName} type`} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border border-border z-50">
-                {specializationOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Custom Context */}
-        <div className="space-y-2">
-          <Label htmlFor="context" className="text-sm font-medium">
-            Additional Requirements (Optional)
-          </Label>
-          <Textarea
-            id="context"
-            placeholder="e.g., luxury homes, green building, modern design, pool houses, specific certifications, licensed, insured, BBB accredited..."
-            value={customContext}
-            onChange={(e) => setCustomContext(e.target.value)}
-            disabled={isResearching}
-            className="min-h-[80px] resize-none"
-            maxLength={500}
-          />
-          <p className="text-xs text-muted-foreground">
-            Add specific requirements to find vendors with certifications, licenses, insurance, or specializations that match your project needs
-          </p>
-        </div>
-
-        {/* Zip Code and Research Button */}
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <Input
-              placeholder="Enter zip code (e.g., 90210)"
-              value={zipCode}
-              onChange={(e) => setZipCode(e.target.value)}
+            <Textarea
+              id="context"
+              placeholder="e.g., luxury homes, green building, modern design, pool houses, specific certifications, licensed, insured, BBB accredited..."
+              value={customContext}
+              onChange={(e) => setCustomContext(e.target.value)}
               disabled={isResearching}
-              maxLength={5}
-              pattern="[0-9]{5}"
+              className="min-h-[80px] resize-none"
+              maxLength={500}
             />
-          </div>
-          <Button 
-            onClick={handleStartResearch}
-            disabled={isResearching || !zipCode.trim()}
-            className="min-w-[100px]"
-          >
-            {isResearching ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Researching...
-              </>
-            ) : (
-              <>
-                <Search className="h-4 w-4 mr-2" />
-                Research
-              </>
-            )}
-          </Button>
-        </div>
-
-        {isResearching && (
-          <div className="space-y-3">
-            <Progress value={progress} className="h-2" />
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {progressMessage || `AI is searching for ${subcategoryName} vendors in ${location}...`}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {progress}%
-              </span>
-            </div>
-            {progressStage && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <div className={`w-2 h-2 rounded-full ${
-                  progressStage === 'complete' ? 'bg-success' : 
-                  progressStage === 'error' ? 'bg-destructive' : 
-                  'bg-primary animate-pulse'
-                }`} />
-                <span className="capitalize">{progressStage.replace(/[_-]/g, ' ')}</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {researchResults && (
-          <div className="mt-4 p-4 bg-success/10 border border-success/20 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-5 w-5 text-success" />
-              <span className="font-medium text-success">Research Complete!</span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Found {researchResults.count} qualified vendors for {subcategoryName}. 
-              Click "View Results" to see details and add vendors to your project.
+            <p className="text-xs text-muted-foreground">
+              Add specific requirements to find vendors with certifications, licenses, insurance, or specializations that match your project needs
             </p>
           </div>
-        )}
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span>Searching in {location} and surrounding areas</span>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Zip Code and Research Button */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <Input
+                placeholder="Enter zip code (e.g., 90210)"
+                value={zipCode}
+                onChange={(e) => setZipCode(e.target.value)}
+                disabled={isResearching}
+                maxLength={5}
+                pattern="[0-9]{5}"
+              />
+            </div>
+            <Button 
+              onClick={handleStartResearch}
+              disabled={isResearching || !zipCode.trim()}
+              className="min-w-[100px]"
+            >
+              {isResearching ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Researching...
+                </>
+              ) : (
+                <>
+                  <Search className="h-4 w-4 mr-2" />
+                  Research
+                </>
+              )}
+            </Button>
+          </div>
+
+          {isResearching && (
+            <div className="space-y-3">
+              <Progress value={progress} className="h-2" />
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {progressMessage || `AI is searching for ${subcategoryName} vendors in ${location}...`}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {progress}%
+                </span>
+              </div>
+              {progressStage && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className={`w-2 h-2 rounded-full ${
+                    progressStage === 'complete' ? 'bg-success' : 
+                    progressStage === 'error' ? 'bg-destructive' : 
+                    'bg-primary animate-pulse'
+                  }`} />
+                  <span className="capitalize">{progressStage.replace(/[_-]/g, ' ')}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {researchResults && (
+            <div className="mt-4 p-4 bg-success/10 border border-success/20 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-5 w-5 text-success" />
+                <span className="font-medium text-success">Research Complete!</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Found {researchResults.count} qualified vendors for {subcategoryName}. 
+                Click "View Results" to see details and add vendors to your project.
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            <span>Searching in {location} and surrounding areas</span>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <VendorResearchStaging projectId={projectId} />
+    </div>
   );
 };
