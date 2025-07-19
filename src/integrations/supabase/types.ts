@@ -94,6 +94,39 @@ export type Database = {
           },
         ]
       }
+      document_categories: {
+        Row: {
+          category_type: string
+          created_at: string | null
+          description: string | null
+          file_types_allowed: string[] | null
+          id: string
+          max_file_size_mb: number | null
+          name: string
+          required_for_phases: string[] | null
+        }
+        Insert: {
+          category_type: string
+          created_at?: string | null
+          description?: string | null
+          file_types_allowed?: string[] | null
+          id?: string
+          max_file_size_mb?: number | null
+          name: string
+          required_for_phases?: string[] | null
+        }
+        Update: {
+          category_type?: string
+          created_at?: string | null
+          description?: string | null
+          file_types_allowed?: string[] | null
+          id?: string
+          max_file_size_mb?: number | null
+          name?: string
+          required_for_phases?: string[] | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -129,6 +162,185 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      project_documents: {
+        Row: {
+          approval_status: string | null
+          approved_at: string | null
+          approved_by: string | null
+          category_id: string | null
+          created_at: string | null
+          description: string | null
+          document_type: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes: number | null
+          id: string
+          is_current_version: boolean | null
+          metadata: Json | null
+          mime_type: string | null
+          phase_id: string | null
+          project_id: string | null
+          supersedes_document_id: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          uploaded_by: string | null
+          version_number: number | null
+        }
+        Insert: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_name: string
+          file_path: string
+          file_size_bytes?: number | null
+          id?: string
+          is_current_version?: boolean | null
+          metadata?: Json | null
+          mime_type?: string | null
+          phase_id?: string | null
+          project_id?: string | null
+          supersedes_document_id?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          version_number?: number | null
+        }
+        Update: {
+          approval_status?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          document_type?: string | null
+          file_name?: string
+          file_path?: string
+          file_size_bytes?: number | null
+          id?: string
+          is_current_version?: boolean | null
+          metadata?: Json | null
+          mime_type?: string | null
+          phase_id?: string | null
+          project_id?: string | null
+          supersedes_document_id?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          version_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "document_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_supersedes_document_id_fkey"
+            columns: ["supersedes_document_id"]
+            isOneToOne: false
+            referencedRelation: "project_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_measurements: {
+        Row: {
+          calculation_method: string | null
+          confidence_level: string | null
+          created_at: string | null
+          id: string
+          measurement_category: string
+          measurement_name: string
+          measurement_unit: string
+          measurement_value: number
+          notes: string | null
+          phase_id: string | null
+          project_id: string | null
+          source_document_id: string | null
+          total_with_waste: number | null
+          updated_at: string | null
+          verified_at: string | null
+          verified_by: string | null
+          waste_factor: number | null
+        }
+        Insert: {
+          calculation_method?: string | null
+          confidence_level?: string | null
+          created_at?: string | null
+          id?: string
+          measurement_category: string
+          measurement_name: string
+          measurement_unit: string
+          measurement_value: number
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string | null
+          source_document_id?: string | null
+          total_with_waste?: number | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          waste_factor?: number | null
+        }
+        Update: {
+          calculation_method?: string | null
+          confidence_level?: string | null
+          created_at?: string | null
+          id?: string
+          measurement_category?: string
+          measurement_name?: string
+          measurement_unit?: string
+          measurement_value?: number
+          notes?: string | null
+          phase_id?: string | null
+          project_id?: string | null
+          source_document_id?: string | null
+          total_with_waste?: number | null
+          updated_at?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+          waste_factor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_measurements_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_measurements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       project_members: {
         Row: {
@@ -208,6 +420,91 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "project_phases_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_requirements: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          id: string
+          is_required: boolean | null
+          measurement_unit: string | null
+          notes: string | null
+          phase_id: string | null
+          priority: string | null
+          project_id: string | null
+          requirement_name: string
+          requirement_type: string
+          updated_at: string | null
+          value_boolean: boolean | null
+          value_date: string | null
+          value_file_id: string | null
+          value_jsonb: Json | null
+          value_number: number | null
+          value_text: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          measurement_unit?: string | null
+          notes?: string | null
+          phase_id?: string | null
+          priority?: string | null
+          project_id?: string | null
+          requirement_name: string
+          requirement_type: string
+          updated_at?: string | null
+          value_boolean?: boolean | null
+          value_date?: string | null
+          value_file_id?: string | null
+          value_jsonb?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          measurement_unit?: string | null
+          notes?: string | null
+          phase_id?: string | null
+          priority?: string | null
+          project_id?: string | null
+          requirement_name?: string
+          requirement_type?: string
+          updated_at?: string | null
+          value_boolean?: boolean | null
+          value_date?: string | null
+          value_file_id?: string | null
+          value_jsonb?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_requirements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_requirements_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "project_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_requirements_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "projects"
