@@ -22,18 +22,14 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
-    if (!firecrawlApiKey) {
-      throw new Error('FIRECRAWL_API_KEY not configured');
+    const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
+    if (!perplexityApiKey) {
+      throw new Error('PERPLEXITY_API_KEY not configured');
     }
 
-    // Build search query - USE CATEGORY NAME, not specialization
-    const baseSearchTerm = categoryName; // Always use the actual category (architects, contractors, etc.)
-    
-    const contextInfo = customContext ? ` ${customContext}` : '';
-    const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
-    
-    console.log('Search query:', searchQuery);
+    // Build comprehensive research query
+    const researchQuery = buildComprehensiveResearchQuery(categoryName, location, zipCode, specialization, customContext);
+    console.log('Research query:', researchQuery);
 
     // Save initial staging record
     console.log('Creating staging record...');
@@ -42,8 +38,8 @@ serve(async (req) => {
       .insert({
         project_id: projectId,
         category_name: categoryName,
-        search_query: baseSearchTerm,
-        raw_firecrawl_data: { initial: 'Starting research...' },
+        search_query: researchQuery,
+        raw_firecrawl_data: { initial: 'Starting comprehensive vendor research...' },
         processing_status: 'starting'
       })
       .select()
@@ -67,172 +63,51 @@ serve(async (req) => {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
               stage: 'initializing',
-              message: `Starting research for ${categoryName} in ${location}...`,
+              message: `Starting comprehensive research for ${categoryName} in ${location}...`,
               progress: 0
             })}\n\n`));
 
-            // Research vendors using Firecrawl with streaming
-            const baseSearchTermStream = categoryName; // Use category name (architects), not specialization
-            
-            const contextInfo = customContext ? ` ${customContext}` : '';
-            const searchQueryStream = `${baseSearchTermStream} near ${location} ${zipCode}${contextInfo}`;
-            
-            // Define search URLs for comprehensive vendor discovery
-            const searchUrls = [
-              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' site:yelp.com')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' site:yellowpages.com')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' site:bbb.org')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' contractor directory')}`,
-              `https://www.google.com/search?q=${encodeURIComponent(searchQueryStream + ' reviews ratings')}`
-            ];
-
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
-              stage: 'searching',
-              message: `Searching for ${categoryName} contractors in ${location}...`,
+              stage: 'researching',
+              message: `AI agent researching ${categoryName} vendors with professional criteria...`,
               progress: 20
             })}\n\n`));
 
-            console.log('Starting Firecrawl vendor search...');
-
-            let allVendorData: any[] = [];
-            const totalUrls = searchUrls.length;
-
-            // Crawl each search URL for comprehensive vendor data
-            for (let i = 0; i < searchUrls.length; i++) {
-              const url = searchUrls[i];
-              const progressStart = 20 + (i * 50 / totalUrls);
-              const progressEnd = 20 + ((i + 1) * 50 / totalUrls);
-
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                type: 'progress',
-                stage: 'crawling',
-                message: `Crawling vendor directory ${i + 1} of ${totalUrls}...`,
-                progress: progressStart
-              })}\n\n`));
-
-              try {
-                const crawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
-                  method: 'POST',
-                  headers: {
-                    'Authorization': `Bearer ${firecrawlApiKey}`,
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    url: url,
-                    formats: ['markdown', 'html'],
-                    onlyMainContent: true,
-                    extractorOptions: {
-                      mode: 'llm-extraction',
-                      extractionSchema: {
-                        type: "object",
-                        properties: {
-                          vendors: {
-                            type: "array",
-                            items: {
-                              type: "object",
-                              properties: {
-                                business_name: { type: "string" },
-                                contact_name: { type: "string" },
-                                phone: { type: "string" },
-                                email: { type: "string" },
-                                website: { type: "string" },
-                                address: { type: "string" },
-                                city: { type: "string" },
-                                state: { type: "string" },
-                                zip_code: { type: "string" },
-                                rating: { type: "number" },
-                                review_count: { type: "number" },
-                                cost_estimate_low: { type: "number" },
-                                cost_estimate_avg: { type: "number" },
-                                cost_estimate_high: { type: "number" },
-                                notes: { type: "string" }
-                              }
-                            }
-                          }
-                        }
-                      },
-                      extractionPrompt: `Extract detailed vendor/business information for ${categoryName} services in ${location} area (${zipCode}). Focus on established businesses with contact info and reviews.`
-                    }
-                  }),
-                });
-
-                if (crawlResponse.ok) {
-                  const crawlData = await crawlResponse.json();
-                  console.log('Firecrawl response for', url, ':', JSON.stringify(crawlData, null, 2));
-                  if (crawlData.success && crawlData.data) {
-                    allVendorData.push({
-                      url: url,
-                      data: crawlData.data,
-                      success: true
-                    });
-                    console.log(`Successfully scraped ${url}, collected data:`, crawlData.data);
-                  } else {
-                    console.warn(`No data returned from ${url}:`, crawlData);
-                    allVendorData.push({
-                      url: url,
-                      data: crawlData,
-                      success: false,
-                      error: 'No data returned'
-                    });
-                  }
-                } else {
-                  const errorText = await crawlResponse.text();
-                  console.warn(`Failed to scrape ${url}:`, errorText);
-                  allVendorData.push({
-                    url: url,
-                    data: null,
-                    success: false,
-                    error: errorText
-                  });
-                }
-
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-                  type: 'progress',
-                  stage: 'crawling',
-                  message: `Processed directory ${i + 1} of ${totalUrls}...`,
-                  progress: progressEnd
-                })}\n\n`));
-
-              } catch (error) {
-                console.warn(`Error crawling ${url}:`, error);
-                // Continue with other URLs
-              }
-            }
-
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
-              type: 'progress',
-              stage: 'parsing',
-              message: 'Extracting vendor details from crawled data...',
-              progress: 75
-            })}\n\n`));
-
-            console.log('Firecrawl crawling complete, parsing vendors...');
+            // Perform comprehensive vendor research using Perplexity
+            const researchData = await performComprehensiveVendorResearch(perplexityApiKey, researchQuery, categoryName, location, zipCode);
             
-            // Update staging with raw data from streaming
+            // Update staging with research data
             await supabase
               .from('vendor_research_staging')
               .update({
-                raw_firecrawl_data: allVendorData,
-                processing_status: 'raw_data_collected'
+                raw_firecrawl_data: { perplexity_research: researchData },
+                processing_status: 'research_complete'
               })
               .eq('id', stagingRecord.id);
 
-            // Extract successful crawl data for processing
-            const successfulData = allVendorData
-              .filter(item => item.success && item.data)
-              .map(item => item.data);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              stage: 'extracting',
+              message: 'Extracting and validating vendor information...',
+              progress: 70
+            })}\n\n`));
 
-            // Combine all crawled data into a single text for processing
-            const combinedData = successfulData.map(item => 
-              typeof item === 'string' ? item : 
-              item.markdown || item.content || item.extract || JSON.stringify(item)
-            ).join('\n\n');
-
-            // Use OpenAI structured extraction to clean and parse vendor data
-            const vendors = await extractStructuredVendorData(combinedData, categoryId, projectId, location, zipCode);
+            // Extract structured vendor data
+            const vendors = await extractVendorsFromResearch(researchData, categoryId, projectId, location, zipCode);
             
-            console.log('Structured vendors:', vendors);
+            console.log('Extracted vendors:', vendors);
+
+            // Update staging record with extracted vendors
+            await supabase
+              .from('vendor_research_staging')
+              .update({
+                extracted_vendors: vendors,
+                processing_status: vendors.length > 0 ? 'vendors_extracted' : 'no_vendors_extracted',
+                processing_notes: `Extracted ${vendors.length} vendors from research data`,
+                processed_at: new Date().toISOString()
+              })
+              .eq('id', stagingRecord.id);
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -242,23 +117,40 @@ serve(async (req) => {
             })}\n\n`));
 
             // Insert vendors into database
-            const { data: insertedVendors, error: insertError } = await supabase
-              .from('vendors')
-              .insert(vendors)
-              .select();
+            let insertedVendors = [];
+            if (vendors.length > 0) {
+              const { data, error: insertError } = await supabase
+                .from('vendors')
+                .insert(vendors)
+                .select();
 
-            if (insertError) {
-              console.error('Database insert error:', insertError);
-              throw insertError;
+              if (insertError) {
+                console.error('Database insert error:', insertError);
+                await supabase
+                  .from('vendor_research_staging')
+                  .update({
+                    processing_status: 'insert_failed',
+                    processing_notes: `Failed to insert vendors: ${insertError.message}`
+                  })
+                  .eq('id', stagingRecord.id);
+              } else {
+                insertedVendors = data || [];
+                console.log('Successfully inserted vendors:', insertedVendors);
+                await supabase
+                  .from('vendor_research_staging')
+                  .update({
+                    processing_status: 'completed',
+                    processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
+                  })
+                  .eq('id', stagingRecord.id);
+              }
             }
-
-            console.log('Successfully inserted vendors:', insertedVendors);
 
             // Send final result
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'complete',
               stage: 'complete',
-              message: `Research complete! Found ${vendors.length} vendors.`,
+              message: `Research complete! Found ${vendors.length} qualified vendors.`,
               progress: 100,
               vendors: insertedVendors,
               count: vendors.length
@@ -286,229 +178,88 @@ serve(async (req) => {
       });
     }
 
-    // Research vendors using Firecrawl (non-streaming fallback)
-    const baseSearchTermFallback = categoryName; // Use category name (architects), not specialization
-    
-    const contextInfoFallback = customContext ? ` ${customContext}` : '';
-    const searchQueryFallback = `${baseSearchTermFallback} near ${location} ${zipCode}${contextInfoFallback}`;
-    
-    // Define search URLs for comprehensive vendor discovery
-    const searchUrls = [
-      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' site:yelp.com')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' site:yellowpages.com')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' site:bbb.org')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' contractor directory')}`,
-      `https://www.google.com/search?q=${encodeURIComponent(searchQueryFallback + ' reviews ratings')}`
-    ];
-
-    console.log('Starting Firecrawl vendor search with URLs:', searchUrls);
-
-    let allVendorData: any[] = [];
-
-    // Crawl each search URL for comprehensive vendor data using scrape API
-    for (const url of searchUrls) {
-      try {
-        const crawlResponse = await fetch('https://api.firecrawl.dev/v0/scrape', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${firecrawlApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            url: url,
-            formats: ['markdown', 'html'],
-            onlyMainContent: true,
-            extractorOptions: {
-              mode: 'llm-extraction',
-              extractionSchema: {
-                type: "object",
-                properties: {
-                  vendors: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        business_name: { type: "string" },
-                        contact_name: { type: "string" },
-                        phone: { type: "string" },
-                        email: { type: "string" },
-                        website: { type: "string" },
-                        address: { type: "string" },
-                        city: { type: "string" },
-                        state: { type: "string" },
-                        zip_code: { type: "string" },
-                        rating: { type: "number" },
-                        review_count: { type: "number" },
-                        cost_estimate_low: { type: "number" },
-                        cost_estimate_avg: { type: "number" },
-                        cost_estimate_high: { type: "number" },
-                        notes: { type: "string" }
-                      }
-                    }
-                  }
-                }
-              },
-              extractionPrompt: `Extract detailed vendor/business information for ${categoryName} services in ${location} area (${zipCode}). Focus on established businesses with contact info and reviews.`
-            }
-          }),
-        });
-
-        if (crawlResponse.ok) {
-          const crawlData = await crawlResponse.json();
-          console.log('Firecrawl response for', url, ':', JSON.stringify(crawlData, null, 2));
-          if (crawlData.success && crawlData.data) {
-            allVendorData.push({
-              url: url,
-              data: crawlData.data,
-              success: true
-            });
-            console.log(`Successfully scraped ${url}, collected data:`, crawlData.data);
-          } else {
-            console.warn(`No data returned from ${url}:`, crawlData);
-            allVendorData.push({
-              url: url,
-              data: crawlData,
-              success: false,
-              error: 'No data returned'
-            });
-          }
-        } else {
-          const errorText = await crawlResponse.text();
-          console.warn(`Failed to scrape ${url}:`, errorText);
-          allVendorData.push({
-            url: url,
-            data: null,
-            success: false,
-            error: errorText
-          });
-        }
-      } catch (error) {
-        console.warn(`Error scraping ${url}:`, error);
-        allVendorData.push({
-          url: url,
-          data: null,
-          success: false,
-          error: error.message
-        });
-        // Continue with other URLs
-      }
-    }
-
-    console.log('Raw Firecrawl data collected:', JSON.stringify(allVendorData, null, 2));
-
-    // Update the existing staging record with raw data
-    const { error: updateError } = await supabase
-      .from('vendor_research_staging')
-      .update({
-        raw_firecrawl_data: allVendorData,
-        processing_status: 'raw_data_collected'
-      })
-      .eq('id', stagingRecord.id);
-
-    if (updateError) {
-      console.error('Error updating staging with raw data:', updateError);
-    } else {
-      console.log('Updated staging record with raw data:', stagingRecord.id);
-    }
-
-    // Extract successful crawl data for processing
-    const successfulData = allVendorData
-      .filter(item => item.success && item.data)
-      .map(item => item.data);
-
-    // Combine successful crawled data for processing
-    const combinedData = successfulData.map(item => 
-      typeof item === 'string' ? item : 
-      item.markdown || item.content || item.extract || JSON.stringify(item)
-    ).join('\n\n');
-
-    console.log('Combined successful data length:', combinedData.length);
-    console.log('Combined data preview:', combinedData.substring(0, 1000));
-
-    if (!combinedData.trim()) {
-      console.log('No usable data extracted from Firecrawl');
+    // Non-streaming fallback
+    try {
+      // Perform comprehensive vendor research using Perplexity
+      const researchData = await performComprehensiveVendorResearch(perplexityApiKey, researchQuery, categoryName, location, zipCode);
       
-      // Update staging record
+      // Update staging with research data
       await supabase
         .from('vendor_research_staging')
         .update({
-          processing_status: 'no_data_found',
-          processing_notes: 'No usable data extracted from Firecrawl responses',
+          raw_firecrawl_data: { perplexity_research: researchData },
+          processing_status: 'research_complete'
+        })
+        .eq('id', stagingRecord.id);
+
+      // Extract structured vendor data
+      const vendors = await extractVendorsFromResearch(researchData, categoryId, projectId, location, zipCode);
+      
+      console.log('Extracted vendors:', vendors);
+
+      // Update staging record with extracted vendors
+      await supabase
+        .from('vendor_research_staging')
+        .update({
+          extracted_vendors: vendors,
+          processing_status: vendors.length > 0 ? 'vendors_extracted' : 'no_vendors_extracted',
+          processing_notes: `Extracted ${vendors.length} vendors from research data`,
           processed_at: new Date().toISOString()
         })
         .eq('id', stagingRecord.id);
 
+      // Insert vendors into database
+      let insertedVendors = [];
+      if (vendors.length > 0) {
+        const { data, error: insertError } = await supabase
+          .from('vendors')
+          .insert(vendors)
+          .select();
+
+        if (insertError) {
+          console.error('Database insert error:', insertError);
+          await supabase
+            .from('vendor_research_staging')
+            .update({
+              processing_status: 'insert_failed',
+              processing_notes: `Failed to insert vendors: ${insertError.message}`
+            })
+            .eq('id', stagingRecord.id);
+        } else {
+          insertedVendors = data || [];
+          console.log('Successfully inserted vendors:', insertedVendors);
+          await supabase
+            .from('vendor_research_staging')
+            .update({
+              processing_status: 'completed',
+              processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
+            })
+            .eq('id', stagingRecord.id);
+        }
+      }
+
       return new Response(JSON.stringify({ 
         success: true, 
-        vendors: [],
-        rawData: allVendorData,
+        vendors: insertedVendors,
         stagingId: stagingRecord.id,
-        count: 0,
-        message: 'No vendor data found in crawled results'
+        count: insertedVendors.length 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+
+    } catch (error) {
+      console.error('Error in vendor research:', error);
+      await supabase
+        .from('vendor_research_staging')
+        .update({
+          processing_status: 'failed',
+          processing_notes: `Research failed: ${error.message}`,
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', stagingRecord.id);
+
+      throw error;
     }
-
-    // Use OpenAI structured extraction to clean and parse vendor data
-    const vendors = await extractStructuredVendorData(combinedData, categoryId, projectId, location, zipCode);
-    
-    console.log('Structured vendors:', vendors);
-
-    // Update staging record with extracted vendors
-    await supabase
-      .from('vendor_research_staging')
-      .update({
-        extracted_vendors: vendors,
-        processing_status: vendors.length > 0 ? 'vendors_extracted' : 'no_vendors_extracted',
-        processing_notes: `Extracted ${vendors.length} vendors from combined data`,
-        processed_at: new Date().toISOString()
-      })
-      .eq('id', stagingRecord.id);
-
-    // Only insert vendors if we have valid data
-    let insertedVendors = [];
-    if (vendors.length > 0) {
-      const { data, error: insertError } = await supabase
-        .from('vendors')
-        .insert(vendors)
-        .select();
-
-      if (insertError) {
-        console.error('Database insert error:', insertError);
-        
-        // Update staging with error
-        await supabase
-          .from('vendor_research_staging')
-          .update({
-            processing_status: 'insert_failed',
-            processing_notes: `Failed to insert vendors: ${insertError.message}`
-          })
-          .eq('id', stagingRecord.id);
-      } else {
-        insertedVendors = data || [];
-        console.log('Successfully inserted vendors:', insertedVendors);
-        
-        // Update staging with success
-        await supabase
-          .from('vendor_research_staging')
-          .update({
-            processing_status: 'completed',
-            processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
-          })
-          .eq('id', stagingRecord.id);
-      }
-    }
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      vendors: insertedVendors,
-      rawData: allVendorData,
-      stagingId: stagingRecord.id,
-      count: insertedVendors.length 
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
 
   } catch (error) {
     console.error('Error in ai-vendor-research function:', error);
@@ -522,19 +273,119 @@ serve(async (req) => {
   }
 });
 
-// OpenAI structured extraction for vendor data
-async function extractStructuredVendorData(rawData: string, categoryId: string, projectId: string, location: string, zipCode: string) {
+// Build comprehensive research query for Perplexity
+function buildComprehensiveResearchQuery(categoryName: string, location: string, zipCode: string, specialization?: string, customContext?: string): string {
+  const specializationText = specialization ? `specializing in ${specialization}` : '';
+  const contextText = customContext ? `Additional requirements: ${customContext}.` : '';
+  
+  return `Find qualified ${categoryName} ${specializationText} in ${location}, Texas ${zipCode} area for construction projects.
+
+RESEARCH REQUIREMENTS:
+- Focus on licensed, insured, and bonded contractors
+- Include established businesses with professional credentials
+- Prioritize companies with positive customer reviews and ratings
+- Look for businesses with relevant project portfolios
+- Include contact information (phone, email, website)
+- Find cost estimates and pricing information where available
+- Include business addresses and service areas
+
+QUALITY CRITERIA:
+- Valid business licenses and certifications
+- Insurance coverage and bonding information
+- Professional certifications and associations
+- Years in business and experience level
+- Customer reviews and BBB ratings
+- Notable projects and specializations
+
+${contextText}
+
+OUTPUT FORMAT:
+For each vendor found, provide:
+1. Business name and contact person
+2. Complete contact information (phone, email, website)
+3. Business address and service areas
+4. Licenses, certifications, and insurance status
+5. Customer ratings and review counts
+6. Cost estimates and pricing ranges
+7. Notable projects, specializations, and experience
+8. Years in business and professional associations
+
+Focus on finding real, verifiable businesses with established reputations in the ${location} area.`;
+}
+
+// Perform comprehensive vendor research using Perplexity
+async function performComprehensiveVendorResearch(apiKey: string, query: string, categoryName: string, location: string, zipCode: string): Promise<string> {
+  console.log('Starting Perplexity research for:', categoryName);
+  
+  const response = await fetch('https://api.perplexity.ai/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.1-sonar-large-128k-online',
+      messages: [
+        {
+          role: 'system',
+          content: `You are an expert construction industry researcher specializing in vendor identification and qualification. Your task is to conduct comprehensive research to find qualified construction vendors.
+
+RESEARCH APPROACH:
+- Search multiple authoritative sources (business directories, review sites, licensing boards)
+- Verify business credentials and legitimacy
+- Prioritize established businesses with professional presence
+- Focus on vendors with proper licensing, insurance, and certifications
+- Include detailed contact information and business details
+- Provide cost estimates and pricing information where available
+
+QUALITY STANDARDS:
+- Only include real, verifiable businesses
+- Prioritize licensed and insured contractors
+- Include businesses with positive reviews and ratings
+- Focus on established companies with professional credentials
+- Ensure geographic relevance to the specified area
+
+Be thorough and comprehensive in your research. Include as much verifiable detail as possible for each vendor found.`
+        },
+        {
+          role: 'user',
+          content: query
+        }
+      ],
+      temperature: 0.2,
+      top_p: 0.9,
+      max_tokens: 4000,
+      return_images: false,
+      return_related_questions: false,
+      search_recency_filter: 'month',
+      frequency_penalty: 1,
+      presence_penalty: 0
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Perplexity API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const researchResult = data.choices[0].message.content;
+  
+  console.log('Perplexity research complete, result length:', researchResult.length);
+  console.log('Research preview:', researchResult.substring(0, 500));
+  
+  return researchResult;
+}
+
+// Extract vendors from research data
+async function extractVendorsFromResearch(researchData: string, categoryId: string, projectId: string, location: string, zipCode: string) {
   const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
   if (!openaiApiKey) {
-    console.log('OpenAI API key not found, falling back to regex parsing');
-    return parseVendorsFromAI(rawData, categoryId, projectId, location, zipCode);
+    console.log('OpenAI API key not found, using fallback parsing');
+    return parseVendorsFromText(researchData, categoryId, projectId, location, zipCode);
   }
 
   try {
-    console.log('Using OpenAI structured extraction for vendor data...');
-    
-    // Preprocess the data to remove common artifacts
-    const cleanedData = preprocessVendorData(rawData);
+    console.log('Using OpenAI to extract structured vendor data...');
     
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -543,7 +394,7 @@ async function extractStructuredVendorData(rawData: string, categoryId: string, 
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4.1-2025-04-14',
         messages: [
           {
             role: 'system',
@@ -609,7 +460,7 @@ CRITICAL OUTPUT RULES:
           },
           {
             role: 'user',
-            content: `Extract vendor information from this research data and format as JSON matching our database schema:\n\n${cleanedData}`
+            content: `Extract vendor information from this research data and format as JSON matching our database schema:\n\n${researchData}`
           }
         ],
         response_format: {
@@ -676,7 +527,7 @@ CRITICAL OUTPUT RULES:
       address: vendor.address || null,
       city: vendor.city || extractCity(location),
       state: vendor.state || extractState(location),
-      zip_code: zipCode,
+      zip_code: vendor.zip_code || zipCode,
       rating: vendor.rating || null,
       review_count: vendor.review_count || null,
       cost_estimate_low: vendor.cost_estimate_low || null,
@@ -695,44 +546,21 @@ CRITICAL OUTPUT RULES:
     );
 
     console.log(`Validated ${validVendors.length} vendors from ${vendors.length} extracted`);
-
-    // If no valid vendors, fall back to regex parsing
-    if (validVendors.length === 0) {
-      console.log('No valid vendors from structured extraction, falling back to regex');
-      return parseVendorsFromAI(rawData, categoryId, projectId, location, zipCode);
-    }
-
     return validVendors;
 
   } catch (error) {
     console.error('Error in structured extraction:', error);
-    console.log('Falling back to regex parsing');
-    return parseVendorsFromAI(rawData, categoryId, projectId, location, zipCode);
+    console.log('Falling back to text parsing');
+    return parseVendorsFromText(researchData, categoryId, projectId, location, zipCode);
   }
 }
 
-// Data preprocessing to clean artifacts
-function preprocessVendorData(rawData: string): string {
-  return rawData
-    // Remove citations and AI artifacts
-    .replace(/\[[^\]]*\]/g, '')
-    .replace(/AI Research/g, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold formatting
-    // Fix common geographic errors
-    .replace(/Lander,TX/g, 'Leander, TX')
-    .replace(/(\w+),(\w+)/g, '$1, $2') // Add space after commas
-    // Clean excessive whitespace
-    .replace(/\s+/g, ' ')
-    .replace(/\n\s*\n/g, '\n')
-    .trim();
-}
-
-// Fallback regex parsing (original function)
-function parseVendorsFromAI(aiResponse: string, categoryId: string, projectId: string, location: string, zipCode: string) {
+// Fallback text parsing function
+function parseVendorsFromText(text: string, categoryId: string, projectId: string, location: string, zipCode: string) {
   const vendors = [];
   
   // Split by common patterns that indicate new vendors
-  const sections = aiResponse.split(/\n(?=\d+\.|\*\*|##)/);
+  const sections = text.split(/\n(?=\d+\.|\*\*|##)/);
   
   for (const section of sections) {
     if (section.trim().length < 20) continue; // Skip very short sections
@@ -756,7 +584,7 @@ function parseVendorsFromAI(aiResponse: string, categoryId: string, projectId: s
     // Extract phone numbers
     const phoneMatch = section.match(/(?:phone|tel|call)[\s:]*([+]?[\d\s\-\(\)\.]{10,})/i);
     if (phoneMatch) {
-      vendor.phone = phoneMatch[1].replace(/[^\d+\-]/g, '');
+      vendor.phone = phoneMatch[1].replace(/[^\d]/g, '');
     }
 
     // Extract email
@@ -783,14 +611,6 @@ function parseVendorsFromAI(aiResponse: string, categoryId: string, projectId: s
       vendor.review_count = parseInt(reviewMatch[1]);
     }
 
-    // Extract cost estimates
-    const costMatch = section.match(/\$\s*(\d+(?:,\d+)*)\s*(?:-|to)\s*\$?\s*(\d+(?:,\d+)*)/);
-    if (costMatch) {
-      vendor.cost_estimate_low = parseInt(costMatch[1].replace(/,/g, ''));
-      vendor.cost_estimate_high = parseInt(costMatch[2].replace(/,/g, ''));
-      vendor.cost_estimate_avg = Math.round((vendor.cost_estimate_low + vendor.cost_estimate_high) / 2);
-    }
-
     // Extract website
     const websiteMatch = section.match(/(https?:\/\/[^\s]+)/);
     if (websiteMatch) {
@@ -798,19 +618,13 @@ function parseVendorsFromAI(aiResponse: string, categoryId: string, projectId: s
     }
 
     // Only add if we have at least a business name
-    if (vendor.business_name) {
+    if (vendor.business_name && vendor.business_name.length > 2) {
+      vendor.notes = section.substring(0, 500); // Store original text as notes
       vendors.push(vendor);
     }
   }
 
-  // If no vendors were parsed, log the issue and return empty array
-  if (vendors.length === 0) {
-    console.log('No vendors parsed from AI response. Raw data length:', aiResponse.length);
-    console.log('AI response preview:', aiResponse.substring(0, 500));
-    // Don't create fallback vendors - return empty array to indicate real failure
-    return [];
-  }
-
+  console.log(`Parsed ${vendors.length} vendors from text`);
   return vendors;
 }
 
@@ -822,42 +636,4 @@ function extractCity(location: string): string {
 function extractState(location: string): string {
   const parts = location.split(',');
   return parts[1]?.trim() || '';
-}
-
-function getCategoryTypeFromText(text: string): string {
-  if (text.toLowerCase().includes('plumb')) return 'Plumbing';
-  if (text.toLowerCase().includes('electric')) return 'Electrical';
-  if (text.toLowerCase().includes('roof')) return 'Roofing';
-  if (text.toLowerCase().includes('floor')) return 'Flooring';
-  return 'Construction';
-}
-
-// Helper function to get specialization label
-function getSpecializationLabel(specialization: string, subcategoryKey: string): string | null {
-  const specializationOptions: { [key: string]: { [value: string]: string } } = {
-    'architects': {
-      'residential': 'Residential Architects',
-      'custom_home': 'Custom Home Architects',
-      'green_building': 'Green Building Architects',
-      'modern_design': 'Modern Design Architects',
-      'traditional': 'Traditional Style Architects',
-      'luxury': 'Luxury Home Architects',
-      'renovation': 'Renovation Specialists'
-    },
-    'engineers': {
-      'structural': 'Structural Engineers',
-      'civil': 'Civil Engineers',
-      'geotechnical': 'Geotechnical Engineers',
-      'mechanical': 'Mechanical Engineers',
-      'electrical': 'Electrical Engineers'
-    },
-    'interior_designers': {
-      'kitchen': 'Kitchen Designers',
-      'bathroom': 'Bathroom Designers',
-      'lighting': 'Lighting Designers',
-      'general': 'General Interior Designers'
-    }
-  };
-
-  return specializationOptions[subcategoryKey]?.[specialization] || null;
 }
