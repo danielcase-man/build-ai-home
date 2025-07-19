@@ -538,64 +538,64 @@ async function extractStructuredVendorData(rawData: string, categoryId: string, 
 EXTRACTION REQUIREMENTS:
 You must extract ONLY real, verifiable vendor information that appears in the provided data. Do not invent, assume, or hallucinate any information.
 
-PRIMARY FOCUS AREAS:
-- Licensed contractors and construction professionals
-- Established businesses with verifiable contact information
-- Companies with demonstrated experience in the requested category
-- Vendors with positive reviews and professional credentials
-- Businesses that serve the specified geographic area
+REQUIRED JSON OUTPUT FORMAT:
+Extract vendor data and format it as a JSON object with a "vendors" array. Each vendor object must match this exact structure for our Supabase database:
 
-REQUIRED VENDOR FIELDS:
-- business_name (REQUIRED): Official company name as it appears
-- contact_name: Primary contact person or owner name
-- phone: Phone number in clean format (remove formatting)
-- email: Professional email address
-- website: Company website URL
-- address: Complete street address
-- city: City where business is located
-- state: State abbreviation (e.g., TX, CA, NY)
-- rating: Numeric rating on 1-5 scale if available
-- review_count: Total number of customer reviews as integer
-- cost_estimate_low: Lowest cost estimate mentioned (numeric)
-- cost_estimate_avg: Average/typical cost estimate (numeric)
-- cost_estimate_high: Highest cost estimate mentioned (numeric)
-- notes: Additional relevant information including:
-  * License numbers and certifications
-  * Insurance information
-  * Specializations and services offered
-  * Years in business
-  * Notable projects or credentials
-  * BBB ratings or accreditations
-  * Professional associations
+{
+  "vendors": [
+    {
+      "business_name": "string (REQUIRED - Official company name)",
+      "contact_name": "string or null (Primary contact person)",
+      "phone": "string or null (Phone in clean format: 5125551234)",
+      "email": "string or null (Professional email address)",
+      "website": "string or null (Company website URL with https://)",
+      "address": "string or null (Complete street address)",
+      "city": "string or null (City name)",
+      "state": "string or null (State abbreviation: TX, CA, NY)",
+      "zip_code": "string or null (5-digit ZIP code)",
+      "rating": number or null (Numeric rating 1.0-5.0),
+      "review_count": integer or null (Total reviews as whole number),
+      "cost_estimate_low": number or null (Lowest cost as number),
+      "cost_estimate_avg": number or null (Average cost as number),
+      "cost_estimate_high": number or null (Highest cost as number),
+      "notes": "string or null (Licenses, certifications, specializations, insurance, years in business, notable projects, BBB ratings)"
+    }
+  ]
+}
+
+FIELD REQUIREMENTS:
+- business_name: REQUIRED - Use official company name as it appears
+- phone: Clean format with no spaces/dashes (e.g., "5125551234")
+- website: Include full URL with protocol (https://)
+- state: Use standard 2-letter abbreviations (TX, CA, NY, FL, etc.)
+- zip_code: 5-digit format only
+- rating: Decimal number between 1.0 and 5.0
+- review_count: Whole integer (no decimals)
+- cost_estimate_*: Pure numbers without $ or commas
 
 QUALITY CRITERIA - PRIORITIZE VENDORS WITH:
 1. Valid business licenses and proper certifications
-2. Comprehensive contact information (phone + email/website)
-3. Positive customer reviews and ratings
-4. Established business presence (not brand new)
+2. Complete contact information (phone + email/website)
+3. Positive customer reviews and ratings (3.0+ preferred)
+4. Established business presence (2+ years)
 5. Professional website and online presence
 6. Proper insurance coverage
-7. Relevant project portfolio
+7. Relevant project portfolio in the category
 8. Local or regional service area coverage
 
-DATA VALIDATION:
-- Verify phone numbers appear legitimate (proper format/length)
-- Check that business names are professional/established
-- Ensure addresses are complete and realistic
-- Validate that ratings are within reasonable ranges
-- Cross-reference contact information for consistency
-
 GEOGRAPHIC RELEVANCE:
-Only include vendors that explicitly serve or are located near the target area. Exclude businesses that are clearly outside the service region.
+Only include vendors that explicitly serve or are located near the target area.
 
-OUTPUT FORMAT:
-Return a JSON array of vendor objects. Each vendor must have at minimum a business_name. If no valid vendors are found in the data, return an empty array.
-
-CRITICAL: Do not create fictional vendors or fill in missing information with assumptions. Only extract data that is explicitly present in the source material.`
+CRITICAL OUTPUT RULES:
+1. Return empty vendors array if no valid vendors found: {"vendors": []}
+2. Do not create fictional vendors or fill missing data with assumptions
+3. Only extract data explicitly present in source material
+4. Ensure all numeric fields are actual numbers, not strings
+5. Use null for missing optional fields, never empty strings`
           },
           {
             role: 'user',
-            content: `Extract vendor information from this research data:\n\n${cleanedData}`
+            content: `Extract vendor information from this research data and format as JSON matching our database schema:\n\n${cleanedData}`
           }
         ],
         response_format: {
@@ -618,7 +618,8 @@ CRITICAL: Do not create fictional vendors or fill in missing information with as
                       address: { type: ["string", "null"] },
                       city: { type: ["string", "null"] },
                       state: { type: ["string", "null"] },
-                      rating: { type: ["number", "null"], minimum: 1, maximum: 5 },
+                      zip_code: { type: ["string", "null"] },
+                      rating: { type: ["number", "null"], minimum: 1.0, maximum: 5.0 },
                       review_count: { type: ["integer", "null"], minimum: 0 },
                       cost_estimate_low: { type: ["number", "null"] },
                       cost_estimate_avg: { type: ["number", "null"] },
