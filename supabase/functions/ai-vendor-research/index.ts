@@ -328,42 +328,26 @@ async function performComprehensiveVendorResearch(
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'llama-3.1-sonar-large-128k-online',
+      model: 'llama-3.1-sonar-small-128k-online',
       messages: [
         {
           role: 'system',
-          content: `You are an expert construction industry researcher specializing in vendor identification and qualification. Your task is to conduct comprehensive research to find qualified construction vendors.
-
-RESEARCH APPROACH:
-- Search multiple authoritative sources (business directories, review sites, licensing boards)
-- Verify business credentials and legitimacy
-- Prioritize established businesses with professional presence
-- Focus on vendors with proper licensing, insurance, and certifications
-- Include detailed contact information and business details
-- Provide cost estimates and pricing information where available
-
-QUALITY STANDARDS:
-- Only include real, verifiable businesses
-- Prioritize licensed and insured contractors
-- Include businesses with positive reviews and ratings
-- Focus on established companies with professional credentials
-- Ensure geographic relevance to the specified area
-
-Be thorough and comprehensive in your research. Include as much verifiable detail as possible for each vendor found.`
+          content: 'You are an expert construction industry researcher. Find qualified construction vendors with complete contact information, licensing details, and pricing estimates.'
         },
         {
           role: 'user',
           content: query
         }
       ],
+      max_tokens: 2000,
       temperature: 0.2,
       top_p: 0.9,
-      max_tokens: 4000,
+      search_domain_filter: ["perplexity.ai"],
       return_images: false,
       return_related_questions: false,
-      search_recency_filter: 'month',
-      frequency_penalty: 1,
-      presence_penalty: 0
+      search_recency_filter: "month",
+      presence_penalty: 0,
+      frequency_penalty: 1
     })
   });
 
