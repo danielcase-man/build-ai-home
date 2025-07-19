@@ -97,26 +97,35 @@ serve(async (req) => {
                     onlyMainContent: true,
                     extractorOptions: {
                       mode: 'llm-extraction',
-                      extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area (zip code ${zipCode}). For each business found, extract:
-
-REQUIRED FIELDS:
-- business_name: Company name
-- contact_name: Primary contact person (if mentioned)
-- phone: Phone number (clean format)
-- email: Email address  
-- website: Website URL
-- address: Full street address
-- city: City name
-- state: State abbreviation
-- zip_code: Zip code
-- rating: Numeric rating (1-5 scale)
-- review_count: Number of reviews (integer)
-- cost_estimate_low: Lowest cost estimate (number)
-- cost_estimate_avg: Average cost estimate (number)
-- cost_estimate_high: Highest cost estimate (number)
-- notes: Services, specializations, certifications, licenses, insurance info
-
-Return each business as a separate entry with all available information. Focus on established businesses with verified contact information and positive reviews.`
+                      extractionSchema: {
+                        type: "object",
+                        properties: {
+                          vendors: {
+                            type: "array",
+                            items: {
+                              type: "object",
+                              properties: {
+                                business_name: { type: "string" },
+                                contact_name: { type: "string" },
+                                phone: { type: "string" },
+                                email: { type: "string" },
+                                website: { type: "string" },
+                                address: { type: "string" },
+                                city: { type: "string" },
+                                state: { type: "string" },
+                                zip_code: { type: "string" },
+                                rating: { type: "number" },
+                                review_count: { type: "number" },
+                                cost_estimate_low: { type: "number" },
+                                cost_estimate_avg: { type: "number" },
+                                cost_estimate_high: { type: "number" },
+                                notes: { type: "string" }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      extractionPrompt: `Extract detailed vendor/business information for ${categoryName} services in ${location} area (${zipCode}). Focus on established businesses with contact info and reviews.`
                     }
                   }),
                 });
@@ -256,26 +265,35 @@ Return each business as a separate entry with all available information. Focus o
             onlyMainContent: true,
             extractorOptions: {
               mode: 'llm-extraction',
-              extractionPrompt: `Extract detailed vendor/business information from this page. Focus on businesses that provide ${categoryName} services in ${location} area (zip code ${zipCode}). For each business found, extract:
-
-REQUIRED FIELDS:
-- business_name: Company name
-- contact_name: Primary contact person (if mentioned)
-- phone: Phone number (clean format)
-- email: Email address  
-- website: Website URL
-- address: Full street address
-- city: City name
-- state: State abbreviation
-- zip_code: Zip code
-- rating: Numeric rating (1-5 scale)
-- review_count: Number of reviews (integer)
-- cost_estimate_low: Lowest cost estimate (number)
-- cost_estimate_avg: Average cost estimate (number)
-- cost_estimate_high: Highest cost estimate (number)
-- notes: Services, specializations, certifications, licenses, insurance info
-
-Return each business as a separate entry with all available information. Focus on established businesses with verified contact information and positive reviews.`
+              extractionSchema: {
+                type: "object",
+                properties: {
+                  vendors: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        business_name: { type: "string" },
+                        contact_name: { type: "string" },
+                        phone: { type: "string" },
+                        email: { type: "string" },
+                        website: { type: "string" },
+                        address: { type: "string" },
+                        city: { type: "string" },
+                        state: { type: "string" },
+                        zip_code: { type: "string" },
+                        rating: { type: "number" },
+                        review_count: { type: "number" },
+                        cost_estimate_low: { type: "number" },
+                        cost_estimate_avg: { type: "number" },
+                        cost_estimate_high: { type: "number" },
+                        notes: { type: "string" }
+                      }
+                    }
+                  }
+                }
+              },
+              extractionPrompt: `Extract detailed vendor/business information for ${categoryName} services in ${location} area (${zipCode}). Focus on established businesses with contact info and reviews.`
             }
           }),
         });
