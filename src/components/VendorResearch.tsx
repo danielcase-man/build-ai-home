@@ -5,6 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -24,11 +27,46 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
   onResearchComplete
 }) => {
   const [zipCode, setZipCode] = useState('');
+  const [specialization, setSpecialization] = useState('');
+  const [customContext, setCustomContext] = useState('');
   const [isResearching, setIsResearching] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
   const [progressStage, setProgressStage] = useState('');
   const [researchResults, setResearchResults] = useState<any>(null);
+
+  // Define specializations based on subcategory
+  const getSpecializationOptions = () => {
+    if (subcategoryKey === 'architects') {
+      return [
+        { value: 'residential', label: 'Residential Architects' },
+        { value: 'custom_home', label: 'Custom Home Architects' },
+        { value: 'green_building', label: 'Green Building Architects' },
+        { value: 'modern_design', label: 'Modern Design Architects' },
+        { value: 'traditional', label: 'Traditional Style Architects' },
+        { value: 'luxury', label: 'Luxury Home Architects' },
+        { value: 'renovation', label: 'Renovation Specialists' }
+      ];
+    } else if (subcategoryKey === 'engineers') {
+      return [
+        { value: 'structural', label: 'Structural Engineers' },
+        { value: 'civil', label: 'Civil Engineers' },
+        { value: 'geotechnical', label: 'Geotechnical Engineers' },
+        { value: 'mechanical', label: 'Mechanical Engineers' },
+        { value: 'electrical', label: 'Electrical Engineers' }
+      ];
+    } else if (subcategoryKey === 'interior_designers') {
+      return [
+        { value: 'kitchen', label: 'Kitchen Designers' },
+        { value: 'bathroom', label: 'Bathroom Designers' },
+        { value: 'lighting', label: 'Lighting Designers' },
+        { value: 'general', label: 'General Interior Designers' }
+      ];
+    }
+    return [];
+  };
+
+  const specializationOptions = getSpecializationOptions();
 
   const handleStartResearch = async () => {
     if (!zipCode.trim()) {
@@ -97,6 +135,8 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
           zipCode: zipCode.trim(),
           categoryId,
           categoryName: subcategoryName,
+          specialization: specialization || null,
+          customContext: customContext.trim() || null,
           phase: 'Pre-Construction Planning & Design',
           stream: true
         })
@@ -175,7 +215,48 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
           Find qualified local vendors in your area
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        {/* Specialization Selection */}
+        {specializationOptions.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="specialization" className="text-sm font-medium">
+              Specialization Type
+            </Label>
+            <Select value={specialization} onValueChange={setSpecialization} disabled={isResearching}>
+              <SelectTrigger id="specialization">
+                <SelectValue placeholder={`Select ${subcategoryName} type`} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border border-border z-50">
+                {specializationOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Custom Context */}
+        <div className="space-y-2">
+          <Label htmlFor="context" className="text-sm font-medium">
+            Additional Requirements (Optional)
+          </Label>
+          <Textarea
+            id="context"
+            placeholder="e.g., luxury homes, green building, modern design, pool houses, specific certifications..."
+            value={customContext}
+            onChange={(e) => setCustomContext(e.target.value)}
+            disabled={isResearching}
+            className="min-h-[80px] resize-none"
+            maxLength={500}
+          />
+          <p className="text-xs text-muted-foreground">
+            Add any specific requirements or preferences to refine your search results
+          </p>
+        </div>
+
+        {/* Zip Code and Research Button */}
         <div className="flex gap-2">
           <div className="flex-1">
             <Input

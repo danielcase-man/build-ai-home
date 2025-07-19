@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { projectId, location, zipCode, categoryId, categoryName, phase, stream = false } = await req.json();
+    const { projectId, location, zipCode, categoryId, categoryName, specialization, customContext, phase, stream = false } = await req.json();
     
     console.log('Starting vendor research for:', { projectId, location, categoryName, phase, stream });
 
@@ -43,28 +43,34 @@ serve(async (req) => {
             })}\n\n`));
 
             // Research vendors using Perplexity with streaming
+            const baseSearchTerm = specialization ? 
+              getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
+              categoryName;
+            
+            const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
+            
             const prompt = `Given the following:
-- Vendor type: ${categoryName} (${phase})
+- Vendor type: ${baseSearchTerm} (${phase})${contextInfo}
 - Zip code: ${zipCode}
 - Location: ${location}
 
 Please:
-- Research and list the top 10 ${categoryName} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
+- Research and list the top 10 ${baseSearchTerm} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
 - For each, provide:
   • Business Name
   • Contact Information (phone, email if available)
   • Address
   • Website (if available)
-  • Estimated cost range for typical ${categoryName} services in ${phase}
+  • Estimated cost range for typical ${baseSearchTerm} services in ${phase}
   • Ratings/reviews (with source platform, if available)
-  • Specializations within ${categoryName} services
+  • Specializations within ${baseSearchTerm} services
   • Licensing and insurance status
   • Company size (small, mid, large)
   • Years in business
 - Clearly identify which vendor is the best value, considering cost, reputation, and specialization.
 - Format the data as a structured list ready for import into a vendor database.
 
-Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.`;
+Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.${contextInfo ? ` Pay special attention to vendors that ${customContext.toLowerCase()}.` : ''}`;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -228,28 +234,34 @@ Focus on licensed, insured contractors with good reviews. Include both local sma
     }
 
     // Research vendors using Perplexity (non-streaming fallback)
+    const baseSearchTerm = specialization ? 
+      getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
+      categoryName;
+    
+    const contextInfo = customContext ? ` with focus on: ${customContext}` : '';
+    
     const prompt = `Given the following:
-- Vendor type: ${categoryName} (${phase})
+- Vendor type: ${baseSearchTerm} (${phase})${contextInfo}
 - Zip code: ${zipCode}
 - Location: ${location}
 
 Please:
-- Research and list the top 10 ${categoryName} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
+- Research and list the top 10 ${baseSearchTerm} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
 - For each, provide:
   • Business Name
   • Contact Information (phone, email if available)
   • Address
   • Website (if available)
-  • Estimated cost range for typical ${categoryName} services in ${phase}
+  • Estimated cost range for typical ${baseSearchTerm} services in ${phase}
   • Ratings/reviews (with source platform, if available)
-  • Specializations within ${categoryName} services
+  • Specializations within ${baseSearchTerm} services
   • Licensing and insurance status
   • Company size (small, mid, large)
   • Years in business
 - Clearly identify which vendor is the best value, considering cost, reputation, and specialization.
 - Format the data as a structured list ready for import into a vendor database.
 
-Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.`;
+Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.${contextInfo ? ` Pay special attention to vendors that ${customContext.toLowerCase()}.` : ''}`;
 
     console.log('Sending request to Perplexity with prompt:', prompt);
 
@@ -607,4 +619,34 @@ function getCategoryTypeFromText(text: string): string {
   if (text.toLowerCase().includes('roof')) return 'Roofing';
   if (text.toLowerCase().includes('floor')) return 'Flooring';
   return 'Construction';
+}
+
+// Helper function to get specialization label
+function getSpecializationLabel(specialization: string, subcategoryKey: string): string | null {
+  const specializationOptions: { [key: string]: { [value: string]: string } } = {
+    'architects': {
+      'residential': 'Residential Architects',
+      'custom_home': 'Custom Home Architects',
+      'green_building': 'Green Building Architects',
+      'modern_design': 'Modern Design Architects',
+      'traditional': 'Traditional Style Architects',
+      'luxury': 'Luxury Home Architects',
+      'renovation': 'Renovation Specialists'
+    },
+    'engineers': {
+      'structural': 'Structural Engineers',
+      'civil': 'Civil Engineers',
+      'geotechnical': 'Geotechnical Engineers',
+      'mechanical': 'Mechanical Engineers',
+      'electrical': 'Electrical Engineers'
+    },
+    'interior_designers': {
+      'kitchen': 'Kitchen Designers',
+      'bathroom': 'Bathroom Designers',
+      'lighting': 'Lighting Designers',
+      'general': 'General Interior Designers'
+    }
+  };
+
+  return specializationOptions[subcategoryKey]?.[specialization] || null;
 }
