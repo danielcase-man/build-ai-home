@@ -27,8 +27,8 @@ serve(async (req) => {
       throw new Error('FIRECRAWL_API_KEY not configured');
     }
 
-    // Build search query
-    const baseSearchTerm = specialization || categoryName;
+    // Build search query - USE CATEGORY NAME, not specialization
+    const baseSearchTerm = categoryName; // Always use the actual category (architects, contractors, etc.)
     
     const contextInfo = customContext ? ` ${customContext}` : '';
     const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
@@ -72,7 +72,7 @@ serve(async (req) => {
             })}\n\n`));
 
             // Research vendors using Firecrawl with streaming
-            const baseSearchTermStream = specialization || categoryName;
+            const baseSearchTermStream = categoryName; // Use category name (architects), not specialization
             
             const contextInfo = customContext ? ` ${customContext}` : '';
             const searchQueryStream = `${baseSearchTermStream} near ${location} ${zipCode}${contextInfo}`;
@@ -208,11 +208,25 @@ serve(async (req) => {
             })}\n\n`));
 
             console.log('Firecrawl crawling complete, parsing vendors...');
+            
+            // Update staging with raw data from streaming
+            await supabase
+              .from('vendor_research_staging')
+              .update({
+                raw_firecrawl_data: allVendorData,
+                processing_status: 'raw_data_collected'
+              })
+              .eq('id', stagingRecord.id);
+
+            // Extract successful crawl data for processing
+            const successfulData = allVendorData
+              .filter(item => item.success && item.data)
+              .map(item => item.data);
 
             // Combine all crawled data into a single text for processing
-            const combinedData = allVendorData.map(item => 
+            const combinedData = successfulData.map(item => 
               typeof item === 'string' ? item : 
-              item.markdown || item.content || JSON.stringify(item)
+              item.markdown || item.content || item.extract || JSON.stringify(item)
             ).join('\n\n');
 
             // Use OpenAI structured extraction to clean and parse vendor data
@@ -273,7 +287,7 @@ serve(async (req) => {
     }
 
     // Research vendors using Firecrawl (non-streaming fallback)
-    const baseSearchTermFallback = specialization || categoryName;
+    const baseSearchTermFallback = categoryName; // Use category name (architects), not specialization
     
     const contextInfoFallback = customContext ? ` ${customContext}` : '';
     const searchQueryFallback = `${baseSearchTermFallback} near ${location} ${zipCode}${contextInfoFallback}`;
