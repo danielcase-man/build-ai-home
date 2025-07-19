@@ -16,16 +16,47 @@ serve(async (req) => {
     const { projectId, location, zipCode, categoryId, categoryName, specialization, customContext, phase, stream = false } = await req.json();
     
     console.log('Starting vendor research for:', { projectId, location, categoryName, phase, stream });
+    
+    // Create Supabase client first
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!firecrawlApiKey) {
       throw new Error('FIRECRAWL_API_KEY not configured');
     }
 
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Build search query
+    const baseSearchTerm = specialization ? 
+      getSpecializationLabel(specialization, categoryName.toLowerCase().replace(/\s+/g, '_')) || categoryName : 
+      categoryName;
+    
+    const contextInfo = customContext ? ` ${customContext}` : '';
+    const searchQuery = `${baseSearchTerm} near ${location} ${zipCode}${contextInfo}`;
+    
+    console.log('Search query:', searchQuery);
+
+    // Save initial staging record
+    console.log('Creating staging record...');
+    const { data: stagingRecord, error: stagingError } = await supabase
+      .from('vendor_research_staging')
+      .insert({
+        project_id: projectId,
+        category_name: categoryName,
+        search_query: searchQuery,
+        raw_firecrawl_data: { initial: 'Starting research...' },
+        processing_status: 'starting'
+      })
+      .select()
+      .single();
+
+    if (stagingError) {
+      console.error('Error creating staging record:', stagingError);
+      throw new Error(`Failed to create staging record: ${stagingError.message}`);
+    }
+
+    console.log('Staging record created:', stagingRecord?.id);
 
     // If streaming is requested, set up SSE
     if (stream) {
@@ -341,23 +372,19 @@ serve(async (req) => {
 
     console.log('Raw Firecrawl data collected:', JSON.stringify(allVendorData, null, 2));
 
-    // Save raw data to staging table
-    const { data: stagingRecord, error: stagingError } = await supabase
+    // Update the existing staging record with raw data
+    const { error: updateError } = await supabase
       .from('vendor_research_staging')
-      .insert({
-        project_id: projectId,
-        category_name: categoryName,
-        search_query: searchQuery,
+      .update({
         raw_firecrawl_data: allVendorData,
         processing_status: 'raw_data_collected'
       })
-      .select()
-      .single();
+      .eq('id', stagingRecord.id);
 
-    if (stagingError) {
-      console.error('Error saving to staging:', stagingError);
+    if (updateError) {
+      console.error('Error updating staging with raw data:', updateError);
     } else {
-      console.log('Saved raw data to staging:', stagingRecord?.id);
+      console.log('Updated staging record with raw data:', stagingRecord.id);
     }
 
     // Extract successful crawl data for processing
@@ -378,22 +405,20 @@ serve(async (req) => {
       console.log('No usable data extracted from Firecrawl');
       
       // Update staging record
-      if (stagingRecord) {
-        await supabase
-          .from('vendor_research_staging')
-          .update({
-            processing_status: 'no_data_found',
-            processing_notes: 'No usable data extracted from Firecrawl responses',
-            processed_at: new Date().toISOString()
-          })
-          .eq('id', stagingRecord.id);
-      }
+      await supabase
+        .from('vendor_research_staging')
+        .update({
+          processing_status: 'no_data_found',
+          processing_notes: 'No usable data extracted from Firecrawl responses',
+          processed_at: new Date().toISOString()
+        })
+        .eq('id', stagingRecord.id);
 
       return new Response(JSON.stringify({ 
         success: true, 
         vendors: [],
         rawData: allVendorData,
-        stagingId: stagingRecord?.id,
+        stagingId: stagingRecord.id,
         count: 0,
         message: 'No vendor data found in crawled results'
       }), {
@@ -407,17 +432,15 @@ serve(async (req) => {
     console.log('Structured vendors:', vendors);
 
     // Update staging record with extracted vendors
-    if (stagingRecord) {
-      await supabase
-        .from('vendor_research_staging')
-        .update({
-          extracted_vendors: vendors,
-          processing_status: vendors.length > 0 ? 'vendors_extracted' : 'no_vendors_extracted',
-          processing_notes: `Extracted ${vendors.length} vendors from combined data`,
-          processed_at: new Date().toISOString()
-        })
-        .eq('id', stagingRecord.id);
-    }
+    await supabase
+      .from('vendor_research_staging')
+      .update({
+        extracted_vendors: vendors,
+        processing_status: vendors.length > 0 ? 'vendors_extracted' : 'no_vendors_extracted',
+        processing_notes: `Extracted ${vendors.length} vendors from combined data`,
+        processed_at: new Date().toISOString()
+      })
+      .eq('id', stagingRecord.id);
 
     // Only insert vendors if we have valid data
     let insertedVendors = [];
@@ -431,29 +454,25 @@ serve(async (req) => {
         console.error('Database insert error:', insertError);
         
         // Update staging with error
-        if (stagingRecord) {
-          await supabase
-            .from('vendor_research_staging')
-            .update({
-              processing_status: 'insert_failed',
-              processing_notes: `Failed to insert vendors: ${insertError.message}`
-            })
-            .eq('id', stagingRecord.id);
-        }
+        await supabase
+          .from('vendor_research_staging')
+          .update({
+            processing_status: 'insert_failed',
+            processing_notes: `Failed to insert vendors: ${insertError.message}`
+          })
+          .eq('id', stagingRecord.id);
       } else {
         insertedVendors = data || [];
         console.log('Successfully inserted vendors:', insertedVendors);
         
         // Update staging with success
-        if (stagingRecord) {
-          await supabase
-            .from('vendor_research_staging')
-            .update({
-              processing_status: 'completed',
-              processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
-            })
-            .eq('id', stagingRecord.id);
-        }
+        await supabase
+          .from('vendor_research_staging')
+          .update({
+            processing_status: 'completed',
+            processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
+          })
+          .eq('id', stagingRecord.id);
       }
     }
 
@@ -461,7 +480,7 @@ serve(async (req) => {
       success: true, 
       vendors: insertedVendors,
       rawData: allVendorData,
-      stagingId: stagingRecord?.id,
+      stagingId: stagingRecord.id,
       count: insertedVendors.length 
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
