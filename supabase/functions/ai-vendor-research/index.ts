@@ -42,7 +42,7 @@ serve(async (req) => {
       .insert({
         project_id: projectId,
         category_name: categoryName,
-        search_query: searchQuery,
+        search_query: baseSearchTerm,
         raw_firecrawl_data: { initial: 'Starting research...' },
         processing_status: 'starting'
       })
@@ -159,16 +159,32 @@ serve(async (req) => {
 
                 if (crawlResponse.ok) {
                   const crawlData = await crawlResponse.json();
-                  console.log('Firecrawl response:', JSON.stringify(crawlData, null, 2));
+                  console.log('Firecrawl response for', url, ':', JSON.stringify(crawlData, null, 2));
                   if (crawlData.success && crawlData.data) {
-                    allVendorData.push(crawlData.data);
+                    allVendorData.push({
+                      url: url,
+                      data: crawlData.data,
+                      success: true
+                    });
                     console.log(`Successfully scraped ${url}, collected data:`, crawlData.data);
                   } else {
-                    console.warn(`No data returned from ${url}`);
+                    console.warn(`No data returned from ${url}:`, crawlData);
+                    allVendorData.push({
+                      url: url,
+                      data: crawlData,
+                      success: false,
+                      error: 'No data returned'
+                    });
                   }
                 } else {
                   const errorText = await crawlResponse.text();
                   console.warn(`Failed to scrape ${url}:`, errorText);
+                  allVendorData.push({
+                    url: url,
+                    data: null,
+                    success: false,
+                    error: errorText
+                  });
                 }
 
                 controller.enqueue(encoder.encode(`data: ${JSON.stringify({
