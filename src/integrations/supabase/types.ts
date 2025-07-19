@@ -740,6 +740,112 @@ export type Database = {
           },
         ]
       }
+      vendor_bid_requirements: {
+        Row: {
+          bid_amount_high: number | null
+          bid_amount_low: number | null
+          bid_amount_preferred: number | null
+          bid_status: string | null
+          category_id: string | null
+          completeness_score: number | null
+          created_at: string | null
+          documents_provided: string[] | null
+          earliest_start_date: string | null
+          estimated_duration_days: number | null
+          id: string
+          insurance_certificates: string[] | null
+          license_information: Json | null
+          payment_terms: string | null
+          project_id: string | null
+          qualification_score: number | null
+          references_provided: Json | null
+          requirement_responses: Json
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          submission_date: string | null
+          updated_at: string | null
+          vendor_id: string | null
+          warranty_terms: string | null
+        }
+        Insert: {
+          bid_amount_high?: number | null
+          bid_amount_low?: number | null
+          bid_amount_preferred?: number | null
+          bid_status?: string | null
+          category_id?: string | null
+          completeness_score?: number | null
+          created_at?: string | null
+          documents_provided?: string[] | null
+          earliest_start_date?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          insurance_certificates?: string[] | null
+          license_information?: Json | null
+          payment_terms?: string | null
+          project_id?: string | null
+          qualification_score?: number | null
+          references_provided?: Json | null
+          requirement_responses: Json
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submission_date?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          warranty_terms?: string | null
+        }
+        Update: {
+          bid_amount_high?: number | null
+          bid_amount_low?: number | null
+          bid_amount_preferred?: number | null
+          bid_status?: string | null
+          category_id?: string | null
+          completeness_score?: number | null
+          created_at?: string | null
+          documents_provided?: string[] | null
+          earliest_start_date?: string | null
+          estimated_duration_days?: number | null
+          id?: string
+          insurance_certificates?: string[] | null
+          license_information?: Json | null
+          payment_terms?: string | null
+          project_id?: string | null
+          qualification_score?: number | null
+          references_provided?: Json | null
+          requirement_responses?: Json
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          submission_date?: string | null
+          updated_at?: string | null
+          vendor_id?: string | null
+          warranty_terms?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_bid_requirements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bid_requirements_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_bid_requirements_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_categories: {
         Row: {
           category: string
@@ -772,6 +878,68 @@ export type Database = {
           typical_cost?: string | null
         }
         Relationships: []
+      }
+      vendor_category_requirements: {
+        Row: {
+          category_id: string | null
+          created_at: string | null
+          data_type: string
+          display_order: number | null
+          field_group: string | null
+          help_text: string | null
+          id: string
+          is_required: boolean | null
+          max_value: number | null
+          measurement_unit: string | null
+          min_value: number | null
+          requirement_description: string | null
+          requirement_name: string
+          selection_options: Json | null
+          validation_pattern: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string | null
+          data_type: string
+          display_order?: number | null
+          field_group?: string | null
+          help_text?: string | null
+          id?: string
+          is_required?: boolean | null
+          max_value?: number | null
+          measurement_unit?: string | null
+          min_value?: number | null
+          requirement_description?: string | null
+          requirement_name: string
+          selection_options?: Json | null
+          validation_pattern?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string | null
+          data_type?: string
+          display_order?: number | null
+          field_group?: string | null
+          help_text?: string | null
+          id?: string
+          is_required?: boolean | null
+          max_value?: number | null
+          measurement_unit?: string | null
+          min_value?: number | null
+          requirement_description?: string | null
+          requirement_name?: string
+          selection_options?: Json | null
+          validation_pattern?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_category_requirements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendors: {
         Row: {
