@@ -13,9 +13,9 @@ serve(async (req) => {
   }
 
   try {
-    const { projectId, location, zipCode, categoryId, categoryName, phase } = await req.json();
+    const { projectId, location, zipCode, categoryId, categoryName, phase, stream = false } = await req.json();
     
-    console.log('Starting vendor research for:', { projectId, location, categoryName, phase });
+    console.log('Starting vendor research for:', { projectId, location, categoryName, phase, stream });
 
     const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
     if (!perplexityApiKey) {
@@ -26,6 +26,193 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // If streaming is requested, set up SSE
+    if (stream) {
+      const encoder = new TextEncoder();
+      
+      const streamResponse = new ReadableStream({
+        async start(controller) {
+          try {
+            // Send initial progress
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              stage: 'initializing',
+              message: `Starting research for ${categoryName} in ${location}...`,
+              progress: 0
+            })}\n\n`));
+
+            // Research vendors using Perplexity with streaming
+            const prompt = `Find 3-5 reputable ${categoryName} contractors/vendors in ${location} (zip code ${zipCode}) for construction projects. For each vendor, provide:
+    - Business name
+    - Contact information (phone, email if available)
+    - Address
+    - Estimated cost range for typical ${phase} phase work
+    - Rating/reviews if available
+    - Specializations within ${categoryName}
+
+    Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies.`;
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              stage: 'searching',
+              message: `Searching for ${categoryName} contractors in ${location}...`,
+              progress: 20
+            })}\n\n`));
+
+            console.log('Sending streaming request to Perplexity...');
+
+            const response = await fetch('https://api.perplexity.ai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${perplexityApiKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'sonar-deep-research',
+                stream: true,
+                messages: [
+                  {
+                    role: 'system',
+                    content: 'You are a construction industry expert helping find qualified contractors. Provide accurate, current information with realistic cost estimates. Format your response as a structured list of vendors.'
+                  },
+                  {
+                    role: 'user',
+                    content: prompt
+                  }
+                ],
+                temperature: 0.3,
+                top_p: 0.9,
+                max_tokens: 2000,
+                return_images: false,
+                return_related_questions: false,
+                search_recency_filter: 'month',
+                frequency_penalty: 1,
+                presence_penalty: 0
+              }),
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error('Perplexity API error:', errorText);
+              throw new Error(`Perplexity API error: ${response.status}`);
+            }
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              stage: 'analyzing',
+              message: 'Analyzing search results and gathering vendor information...',
+              progress: 40
+            })}\n\n`));
+
+            const reader = response.body?.getReader();
+            const decoder = new TextDecoder();
+            let aiResponse = '';
+            let processedChunks = 0;
+
+            if (reader) {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n');
+
+                for (const line of lines) {
+                  if (line.startsWith('data: ')) {
+                    const data = line.slice(6);
+                    if (data === '[DONE]') continue;
+                    
+                    try {
+                      const parsed = JSON.parse(data);
+                      if (parsed.choices?.[0]?.delta?.content) {
+                        aiResponse += parsed.choices[0].delta.content;
+                        processedChunks++;
+                        
+                        // Send progress updates
+                        if (processedChunks % 10 === 0) {
+                          const progress = Math.min(40 + (processedChunks * 2), 80);
+                          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+                            type: 'progress',
+                            stage: 'processing',
+                            message: 'Processing research results...',
+                            progress
+                          })}\n\n`));
+                        }
+                      }
+                    } catch (e) {
+                      console.log('Skipping invalid JSON chunk:', data);
+                    }
+                  }
+                }
+              }
+            }
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              stage: 'parsing',
+              message: 'Extracting vendor details...',
+              progress: 85
+            })}\n\n`));
+
+            console.log('Perplexity streaming complete, parsing vendors...');
+
+            // Parse the AI response to extract vendor information
+            const vendors = parseVendorsFromAI(aiResponse, categoryId, projectId, location, zipCode);
+            
+            console.log('Parsed vendors:', vendors);
+
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'progress',
+              stage: 'saving',
+              message: `Saving ${vendors.length} vendors to database...`,
+              progress: 90
+            })}\n\n`));
+
+            // Insert vendors into database
+            const { data: insertedVendors, error: insertError } = await supabase
+              .from('vendors')
+              .insert(vendors)
+              .select();
+
+            if (insertError) {
+              console.error('Database insert error:', insertError);
+              throw insertError;
+            }
+
+            console.log('Successfully inserted vendors:', insertedVendors);
+
+            // Send final result
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'complete',
+              stage: 'complete',
+              message: `Research complete! Found ${vendors.length} vendors.`,
+              progress: 100,
+              vendors: insertedVendors,
+              count: vendors.length
+            })}\n\n`));
+
+            controller.close();
+          } catch (error) {
+            console.error('Error in streaming research:', error);
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+              type: 'error',
+              message: error.message
+            })}\n\n`));
+            controller.close();
+          }
+        }
+      });
+
+      return new Response(streamResponse, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    }
 
     // Research vendors using Perplexity
     const prompt = `Find 3-5 reputable ${categoryName} contractors/vendors in ${location} (zip code ${zipCode}) for construction projects. For each vendor, provide:

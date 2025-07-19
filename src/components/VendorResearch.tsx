@@ -26,6 +26,8 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
   const [zipCode, setZipCode] = useState('');
   const [isResearching, setIsResearching] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
+  const [progressStage, setProgressStage] = useState('');
   const [researchResults, setResearchResults] = useState<any>(null);
 
   const handleStartResearch = async () => {
@@ -35,11 +37,16 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
     }
 
     setIsResearching(true);
-    setProgress(10);
+    setProgress(0);
+    setProgressMessage('Preparing research...');
+    setProgressStage('initializing');
     
     try {
       // First, find or create a vendor category for this subcategory
       let categoryId: string;
+      
+      setProgressMessage('Setting up vendor category...');
+      setProgress(5);
       
       // Check if category exists
       const { data: existingCategory } = await supabase
@@ -70,56 +77,90 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
         categoryId = newCategory.id;
       }
 
-      setProgress(30);
+      setProgress(10);
+      setProgressMessage('Connecting to AI research service...');
 
-      // Call the AI vendor research edge function
-      console.log('Calling edge function with data:', {
-        projectId,
-        location,
-        zipCode: zipCode.trim(),
-        categoryId,
-        categoryName: subcategoryName,
-        phase: 'Pre-Construction Planning & Design'
-      });
-
-      const { data, error } = await supabase.functions.invoke('ai-vendor-research', {
-        body: {
+      // Get Supabase project info for streaming URL
+      const { data: { session } } = await supabase.auth.getSession();
+      const baseUrl = `https://kgvckbmwanmngryskari.functions.supabase.co`;
+      
+      // Call the streaming edge function
+      const response = await fetch(`${baseUrl}/ai-vendor-research`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || 'anonymous'}`,
+        },
+        body: JSON.stringify({
           projectId,
           location,
           zipCode: zipCode.trim(),
           categoryId,
           categoryName: subcategoryName,
-          phase: 'Pre-Construction Planning & Design'
-        }
+          phase: 'Pre-Construction Planning & Design',
+          stream: true
+        })
       });
 
-      setProgress(80);
-
-      console.log('Edge function response:', { data, error });
-
-      if (error) {
-        console.error('Edge function error:', error);
-        throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      if (!data?.success) {
-        console.error('Edge function returned unsuccessful:', data);
-        throw new Error(data?.error || 'Failed to research vendors');
-      }
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      setProgress(100);
-      setResearchResults(data);
-      onResearchComplete(data.vendors);
-      
-      toast.success(`Found ${data.count} vendors for ${subcategoryName}`);
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6).trim();
+              if (!data) continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                
+                if (parsed.type === 'progress') {
+                  setProgress(parsed.progress || 0);
+                  setProgressMessage(parsed.message || '');
+                  setProgressStage(parsed.stage || '');
+                } else if (parsed.type === 'complete') {
+                  setProgress(100);
+                  setProgressMessage(parsed.message || 'Research complete!');
+                  setProgressStage('complete');
+                  setResearchResults(parsed);
+                  onResearchComplete(parsed.vendors || []);
+                  toast.success(`Found ${parsed.count || 0} vendors for ${subcategoryName}`);
+                } else if (parsed.type === 'error') {
+                  throw new Error(parsed.message || 'Research failed');
+                }
+              } catch (parseError) {
+                console.log('Skipping non-JSON line:', data);
+              }
+            }
+          }
+        }
+      }
 
     } catch (error) {
       console.error('Error researching vendors:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to research vendors. Please try again.';
       toast.error(`Research failed: ${errorMessage}`);
+      setProgressMessage('Research failed');
+      setProgressStage('error');
     } finally {
       setIsResearching(false);
-      setTimeout(() => setProgress(0), 2000);
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+        setProgressStage('');
+      }, 3000);
     }
   };
 
@@ -166,11 +207,26 @@ export const VendorResearch: React.FC<VendorResearchProps> = ({
         </div>
 
         {isResearching && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Progress value={progress} className="h-2" />
-            <p className="text-sm text-muted-foreground text-center">
-              AI is searching for {subcategoryName} vendors in {location}...
-            </p>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                {progressMessage || `AI is searching for ${subcategoryName} vendors in ${location}...`}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {progress}%
+              </span>
+            </div>
+            {progressStage && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className={`w-2 h-2 rounded-full ${
+                  progressStage === 'complete' ? 'bg-success' : 
+                  progressStage === 'error' ? 'bg-destructive' : 
+                  'bg-primary animate-pulse'
+                }`} />
+                <span className="capitalize">{progressStage.replace(/[_-]/g, ' ')}</span>
+              </div>
+            )}
           </div>
         )}
 
