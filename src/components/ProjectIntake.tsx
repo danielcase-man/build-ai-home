@@ -24,7 +24,7 @@ interface ProjectFormData {
 }
 
 export const ProjectIntake = () => {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<ProjectFormData>({
@@ -55,8 +55,9 @@ export const ProjectIntake = () => {
   const createProject = async () => {
     console.log('User object:', user);
     console.log('User ID:', user?.id);
+    console.log('Session:', session);
     
-    if (!user) {
+    if (!user || !session) {
       toast.error('Please sign in to create a project');
       return;
     }
@@ -64,6 +65,15 @@ export const ProjectIntake = () => {
     setLoading(true);
     
     try {
+      // Check authentication status before creating project
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      console.log('Current session before insert:', currentSession);
+      
+      if (!currentSession) {
+        toast.error('Authentication session expired. Please sign in again.');
+        return;
+      }
+
       // Create the project
       const { data: project, error: projectError } = await supabase
         .from('projects')
@@ -80,7 +90,10 @@ export const ProjectIntake = () => {
         .select()
         .single();
 
-      if (projectError) throw projectError;
+      if (projectError) {
+        console.error('Project creation error:', projectError);
+        throw projectError;
+      }
 
       // Create default project phases for new home construction
       const defaultPhases = [
