@@ -11,6 +11,7 @@ import ProjectTemplate from "./components/ProjectTemplate";
 import { ProjectIntake } from "./components/ProjectIntake";
 import { ProjectDashboard } from "./components/ProjectDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PreConstructionPlanning from "./pages/PreConstructionPlanning";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/projects" element={<ProtectedRoute><ProjectDashboard /></ProtectedRoute>} />
             <Route path="/project/new" element={<ProtectedRoute><ProjectIntake /></ProtectedRoute>} />
             <Route path="/project/:id" element={<ProtectedRoute><ProjectTemplate /></ProtectedRoute>} />
+            <Route path="/project/:id/pre-construction" element={<ProtectedRoute><PreConstructionPlanning /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

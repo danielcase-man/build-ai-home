@@ -14,8 +14,10 @@ import {
   Users,
   FileText,
   Wrench,
-  MapPin
+  MapPin,
+  ArrowRight
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -391,6 +393,17 @@ const ProjectTemplate = () => {
                     {phase.status.replace('_', ' ')}
                   </Badge>
                 </div>
+                
+                {phase.phase_name === "Pre-Construction Planning & Design" && (
+                  <div className="mb-3">
+                    <Link to={`/project/${id}/pre-construction`}>
+                      <Button variant="outline" size="sm" className="w-full">
+                        View Detailed Categories & Vendors
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                )}
                 
                 {(phase.start_date || phase.end_date) && (
                   <div className="text-xs text-muted-foreground">
