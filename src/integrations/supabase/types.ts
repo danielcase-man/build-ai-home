@@ -14,6 +14,86 @@ export type Database = {
   }
   public: {
     Tables: {
+      building_specifications: {
+        Row: {
+          appliance_specifications: Json | null
+          cabinetry_specifications: Json | null
+          concrete_requirements: Json | null
+          created_at: string | null
+          electrical_specifications: Json | null
+          exterior_materials: Json | null
+          flooring_specifications: Json | null
+          foundation_dimensions: Json | null
+          foundation_type: string | null
+          framing_type: string | null
+          hvac_specifications: Json | null
+          id: string
+          interior_finishes: Json | null
+          lumber_specifications: Json | null
+          plumbing_specifications: Json | null
+          project_id: string | null
+          roof_specifications: Json | null
+          structural_loads: Json | null
+          updated_at: string | null
+          wall_specifications: Json | null
+          window_door_specifications: Json | null
+        }
+        Insert: {
+          appliance_specifications?: Json | null
+          cabinetry_specifications?: Json | null
+          concrete_requirements?: Json | null
+          created_at?: string | null
+          electrical_specifications?: Json | null
+          exterior_materials?: Json | null
+          flooring_specifications?: Json | null
+          foundation_dimensions?: Json | null
+          foundation_type?: string | null
+          framing_type?: string | null
+          hvac_specifications?: Json | null
+          id?: string
+          interior_finishes?: Json | null
+          lumber_specifications?: Json | null
+          plumbing_specifications?: Json | null
+          project_id?: string | null
+          roof_specifications?: Json | null
+          structural_loads?: Json | null
+          updated_at?: string | null
+          wall_specifications?: Json | null
+          window_door_specifications?: Json | null
+        }
+        Update: {
+          appliance_specifications?: Json | null
+          cabinetry_specifications?: Json | null
+          concrete_requirements?: Json | null
+          created_at?: string | null
+          electrical_specifications?: Json | null
+          exterior_materials?: Json | null
+          flooring_specifications?: Json | null
+          foundation_dimensions?: Json | null
+          foundation_type?: string | null
+          framing_type?: string | null
+          hvac_specifications?: Json | null
+          id?: string
+          interior_finishes?: Json | null
+          lumber_specifications?: Json | null
+          plumbing_specifications?: Json | null
+          project_id?: string | null
+          roof_specifications?: Json | null
+          structural_loads?: Json | null
+          updated_at?: string | null
+          wall_specifications?: Json | null
+          window_door_specifications?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "building_specifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -213,45 +293,155 @@ export type Database = {
       }
       projects: {
         Row: {
+          address: string | null
+          architectural_style: string | null
+          bathrooms: number | null
+          bedrooms: number | null
           budget: number | null
+          city: string | null
           created_at: string
           description: string | null
           end_date: string | null
           id: string
           location: string | null
+          lot_size_acres: number | null
           name: string
           owner_id: string
+          project_type: string | null
+          square_footage: number | null
           start_date: string | null
+          state: string | null
           status: string | null
+          stories: number | null
+          timeline: Json | null
           updated_at: string
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          architectural_style?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
           budget?: number | null
+          city?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
           location?: string | null
+          lot_size_acres?: number | null
           name: string
           owner_id: string
+          project_type?: string | null
+          square_footage?: number | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
+          stories?: number | null
+          timeline?: Json | null
           updated_at?: string
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          architectural_style?: string | null
+          bathrooms?: number | null
+          bedrooms?: number | null
           budget?: number | null
+          city?: string | null
           created_at?: string
           description?: string | null
           end_date?: string | null
           id?: string
           location?: string | null
+          lot_size_acres?: number | null
           name?: string
           owner_id?: string
+          project_type?: string | null
+          square_footage?: number | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
+          stories?: number | null
+          timeline?: Json | null
           updated_at?: string
+          zip_code?: string | null
         }
         Relationships: []
+      }
+      site_information: {
+        Row: {
+          access_routes: Json | null
+          building_codes: Json | null
+          created_at: string | null
+          environmental_factors: Json | null
+          flood_zone: string | null
+          hoa_restrictions: Json | null
+          id: string
+          project_id: string | null
+          property_survey: Json | null
+          septic_location: unknown | null
+          setback_requirements: Json | null
+          soil_bearing_capacity: number | null
+          soil_conditions: Json | null
+          topographic_data: Json | null
+          updated_at: string | null
+          utility_locations: Json | null
+          water_table_depth: number | null
+          well_location: unknown | null
+          zoning_classification: string | null
+        }
+        Insert: {
+          access_routes?: Json | null
+          building_codes?: Json | null
+          created_at?: string | null
+          environmental_factors?: Json | null
+          flood_zone?: string | null
+          hoa_restrictions?: Json | null
+          id?: string
+          project_id?: string | null
+          property_survey?: Json | null
+          septic_location?: unknown | null
+          setback_requirements?: Json | null
+          soil_bearing_capacity?: number | null
+          soil_conditions?: Json | null
+          topographic_data?: Json | null
+          updated_at?: string | null
+          utility_locations?: Json | null
+          water_table_depth?: number | null
+          well_location?: unknown | null
+          zoning_classification?: string | null
+        }
+        Update: {
+          access_routes?: Json | null
+          building_codes?: Json | null
+          created_at?: string | null
+          environmental_factors?: Json | null
+          flood_zone?: string | null
+          hoa_restrictions?: Json | null
+          id?: string
+          project_id?: string | null
+          property_survey?: Json | null
+          septic_location?: unknown | null
+          setback_requirements?: Json | null
+          soil_bearing_capacity?: number | null
+          soil_conditions?: Json | null
+          topographic_data?: Json | null
+          updated_at?: string | null
+          utility_locations?: Json | null
+          water_table_depth?: number | null
+          well_location?: unknown | null
+          zoning_classification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_information_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vendor_categories: {
         Row: {
