@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, Star, Phone, Mail, MapPin, DollarSign, Plus, Check } from 'lucide-react';
+import { ArrowLeft, Star, Phone, Mail, MapPin, DollarSign, Plus, Check, Edit, Trash2, MoreVertical } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { VendorEditDialog } from '@/components/VendorEditDialog';
+import { VendorDeleteDialog } from '@/components/VendorDeleteDialog';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -38,6 +47,8 @@ export default function VendorResults() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [addingVendors, setAddingVendors] = useState<Set<string>>(new Set());
+  const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+  const [deletingVendor, setDeletingVendor] = useState<Vendor | null>(null);
 
   useEffect(() => {
     fetchVendors();
@@ -119,6 +130,16 @@ export default function VendorResults() {
         return newSet;
       });
     }
+  };
+
+  const handleVendorUpdated = (updatedVendor: Vendor) => {
+    setVendors(prev => 
+      prev.map(v => v.id === updatedVendor.id ? updatedVendor : v)
+    );
+  };
+
+  const handleVendorDeleted = (vendorId: string) => {
+    setVendors(prev => prev.filter(v => v.id !== vendorId));
   };
 
   const formatCostRange = (vendor: Vendor) => {
@@ -214,6 +235,29 @@ export default function VendorResults() {
                           Added
                         </Badge>
                       )}
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => setEditingVendor(vendor)}>
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => setDeletingVendor(vendor)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove Vendor
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </CardHeader>
@@ -318,6 +362,22 @@ export default function VendorResults() {
             ))}
           </div>
         )}
+        
+        {/* Edit Dialog */}
+        <VendorEditDialog
+          vendor={editingVendor}
+          open={!!editingVendor}
+          onOpenChange={(open) => !open && setEditingVendor(null)}
+          onVendorUpdated={handleVendorUpdated}
+        />
+        
+        {/* Delete Dialog */}
+        <VendorDeleteDialog
+          vendor={deletingVendor}
+          open={!!deletingVendor}
+          onOpenChange={(open) => !open && setDeletingVendor(null)}
+          onVendorDeleted={handleVendorDeleted}
+        />
       </div>
     </div>
   );
