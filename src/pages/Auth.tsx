@@ -144,7 +144,7 @@ const Auth = () => {
                     type="submit" 
                     className="w-full" 
                     disabled={loading}
-                    variant="construction"
+                    variant="default"
                   >
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
@@ -219,7 +219,7 @@ const Auth = () => {
                     type="submit" 
                     className="w-full" 
                     disabled={loading}
-                    variant="construction"
+                    variant="default"
                   >
                     {loading ? 'Creating account...' : 'Create Account'}
                   </Button>
