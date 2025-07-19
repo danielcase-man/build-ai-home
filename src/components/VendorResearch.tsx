@@ -128,41 +128,42 @@ export const VendorResearch = ({ projectId, zipCode, location }: VendorResearchP
     setSearchProgress(0);
 
     try {
-      // Simulate AI research progress
-      const totalCategories = categories.length;
-      let processedCategories = 0;
+      const filteredCategories = categories.filter(cat => 
+        selectedPhase === 'all' || cat.phase === selectedPhase
+      );
 
-      for (const category of categories) {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+      for (let i = 0; i < filteredCategories.length; i++) {
+        const category = filteredCategories[i];
+        setSearchProgress(((i + 1) / filteredCategories.length) * 100);
         
-        // Create mock vendor data (in real implementation, this would call AI research APIs)
-        const mockVendors = generateMockVendors(category, zipCode, location);
-        
-        // Insert vendors into database
-        if (mockVendors.length > 0) {
-          const { error } = await supabase
-            .from('vendors')
-            .insert(
-              mockVendors.map(vendor => ({
-                ...vendor,
-                project_id: projectId,
-                category_id: category.id
-              }))
-            );
-
-          if (error) {
-            console.error('Error inserting vendors:', error);
+        // Use AI-powered vendor research via Perplexity
+        const { data, error } = await supabase.functions.invoke('ai-vendor-research', {
+          body: {
+            projectId,
+            location,
+            zipCode,
+            categoryId: category.id,
+            categoryName: category.name,
+            phase: category.phase
           }
+        });
+        
+        if (error) {
+          console.error('Error in AI vendor research:', error);
+          toast.error(`Failed to research vendors for ${category.name}`);
+        } else if (data?.success) {
+          toast.success(`Found ${data.count} vendors for ${category.name}`);
+        } else {
+          toast.error(`AI research failed for ${category.name}`);
         }
-
-        processedCategories++;
-        setSearchProgress((processedCategories / totalCategories) * 100);
+        
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       // Refresh vendor list
       await fetchExistingVendors();
-      toast.success(`Research complete! Found vendors for ${categories.length} categories.`);
+      toast.success('AI vendor research completed!');
 
     } catch (error: any) {
       console.error('Error during vendor research:', error);
