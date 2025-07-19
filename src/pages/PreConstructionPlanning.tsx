@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, FileText, ClipboardCheck } from 'lucide-react';
+import { ArrowLeft, Users, FileText, ClipboardCheck, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { VendorResearch } from '@/components/VendorResearch';
+import { supabase } from '@/integrations/supabase/client';
 
 const preConstructionCategories = {
   professional_services: {
@@ -113,6 +115,45 @@ const preConstructionCategories = {
 
 export default function PreConstructionPlanning() {
   const { id } = useParams();
+  const [project, setProject] = useState<any>(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
+  const [researchedCategories, setResearchedCategories] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetchProject();
+  }, [id]);
+
+  const fetchProject = async () => {
+    if (!id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      setProject(data);
+    } catch (error) {
+      console.error('Error fetching project:', error);
+    }
+  };
+
+  const handleResearchComplete = (subcategoryKey: string, vendors: any[]) => {
+    setResearchedCategories(prev => new Set(prev).add(subcategoryKey));
+    setSelectedSubcategory(null);
+  };
+
+  const getVendorResultsUrl = (subcategoryKey: string, subcategoryName: string) => {
+    // Create a mock category ID based on the subcategory for the URL
+    const categoryParam = encodeURIComponent(subcategoryKey);
+    const subcategoryParam = encodeURIComponent(subcategoryName);
+    return `/project/${id}/vendors?category=${categoryParam}&subcategory=${subcategoryParam}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -170,7 +211,8 @@ export default function PreConstructionPlanning() {
                             </Badge>
                           )}
                         </div>
-                        <div className="space-y-1">
+                        
+                        <div className="space-y-2">
                           {subcategory.items.map((item, index) => (
                             <div 
                               key={index}
@@ -179,6 +221,43 @@ export default function PreConstructionPlanning() {
                               • {item}
                             </div>
                           ))}
+                        </div>
+
+                        <div className="flex gap-2 pt-3 border-t border-border">
+                          {selectedSubcategory === subKey ? (
+                            <div className="w-full">
+                              <VendorResearch
+                                projectId={id!}
+                                location={project?.location || 'Your Location'}
+                                subcategoryKey={subKey}
+                                subcategoryName={subKey.replace(/_/g, ' ')}
+                                onResearchComplete={(vendors) => handleResearchComplete(subKey, vendors)}
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedSubcategory(subKey)}
+                                className="flex-1"
+                              >
+                                Research Vendors
+                              </Button>
+                              {researchedCategories.has(subKey) && (
+                                <Button 
+                                  variant="default" 
+                                  size="sm"
+                                  asChild
+                                >
+                                  <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    View Results
+                                  </Link>
+                                </Button>
+                              )}
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
