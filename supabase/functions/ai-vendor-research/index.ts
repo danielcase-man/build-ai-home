@@ -43,15 +43,28 @@ serve(async (req) => {
             })}\n\n`));
 
             // Research vendors using Perplexity with streaming
-            const prompt = `Find 3-5 reputable ${categoryName} contractors/vendors in ${location} (zip code ${zipCode}) for construction projects. For each vendor, provide:
-    - Business name
-    - Contact information (phone, email if available)
-    - Address
-    - Estimated cost range for typical ${phase} phase work
-    - Rating/reviews if available
-    - Specializations within ${categoryName}
+            const prompt = `Given the following:
+- Vendor type: ${categoryName} (${phase})
+- Zip code: ${zipCode}
+- Location: ${location}
 
-    Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies.`;
+Please:
+- Research and list the top 10 ${categoryName} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
+- For each, provide:
+  • Business Name
+  • Contact Information (phone, email if available)
+  • Address
+  • Website (if available)
+  • Estimated cost range for typical ${categoryName} services in ${phase}
+  • Ratings/reviews (with source platform, if available)
+  • Specializations within ${categoryName} services
+  • Licensing and insurance status
+  • Company size (small, mid, large)
+  • Years in business
+- Clearly identify which vendor is the best value, considering cost, reputation, and specialization.
+- Format the data as a structured list ready for import into a vendor database.
+
+Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.`;
 
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
@@ -74,7 +87,7 @@ serve(async (req) => {
                 messages: [
                   {
                     role: 'system',
-                    content: 'You are a construction industry expert helping find qualified contractors. Provide accurate, current information with realistic cost estimates. Format your response as a structured list of vendors.'
+                    content: 'You are a vendor research agent supporting a home build management platform. For a given vendor type and zip code, your task is to identify the top 10 vendors, evaluate and rank "best value", and return complete metadata. Thoroughly fact-check all included metadata and provide results as a structured list suitable for direct database import.'
                   },
                   {
                     role: 'user',
@@ -214,16 +227,29 @@ serve(async (req) => {
       });
     }
 
-    // Research vendors using Perplexity
-    const prompt = `Find 3-5 reputable ${categoryName} contractors/vendors in ${location} (zip code ${zipCode}) for construction projects. For each vendor, provide:
-    - Business name
-    - Contact information (phone, email if available)
-    - Address
-    - Estimated cost range for typical ${phase} phase work
-    - Rating/reviews if available
-    - Specializations within ${categoryName}
+    // Research vendors using Perplexity (non-streaming fallback)
+    const prompt = `Given the following:
+- Vendor type: ${categoryName} (${phase})
+- Zip code: ${zipCode}
+- Location: ${location}
 
-    Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies.`;
+Please:
+- Research and list the top 10 ${categoryName} serving ${location} (zip ${zipCode}) based on reputation, credentials, and client reviews.
+- For each, provide:
+  • Business Name
+  • Contact Information (phone, email if available)
+  • Address
+  • Website (if available)
+  • Estimated cost range for typical ${categoryName} services in ${phase}
+  • Ratings/reviews (with source platform, if available)
+  • Specializations within ${categoryName} services
+  • Licensing and insurance status
+  • Company size (small, mid, large)
+  • Years in business
+- Clearly identify which vendor is the best value, considering cost, reputation, and specialization.
+- Format the data as a structured list ready for import into a vendor database.
+
+Focus on licensed, insured contractors with good reviews. Include both local smaller businesses and established companies actively servicing zip code ${zipCode}.`;
 
     console.log('Sending request to Perplexity with prompt:', prompt);
 
@@ -238,7 +264,7 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a construction industry expert helping find qualified contractors. Provide accurate, current information with realistic cost estimates. Format your response as a structured list of vendors.'
+            content: 'You are a vendor research agent supporting a home build management platform. For a given vendor type and zip code, your task is to identify the top 10 vendors, evaluate and rank "best value", and return complete metadata. Thoroughly fact-check all included metadata and provide results as a structured list suitable for direct database import.'
           },
           {
             role: 'user',
