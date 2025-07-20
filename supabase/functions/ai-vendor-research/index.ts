@@ -136,31 +136,41 @@ serve(async (req) => {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'progress',
               stage: 'saving',
-              message: `Saving ${vendors.length} vendors to database...`,
+              message: `Checking for duplicates and saving ${vendors.length} vendors...`,
               progress: 90
             })}\n\n`));
 
-            // Insert vendors into database
+            // Deduplicate and insert vendors into database
             let insertedVendors = [];
             if (vendors.length > 0) {
-              const { data, error: insertError } = await supabase
-                .from('vendors')
-                .insert(vendors)
-                .select();
+              const deduplicatedVendors = await deduplicateVendors(supabase, projectId, categoryId, vendors);
+              
+              if (deduplicatedVendors.length > 0) {
+                const { data, error: insertError } = await supabase
+                  .from('vendors')
+                  .insert(deduplicatedVendors)
+                  .select();
 
-              if (insertError) {
-                console.error('Database insert error:', insertError);
-                await supabase.from('vendor_research_staging').update({
-                  processing_status: 'insert_failed',
-                  processing_notes: `Failed to insert vendors: ${insertError.message}`
-                }).eq('id', stagingRecord.id);
-                throw insertError;
+                if (insertError) {
+                  console.error('Database insert error:', insertError);
+                  await supabase.from('vendor_research_staging').update({
+                    processing_status: 'insert_failed',
+                    processing_notes: `Failed to insert vendors: ${insertError.message}`
+                  }).eq('id', stagingRecord.id);
+                  throw insertError;
+                } else {
+                  insertedVendors = data || [];
+                  console.log('Successfully inserted vendors:', insertedVendors);
+                  await supabase.from('vendor_research_staging').update({
+                    processing_status: 'completed',
+                    processing_notes: `Inserted ${insertedVendors.length} new vendors (${vendors.length - deduplicatedVendors.length} duplicates skipped)`
+                  }).eq('id', stagingRecord.id);
+                }
               } else {
-                insertedVendors = data || [];
-                console.log('Successfully inserted vendors:', insertedVendors);
+                console.log('All vendors were duplicates, none inserted');
                 await supabase.from('vendor_research_staging').update({
                   processing_status: 'completed',
-                  processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
+                  processing_notes: `All ${vendors.length} vendors were duplicates, none inserted`
                 }).eq('id', stagingRecord.id);
               }
             }
@@ -169,10 +179,10 @@ serve(async (req) => {
             controller.enqueue(encoder.encode(`data: ${JSON.stringify({
               type: 'complete',
               stage: 'complete',
-              message: `Research complete! Found ${vendors.length} qualified vendors.`,
+              message: `Research complete! Added ${insertedVendors.length} new vendors${vendors.length > insertedVendors.length ? ` (${vendors.length - insertedVendors.length} duplicates skipped)` : ''}.`,
               progress: 100,
               vendors: insertedVendors,
-              count: vendors.length
+              count: insertedVendors.length
             })}\n\n`));
 
             controller.close();
@@ -247,27 +257,37 @@ serve(async (req) => {
         processed_at: new Date().toISOString()
       }).eq('id', stagingRecord.id);
 
-      // Insert vendors
+      // Deduplicate and insert vendors
       let insertedVendors = [];
       if (vendors.length > 0) {
-        const { data, error: insertError } = await supabase
-          .from('vendors')
-          .insert(vendors)
-          .select();
+        const deduplicatedVendors = await deduplicateVendors(supabase, projectId, categoryId, vendors);
+        
+        if (deduplicatedVendors.length > 0) {
+          const { data, error: insertError } = await supabase
+            .from('vendors')
+            .insert(deduplicatedVendors)
+            .select();
 
-        if (insertError) {
-          console.error('Database insert error:', insertError);
-          await supabase.from('vendor_research_staging').update({
-            processing_status: 'insert_failed',
-            processing_notes: `Failed to insert vendors: ${insertError.message}`
-          }).eq('id', stagingRecord.id);
-          throw insertError;
+          if (insertError) {
+            console.error('Database insert error:', insertError);
+            await supabase.from('vendor_research_staging').update({
+              processing_status: 'insert_failed',
+              processing_notes: `Failed to insert vendors: ${insertError.message}`
+            }).eq('id', stagingRecord.id);
+            throw insertError;
+          } else {
+            insertedVendors = data || [];
+            console.log('Successfully inserted vendors:', insertedVendors);
+            await supabase.from('vendor_research_staging').update({
+              processing_status: 'completed',
+              processing_notes: `Inserted ${insertedVendors.length} new vendors (${vendors.length - deduplicatedVendors.length} duplicates skipped)`
+            }).eq('id', stagingRecord.id);
+          }
         } else {
-          insertedVendors = data || [];
-          console.log('Successfully inserted vendors:', insertedVendors);
+          console.log('All vendors were duplicates, none inserted');
           await supabase.from('vendor_research_staging').update({
             processing_status: 'completed',
-            processing_notes: `Successfully inserted ${insertedVendors.length} vendors`
+            processing_notes: `All ${vendors.length} vendors were duplicates, none inserted`
           }).eq('id', stagingRecord.id);
         }
       }
@@ -633,4 +653,88 @@ function extractCity(location: string): string {
 function extractState(location: string): string {
   const parts = location.split(',');
   return parts[1]?.trim() || '';
+}
+
+// Deduplication function to prevent duplicate vendors
+async function deduplicateVendors(
+  supabase: any,
+  projectId: string,
+  categoryId: string,
+  newVendors: any[]
+): Promise<any[]> {
+  console.log(`Checking for duplicates among ${newVendors.length} vendors...`);
+
+  // Get existing vendors for this project and category
+  const { data: existingVendors, error } = await supabase
+    .from('vendors')
+    .select('business_name, phone, email, address')
+    .eq('project_id', projectId)
+    .eq('category_id', categoryId);
+
+  if (error) {
+    console.error('Error fetching existing vendors:', error);
+    return newVendors; // Return all if we can't check for duplicates
+  }
+
+  const deduplicatedVendors = [];
+  
+  for (const newVendor of newVendors) {
+    let isDuplicate = false;
+    
+    for (const existing of existingVendors || []) {
+      // Check for duplicates based on multiple criteria
+      const nameMatch = newVendor.business_name && existing.business_name &&
+        normalizeBusinessName(newVendor.business_name) === normalizeBusinessName(existing.business_name);
+      
+      const phoneMatch = newVendor.phone && existing.phone &&
+        normalizePhone(newVendor.phone) === normalizePhone(existing.phone);
+      
+      const emailMatch = newVendor.email && existing.email &&
+        newVendor.email.toLowerCase() === existing.email.toLowerCase();
+      
+      const addressMatch = newVendor.address && existing.address &&
+        normalizeAddress(newVendor.address) === normalizeAddress(existing.address);
+      
+      // Consider it a duplicate if:
+      // 1. Business name matches exactly, OR
+      // 2. Phone number matches, OR  
+      // 3. Email matches, OR
+      // 4. Address matches closely
+      if (nameMatch || phoneMatch || emailMatch || addressMatch) {
+        isDuplicate = true;
+        console.log(`Skipping duplicate vendor: ${newVendor.business_name} (matched on ${nameMatch ? 'name' : phoneMatch ? 'phone' : emailMatch ? 'email' : 'address'})`);
+        break;
+      }
+    }
+    
+    if (!isDuplicate) {
+      deduplicatedVendors.push(newVendor);
+    }
+  }
+  
+  console.log(`Deduplicated ${newVendors.length} vendors to ${deduplicatedVendors.length} (${newVendors.length - deduplicatedVendors.length} duplicates removed)`);
+  return deduplicatedVendors;
+}
+
+// Helper functions for normalization
+function normalizeBusinessName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '') // Remove punctuation
+    .replace(/\b(inc|llc|corp|ltd|company|co)\b/g, '') // Remove business suffixes
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizePhone(phone: string): string {
+  return phone.replace(/[^\d]/g, ''); // Keep only digits
+}
+
+function normalizeAddress(address: string): string {
+  return address
+    .toLowerCase()
+    .replace(/\b(street|st|avenue|ave|road|rd|lane|ln|drive|dr|boulevard|blvd)\b/g, '')
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
