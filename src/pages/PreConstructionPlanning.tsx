@@ -148,36 +148,54 @@ export default function PreConstructionPlanning() {
   const handleResearchComplete = (subcategoryKey: string, vendors: any[]) => {
     setResearchedCategories(prev => new Set(prev).add(subcategoryKey));
     setSelectedSubcategory(null);
+    // Refresh vendor counts to show the updated count
+    checkExistingVendors();
   };
 
   const checkExistingVendors = async () => {
     if (!id) return;
     
     try {
-      // Get all vendor categories for pre-construction phase
-      const { data: categories, error: categoriesError } = await supabase
-        .from('vendor_categories')
-        .select('id, name')
-        .eq('phase', 'Pre-Construction Planning & Design');
-
-      if (categoriesError) throw categoriesError;
-
       const vendorCounts: Record<string, number> = {};
       
-      // Check vendor count for each category
-      for (const category of categories || []) {
-        const { count, error: vendorError } = await supabase
-          .from('vendors')
-          .select('*', { count: 'exact' })
-          .eq('project_id', id)
-          .eq('category_id', category.id);
+      // Check vendor count for each subcategory by mapping to actual database category names
+      const subcategoryMappings = [
+        { subKey: 'architects', categoryName: 'architects' },
+        { subKey: 'engineers', categoryName: 'engineers' },
+        { subKey: 'interior_designers', categoryName: 'interior_designers' },
+        { subKey: 'land_surveyors', categoryName: 'land_surveyors' },
+        { subKey: 'permit_authorities', categoryName: 'permit authorities' },
+        { subKey: 'legal_services', categoryName: 'legal_services' },
+        { subKey: 'consultants', categoryName: 'consultants' },
+        { subKey: 'soil_testing', categoryName: 'soil_testing' },
+        { subKey: 'site_analysis', categoryName: 'site_analysis' }
+      ];
 
-        if (!vendorError && count !== null) {
-          vendorCounts[category.name] = count;
+      for (const mapping of subcategoryMappings) {
+        // First get the category ID
+        const { data: category, error: categoryError } = await supabase
+          .from('vendor_categories')
+          .select('id')
+          .eq('name', mapping.categoryName)
+          .eq('phase', 'Pre-Construction Planning & Design')
+          .maybeSingle();
+
+        if (!categoryError && category) {
+          // Then count vendors for this category
+          const { count, error: vendorError } = await supabase
+            .from('vendors')
+            .select('*', { count: 'exact' })
+            .eq('project_id', id)
+            .eq('category_id', category.id);
+
+          if (!vendorError && count !== null) {
+            vendorCounts[mapping.subKey] = count;
+          }
         }
       }
 
       setExistingVendors(vendorCounts);
+      console.log('Vendor counts:', vendorCounts);
     } catch (error) {
       console.error('Error checking existing vendors:', error);
     }
