@@ -118,9 +118,11 @@ export default function PreConstructionPlanning() {
   const [project, setProject] = useState<any>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
   const [researchedCategories, setResearchedCategories] = useState<Set<string>>(new Set());
+  const [existingVendors, setExistingVendors] = useState<Record<string, number>>({});
 
   useEffect(() => {
     fetchProject();
+    checkExistingVendors();
   }, [id]);
 
   const fetchProject = async () => {
@@ -146,6 +148,39 @@ export default function PreConstructionPlanning() {
   const handleResearchComplete = (subcategoryKey: string, vendors: any[]) => {
     setResearchedCategories(prev => new Set(prev).add(subcategoryKey));
     setSelectedSubcategory(null);
+  };
+
+  const checkExistingVendors = async () => {
+    if (!id) return;
+    
+    try {
+      // Get all vendor categories for pre-construction phase
+      const { data: categories, error: categoriesError } = await supabase
+        .from('vendor_categories')
+        .select('id, name')
+        .eq('phase', 'Pre-Construction Planning & Design');
+
+      if (categoriesError) throw categoriesError;
+
+      const vendorCounts: Record<string, number> = {};
+      
+      // Check vendor count for each category
+      for (const category of categories || []) {
+        const { count, error: vendorError } = await supabase
+          .from('vendors')
+          .select('*', { count: 'exact' })
+          .eq('project_id', id)
+          .eq('category_id', category.id);
+
+        if (!vendorError && count !== null) {
+          vendorCounts[category.name] = count;
+        }
+      }
+
+      setExistingVendors(vendorCounts);
+    } catch (error) {
+      console.error('Error checking existing vendors:', error);
+    }
   };
 
   const getVendorResultsUrl = (subcategoryKey: string, subcategoryName: string) => {
@@ -236,25 +271,50 @@ export default function PreConstructionPlanning() {
                             </div>
                           ) : (
                             <>
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => setSelectedSubcategory(subKey)}
-                                className="flex-1"
-                              >
-                                Research Vendors
-                              </Button>
-                              {researchedCategories.has(subKey) && (
-                                <Button 
-                                  variant="default" 
-                                  size="sm"
-                                  asChild
-                                >
-                                  <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View Results
-                                  </Link>
-                                </Button>
+                              {existingVendors[subKey] > 0 ? (
+                                <div className="flex gap-2 w-full">
+                                  <Button 
+                                    variant="default" 
+                                    size="sm"
+                                    asChild
+                                    className="flex-1"
+                                  >
+                                    <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      View {existingVendors[subKey]} Vendors
+                                    </Link>
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setSelectedSubcategory(subKey)}
+                                  >
+                                    Research More
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setSelectedSubcategory(subKey)}
+                                    className="flex-1"
+                                  >
+                                    Research Vendors
+                                  </Button>
+                                  {researchedCategories.has(subKey) && (
+                                    <Button 
+                                      variant="default" 
+                                      size="sm"
+                                      asChild
+                                    >
+                                      <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
+                                        <Eye className="h-4 w-4 mr-1" />
+                                        View Results
+                                      </Link>
+                                    </Button>
+                                  )}
+                                </>
                               )}
                             </>
                           )}
