@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, FileText, ClipboardCheck, Eye, Building } from 'lucide-react';
+import { ArrowLeft, Users, FileText, ClipboardCheck, Eye, Building, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VendorResearch } from '@/components/VendorResearch';
 import { ProjectVendors } from '@/components/ProjectVendors';
+import { VendorDeduplication } from '@/components/VendorDeduplication';
 import { supabase } from '@/integrations/supabase/client';
 
 const preConstructionCategories = {
@@ -232,7 +233,7 @@ export default function PreConstructionPlanning() {
         </div>
 
         <Tabs defaultValue="research" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="research" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               Research Vendors
@@ -240,6 +241,10 @@ export default function PreConstructionPlanning() {
             <TabsTrigger value="manage" className="flex items-center gap-2">
               <Building className="h-4 w-4" />
               Manage All Vendors
+            </TabsTrigger>
+            <TabsTrigger value="cleanup" className="flex items-center gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Clean & Deduplicate
             </TabsTrigger>
           </TabsList>
 
@@ -364,6 +369,10 @@ export default function PreConstructionPlanning() {
 
           <TabsContent value="manage">
             <ProjectVendors />
+          </TabsContent>
+
+          <TabsContent value="cleanup">
+            <VendorDeduplication projectId={id!} />
           </TabsContent>
         </Tabs>
       </div>

@@ -531,6 +531,53 @@ function buildComprehensiveResearchQuery(
   const specializationText = specialization ? `specializing in ${specialization}` : '';
   const contextText = customContext ? `Additional requirements: ${customContext}.` : '';
 
+  // Special handling for architects to exclude builders
+  if (categoryName.toLowerCase().includes('architect')) {
+    return `Find licensed residential architects and architectural firms in ${location}, Texas ${zipCode} area.
+
+CRITICAL: Only include licensed architects and architectural design firms. 
+DO NOT include general contractors, builders, construction companies, or home building companies.
+
+ARCHITECT REQUIREMENTS:
+- Licensed architects (AIA members preferred)
+- Architectural design firms and studios  
+- Professionals who create house plans and blueprints
+- Have architectural degrees or professional certifications
+- Specialize in residential architecture
+- Provide architectural design services
+
+EXCLUDE THESE TYPES OF COMPANIES:
+- Home builders (like Drees Homes, DR Horton, Lennar, etc.)
+- General contractors and construction companies
+- Building contractors and construction services
+- Companies that primarily build rather than design
+
+QUALITY CRITERIA:
+- Valid architectural licenses
+- Professional architectural certifications (AIA, NCARB)
+- Architectural education and credentials
+- Portfolio of architectural design work
+- Experience with residential projects
+- Customer reviews for design services
+
+${specializationText ? `Specialization focus: ${specializationText}` : ''}
+${contextText}
+
+OUTPUT FORMAT:
+For each architect/firm found, provide:
+1. Business name and principal architect name
+2. Complete contact information (phone, email, website)
+3. Business address and service areas
+4. Architectural licenses and certifications
+5. Customer ratings and review counts for design services
+6. Design fee estimates and pricing ranges
+7. Portfolio highlights and architectural specializations
+8. Years practicing architecture and professional associations
+
+Focus on finding real, licensed architects with established design practices in the ${location} area.`;
+  }
+
+  // General query for other categories
   return `Find qualified ${categoryName} ${specializationText} in ${location}, Texas ${zipCode} area for construction projects.
 
 RESEARCH REQUIREMENTS:
