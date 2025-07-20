@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Users, FileText, ClipboardCheck, Eye } from 'lucide-react';
+import { ArrowLeft, Users, FileText, ClipboardCheck, Eye, Building } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { VendorResearch } from '@/components/VendorResearch';
+import { ProjectVendors } from '@/components/ProjectVendors';
 import { supabase } from '@/integrations/supabase/client';
 
 const preConstructionCategories = {
@@ -229,122 +231,141 @@ export default function PreConstructionPlanning() {
           </p>
         </div>
 
-        <div className="grid gap-8">
-          {Object.entries(preConstructionCategories).map(([categoryKey, category]) => {
-            const Icon = category.icon;
-            return (
-              <Card key={categoryKey} className="border-border">
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <Icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-xl">{category.title}</CardTitle>
-                      <CardDescription className="text-base">
-                        {category.description}
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {Object.entries(category.subcategories).map(([subKey, subcategory]) => (
-                      <div key={subKey} className="space-y-3">
-                        <div>
-                          <h4 className="font-semibold text-foreground capitalize mb-1">
-                            {subKey.replace(/_/g, ' ')}
-                          </h4>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {subcategory.description}
-                          </p>
-                          {'typical_cost' in subcategory && (
-                            <Badge variant="secondary" className="text-xs">
-                              {(subcategory as any).typical_cost}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-2">
-                          {subcategory.items.map((item, index) => (
-                            <div 
-                              key={index}
-                              className="text-sm text-muted-foreground hover:text-foreground cursor-pointer p-2 rounded hover:bg-muted/50 transition-colors"
-                            >
-                              • {item}
-                            </div>
-                          ))}
-                        </div>
+        <Tabs defaultValue="research" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="research" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Research Vendors
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Manage All Vendors
+            </TabsTrigger>
+          </TabsList>
 
-                        <div className="flex gap-2 pt-3 border-t border-border">
-                          {selectedSubcategory === subKey ? (
-                            <div className="w-full">
-                              <VendorResearch
-                                projectId={id!}
-                                location={project?.location || 'Your Location'}
-                                subcategoryKey={subKey}
-                                subcategoryName={subKey.replace(/_/g, ' ')}
-                                onResearchComplete={(vendors) => handleResearchComplete(subKey, vendors)}
-                              />
+          <TabsContent value="research" className="space-y-8">
+            <div className="grid gap-8">
+              {Object.entries(preConstructionCategories).map(([categoryKey, category]) => {
+                const Icon = category.icon;
+                return (
+                  <Card key={categoryKey} className="border-border">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                          <Icon className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-xl">{category.title}</CardTitle>
+                          <CardDescription className="text-base">
+                            {category.description}
+                          </CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid gap-6 md:grid-cols-2">
+                        {Object.entries(category.subcategories).map(([subKey, subcategory]) => (
+                          <div key={subKey} className="space-y-3">
+                            <div>
+                              <h4 className="font-semibold text-foreground capitalize mb-1">
+                                {subKey.replace(/_/g, ' ')}
+                              </h4>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                {subcategory.description}
+                              </p>
+                              {'typical_cost' in subcategory && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {(subcategory as any).typical_cost}
+                                </Badge>
+                              )}
                             </div>
-                          ) : (
-                            <>
-                              {existingVendors[subKey] > 0 ? (
-                                <div className="flex gap-2 w-full">
-                                  <Button 
-                                    variant="default" 
-                                    size="sm"
-                                    asChild
-                                    className="flex-1"
-                                  >
-                                    <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
-                                      <Eye className="h-4 w-4 mr-1" />
-                                      View {existingVendors[subKey]} Vendors
-                                    </Link>
-                                  </Button>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setSelectedSubcategory(subKey)}
-                                  >
-                                    Research More
-                                  </Button>
+                            
+                            <div className="space-y-2">
+                              {subcategory.items.map((item, index) => (
+                                <div 
+                                  key={index}
+                                  className="text-sm text-muted-foreground hover:text-foreground cursor-pointer p-2 rounded hover:bg-muted/50 transition-colors"
+                                >
+                                  • {item}
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="flex gap-2 pt-3 border-t border-border">
+                              {selectedSubcategory === subKey ? (
+                                <div className="w-full">
+                                  <VendorResearch
+                                    projectId={id!}
+                                    location={project?.location || 'Your Location'}
+                                    subcategoryKey={subKey}
+                                    subcategoryName={subKey.replace(/_/g, ' ')}
+                                    onResearchComplete={(vendors) => handleResearchComplete(subKey, vendors)}
+                                  />
                                 </div>
                               ) : (
                                 <>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setSelectedSubcategory(subKey)}
-                                    className="flex-1"
-                                  >
-                                    Research Vendors
-                                  </Button>
-                                  {researchedCategories.has(subKey) && (
-                                    <Button 
-                                      variant="default" 
-                                      size="sm"
-                                      asChild
-                                    >
-                                      <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
-                                        <Eye className="h-4 w-4 mr-1" />
-                                        View Results
-                                      </Link>
-                                    </Button>
+                                  {existingVendors[subKey] > 0 ? (
+                                    <div className="flex gap-2 w-full">
+                                      <Button 
+                                        variant="default" 
+                                        size="sm"
+                                        asChild
+                                        className="flex-1"
+                                      >
+                                        <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
+                                          <Eye className="h-4 w-4 mr-1" />
+                                          View {existingVendors[subKey]} Vendors
+                                        </Link>
+                                      </Button>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setSelectedSubcategory(subKey)}
+                                      >
+                                        Research More
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <Button 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={() => setSelectedSubcategory(subKey)}
+                                        className="flex-1"
+                                      >
+                                        Research Vendors
+                                      </Button>
+                                      {researchedCategories.has(subKey) && (
+                                        <Button 
+                                          variant="default" 
+                                          size="sm"
+                                          asChild
+                                        >
+                                          <Link to={getVendorResultsUrl(subKey, subKey.replace(/_/g, ' '))}>
+                                            <Eye className="h-4 w-4 mr-1" />
+                                            View Results
+                                          </Link>
+                                        </Button>
+                                      )}
+                                    </>
                                   )}
                                 </>
                               )}
-                            </>
-                          )}
-                        </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="manage">
+            <ProjectVendors />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
