@@ -20,6 +20,8 @@ import {
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { UBuildItWorkflowBar, UBuildItWorkflowState } from "@/components/ubuildit/UBuildItWorkflowBar";
+import { useUBuildItWorkflow } from "@/hooks/useUBuildItWorkflow";
 
 interface Project {
   id: string;
@@ -31,6 +33,7 @@ interface Project {
   end_date: string;
   status: string;
   created_at: string;
+  ubuildit_workflow_state?: UBuildItWorkflowState | null;
 }
 
 interface ProjectPhase {
@@ -188,6 +191,7 @@ const ProjectTemplate = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [phases, setPhases] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { enableWorkflow, advanceStep, loading: workflowLoading } = useUBuildItWorkflow();
 
   useEffect(() => {
     fetchProjectData();
@@ -199,10 +203,10 @@ const ProjectTemplate = () => {
     try {
       setLoading(true);
       
-      // Fetch project details
+      // Fetch project details including ubuildit_workflow_state
       const { data: projectData, error: projectError } = await supabase
         .from('projects')
-        .select('*')
+        .select('*, ubuildit_workflow_state')
         .eq('id', id)
         .single();
 
@@ -232,6 +236,34 @@ const ProjectTemplate = () => {
       toast.error('Failed to load project data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleEnableWorkflow = async () => {
+    if (!project) return;
+    
+    try {
+      const updatedWorkflowState = await enableWorkflow(project.id);
+      setProject({
+        ...project,
+        ubuildit_workflow_state: updatedWorkflowState
+      });
+    } catch (error) {
+      // Error already handled in the hook
+    }
+  };
+
+  const handleAdvanceStep = async (stepId: string) => {
+    if (!project?.ubuildit_workflow_state) return;
+    
+    try {
+      const updatedWorkflowState = await advanceStep(project.id, stepId, project.ubuildit_workflow_state);
+      setProject({
+        ...project,
+        ubuildit_workflow_state: updatedWorkflowState
+      });
+    } catch (error) {
+      // Error already handled in the hook
     }
   };
 
@@ -365,6 +397,13 @@ const ProjectTemplate = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* UBuildIt Planning Process Workflow */}
+      <UBuildItWorkflowBar
+        project={project}
+        onEnableWorkflow={handleEnableWorkflow}
+        onAdvanceStep={handleAdvanceStep}
+      />
 
       {/* Project Phases */}
       {phases.length > 0 ? (

@@ -611,6 +611,7 @@ export type Database = {
           status: string | null
           stories: number | null
           timeline: Json | null
+          ubuildit_workflow_state: Json | null
           updated_at: string
           zip_code: string | null
         }
@@ -636,6 +637,7 @@ export type Database = {
           status?: string | null
           stories?: number | null
           timeline?: Json | null
+          ubuildit_workflow_state?: Json | null
           updated_at?: string
           zip_code?: string | null
         }
@@ -661,6 +663,7 @@ export type Database = {
           status?: string | null
           stories?: number | null
           timeline?: Json | null
+          ubuildit_workflow_state?: Json | null
           updated_at?: string
           zip_code?: string | null
         }
