@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>708 Purple Salvia Cove - Construction Schedule</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="none"/><path d="M0 0L50 50L0 100" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none"/><path d="M50 0L100 50L50 100" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none"/></svg>');
+            opacity: 0.5;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            font-size: 14px;
+            opacity: 0.95;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            padding: 8px 14px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 8px 0;
+        }
+
+        .card-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .timeline-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .timeline-controls label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            color: #4b5563;
+        }
+
+        .filter-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .gantt-wrapper {
+            overflow-x: auto;
+            margin-top: 25px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .gantt-chart {
+            min-width: 1600px;
+            background: white;
+        }
+
+        .gantt-header {
+            display: flex;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-bottom: 2px solid #d1d5db;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .gantt-col-phase {
+            width: 320px;
+            padding: 16px 20px;
+            border-right: 2px solid #e5e7eb;
+            color: #374151;
+        }
+
+        .gantt-col-vendor {
+            width: 200px;
+            padding: 16px 20px;
+            border-right: 2px solid #e5e7eb;
+            color: #374151;
+        }
+
+        .gantt-col-timeline {
+            flex: 1;
+            padding: 12px;
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .month-label {
+            font-size: 10px;
+            text-align: center;
+            color: #6b7280;
+            padding: 4px;
+            line-height: 1.4;
+        }
+
+        .gantt-row {
+            display: flex;
+            border-bottom: 1px solid #f3f4f6;
+            transition: all 0.2s ease;
+            min-height: 52px;
+        }
+
+        .gantt-row:hover {
+            background: #fafbfc;
+            box-shadow: inset 0 0 0 1px #e5e7eb;
+        }
+
+        .gantt-row.phase-header {
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            font-weight: 700;
+            border-top: 2px solid #d1d5db;
+            border-bottom: 2px solid #d1d5db;
+            min-height: 56px;
+        }
+
+        .gantt-row.phase-header:first-child {
+            border-top: none;
+        }
+
+        .gantt-row.phase-header:hover {
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+
+        .row-phase {
+            width: 320px;
+            padding: 14px 20px;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #1f2937;
+            line-height: 1.5;
+            overflow: hidden;
+        }
+
+        .row-phase span:first-child {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .row-vendor {
+            width: 200px;
+            padding: 14px 16px;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            color: #4b5563;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .row-timeline {
+            flex: 1;
+            padding: 8px 12px;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .timeline-bar {
+            height: 32px;
+            border-radius: 6px;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            font-size: 11px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .timeline-bar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+            z-index: 50;
+        }
+
+        .status-complete {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        .status-inprogress {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+        .status-pending {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .status-tbd {
+            background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+        }
+        .status-blocked {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        .status-critical {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            border: 2px solid #7f1d1d;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+
+        .badge-complete { background: #d1fae5; color: #065f46; }
+        .badge-inprogress { background: #dbeafe; color: #1e40af; }
+        .badge-pending { background: #fef3c7; color: #92400e; }
+        .badge-tbd { background: #e2e8f0; color: #475569; }
+        .badge-blocked { background: #fee2e2; color: #991b1b; }
+
+        .legend {
+            display: flex;
+            gap: 24px;
+            padding: 24px;
+            background: linear-gradient(135deg, #f6f8fb 0%, #ffffff 100%);
+            border-radius: 12px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+            border: 1px solid #e5e7eb;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #4b5563;
+        }
+
+        .legend-color {
+            width: 32px;
+            height: 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .notes, .critical-path {
+            margin-top: 25px;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .notes {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .critical-path {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border-left: 4px solid #dc2626;
+        }
+
+        .notes h3, .critical-path h3 {
+            font-size: 16px;
+            margin-bottom: 14px;
+            font-weight: 700;
+        }
+
+        .notes h3 {
+            color: #92400e;
+        }
+
+        .critical-path h3 {
+            color: #991b1b;
+        }
+
+        .notes ul, .critical-path ul {
+            margin-left: 24px;
+        }
+
+        .notes li {
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        .critical-path li {
+            margin-bottom: 10px;
+            font-size: 13px;
+            color: #7f1d1d;
+            line-height: 1.6;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .timeline-controls {
+                display: none;
+            }
+            .gantt-chart {
+                min-width: auto;
+            }
+        }
+
+        @media (max-width: 1400px) {
+            .summary-cards {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 20px;
+            }
+            .header {
+                padding: 24px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .header-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        .tooltip {
+            position: fixed;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>🏗️ 708 Purple Salvia Cove - Construction Schedule</h1>
+                <div class="header-meta">
+                    <div class="meta-item">
+                        <span>📍</span>
+                        <span>Liberty Hill, TX</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📅</span>
+                        <span>Updated: Feb 14, 2026</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>👨‍💼</span>
+                        <span>Owner: Daniel Case</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🏢</span>
+                        <span>Consultant: UBuildIt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Summary Cards -->
+            <div class="summary-cards">
+                <div class="card">
+                    <div class="card-label">Project Duration</div>
+                    <div class="card-value">~18 mo</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Target Completion</div>
+                    <div class="card-value">Aug 2027</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Budget</div>
+                    <div class="card-value">$1.2M</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Paid to Date</div>
+                    <div class="card-value">$292K</div>
+                </div>
+                <div class="card">
+                    <div class="card-label">Square Footage</div>
+                    <div class="card-value">7,526 SF</div>
+                </div>
+            </div>
+
+            <!-- Critical Path Alert -->
+            <div class="critical-path">
+                <h3>⚠️ Critical Path Items</h3>
+                <ul>
+                    <li><strong>Septic Design:</strong> BLOCKED - waiting for site plan from Matt Bonnette (KFA) to Travis Weiser</li>
+                    <li><strong>Windows/Doors:</strong> Decision needed ASAP (8-15 week lead time affects frame timing)</li>
+                    <li><strong>Civil Engineering:</strong> Grading plan finalization needed for permits</li>
+                    <li><strong>HOA Approval:</strong> Requires finalized plans (blocks building permit)</li>
+                </ul>
+            </div>
+
+            <!-- Timeline Controls -->
+            <div class="timeline-controls">
+                <label>Filter by Phase:</label>
+                <button class="filter-btn active" onclick="filterPhase('all')">All Phases</button>
+                <button class="filter-btn" onclick="filterPhase('preconstruction')">Pre-Construction</button>
+                <button class="filter-btn" onclick="filterPhase('sitework')">Site Work</button>
+                <button class="filter-btn" onclick="filterPhase('structure')">Structure</button>
+                <button class="filter-btn" onclick="filterPhase('finishes')">Finishes</button>
+            </div>
+
+            <!-- Gantt Chart -->
+            <div class="gantt-wrapper">
+                <div class="gantt-chart">
+                    <!-- Header -->
+                    <div class="gantt-header">
+                        <div class="gantt-col-phase">Phase / Task</div>
+                        <div class="gantt-col-vendor">Vendor / Status</div>
+                        <div class="gantt-col-timeline">
+                            <div class="month-label">Feb<br>'26</div>
+                            <div class="month-label">Mar<br>'26</div>
+                            <div class="month-label">Apr<br>'26</div>
+                            <div class="month-label">May<br>'26</div>
+                            <div class="month-label">Jun<br>'26</div>
+                            <div class="month-label">Jul<br>'26</div>
+                            <div class="month-label">Aug<br>'26</div>
+                            <div class="month-label">Sep<br>'26</div>
+                            <div class="month-label">Oct<br>'26</div>
+                            <div class="month-label">Nov<br>'26</div>
+                            <div class="month-label">Dec<br>'26</div>
+                            <div class="month-label">2027</div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 1: PRE-CONSTRUCTION -->
+                    <div class="gantt-row phase-header" data-phase="preconstruction">
+                        <div class="row-phase">
+                            <span>📋</span>
+                            <span>PRE-CONSTRUCTION & PERMITS</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="preconstruction">
+                        <div class="row-phase" style="padding-left: 36px;">Civil Engineering</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-inprogress">In Progress</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-inprogress" style="left: 0%; width: 12%;" data-tooltip="Four A Engineering - Draft delivered Jan 26">
+                                Four A Eng
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="preconstruction">
+                        <div class="row-phase" style="padding-left: 36px;">Septic Design</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-blocked">BLOCKED</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-blocked" style="left: 0%; width: 10%;" data-tooltip="Travis Weiser - Waiting for site plan CAD from KFA">
+                                Blocked - Site Plan
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="preconstruction">
+                        <div class="row-phase" style="padding-left: 36px;">Structural Details</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-inprogress">In Progress</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-inprogress" style="left: 0%; width: 15%;" data-tooltip="Asiri Design - 3 of 11 details delivered, working on remaining 8">
+                                Asiri (3/11)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="preconstruction">
+                        <div class="row-phase" style="padding-left: 36px;">Windows/Doors Decision</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-pending">Deciding</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-critical" style="left: 0%; width: 8%;" data-tooltip="CRITICAL: 8-15 week lead time! Doorwin vs Prestige decision needed">
+                                CRITICAL - Decide Now!
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="preconstruction">
+                        <div class="row-phase" style="padding-left: 36px;">HOA Approval</div>
+                        <div class="row-vendor">Mesa Vista POA</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 10%; width: 12%;" data-tooltip="Mesa Vista POA - Needs finalized plans + materials">
+                                HOA Review
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="preconstruction">
+                        <div class="row-phase" style="padding-left: 36px;">Building Permit</div>
+                        <div class="row-vendor">Williamson County</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 15%; width: 15%;" data-tooltip="Williamson County - After HOA approval">
+                                Permit Application
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 2: SITE WORK -->
+                    <div class="gantt-row phase-header" data-phase="sitework">
+                        <div class="row-phase">
+                            <span>🚧</span>
+                            <span>SITE WORK</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="sitework">
+                        <div class="row-phase" style="padding-left: 36px;">Site Clearing & Grading</div>
+                        <div class="row-vendor">Chuck F. ($15K)</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 25%; width: 6%;" data-tooltip="Chuck F. - Ready to accept, $15,000 bid">
+                                Clear & Grade
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="sitework">
+                        <div class="row-phase" style="padding-left: 36px;">Well Drilling</div>
+                        <div class="row-vendor">Bee Cave ($56K)</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 27%; width: 8%;" data-tooltip="Bee Cave - 560 ft well + 2,500 gal storage, $56,481">
+                                Well Install
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="sitework">
+                        <div class="row-phase" style="padding-left: 36px;">Septic Installation</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">TBD</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 30%; width: 10%;" data-tooltip="Pending Travis design - Chuck F/Triple C or Paul Swoyer">
+                                Septic ($21-45K)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="sitework">
+                        <div class="row-phase" style="padding-left: 36px;">Underground Utilities</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">TBD</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 32%; width: 8%;" data-tooltip="Electric, water, gas lines to house">
+                                Utilities
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 3: FOUNDATION -->
+                    <div class="gantt-row phase-header" data-phase="structure">
+                        <div class="row-phase">
+                            <span>🏗️</span>
+                            <span>FOUNDATION</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">Foundation (Post-Tension)</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 35%; width: 12%;" data-tooltip="Need contractor bid - Synergetic engineering complete REV3">
+                                Foundation 6-8 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 4: FRAMING -->
+                    <div class="gantt-row phase-header" data-phase="structure">
+                        <div class="row-phase">
+                            <span>🪚</span>
+                            <span>FRAMING</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">Framing (All Structures)</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 43%; width: 16%;" data-tooltip="~7,526 SF total - Main + Casita + Cabana, 8-10 weeks">
+                                Frame 8-10 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">Windows & Doors Install</div>
+                        <div class="row-vendor">Doorwin/Prestige?</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-critical" style="left: 48%; width: 10%;" data-tooltip="CRITICAL: 8-15 wk lead + install time">
+                                W&D + Lead Time
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">Roofing</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 52%; width: 8%;" data-tooltip="After framing complete, 4-6 weeks">
+                                Roof 4-6 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 5: ROUGH-INS -->
+                    <div class="gantt-row phase-header" data-phase="structure">
+                        <div class="row-phase">
+                            <span>🔌</span>
+                            <span>ROUGH-IN (MEP)</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">Plumbing Rough-In</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 55%; width: 10%;" data-tooltip="5-6 weeks for rough-in">
+                                Plumb 5-6 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">Electrical Rough-In</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 56%; width: 10%;" data-tooltip="5-6 weeks for rough-in">
+                                Electric 5-6 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="structure">
+                        <div class="row-phase" style="padding-left: 36px;">HVAC Rough-In</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 57%; width: 8%;" data-tooltip="4-5 weeks for ductwork">
+                                HVAC 4-5 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 6: EXTERIORS -->
+                    <div class="gantt-row phase-header" data-phase="finishes">
+                        <div class="row-phase">
+                            <span>🏠</span>
+                            <span>EXTERIOR FINISHES</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Exterior Stone</div>
+                        <div class="row-vendor">CobraStone (Bid)</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 58%; width: 12%;" data-tooltip="CobraStone - Bid requested Feb 13, 6-8 weeks">
+                                Stone 6-8 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Stucco/Siding</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 60%; width: 10%;" data-tooltip="5-7 weeks for exterior finish">
+                                Stucco 5-7 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 7: INTERIOR FINISHES -->
+                    <div class="gantt-row phase-header" data-phase="finishes">
+                        <div class="row-phase">
+                            <span>🎨</span>
+                            <span>INTERIOR FINISHES</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Drywall & Texture</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 63%; width: 10%;" data-tooltip="5-6 weeks for drywall">
+                                Drywall 5-6 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Interior Paint</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 67%; width: 8%;" data-tooltip="4-5 weeks for painting">
+                                Paint 4-5 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Flooring</div>
+                        <div class="row-vendor">Kristynik ($105K)</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 70%; width: 10%;" data-tooltip="Kristynik Hardwood - $105K committed, deposit paid">
+                                Kristynik 5-6 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Countertops</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 72%; width: 6%;" data-tooltip="3-4 weeks for fabrication + install">
+                                Counter 3-4 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Cabinets & Millwork</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 70%; width: 12%;" data-tooltip="Custom cabinetry - 6-8 week lead time, order early!">
+                                Cabinets 6-8 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Appliances</div>
+                        <div class="row-vendor">FBS ($165K)</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-pending" style="left: 74%; width: 4%;" data-tooltip="FBS - La Cornue 16+ week lead, order by Mar 2027!">
+                                Install
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Plumb/Elec Trim</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 75%; width: 6%;" data-tooltip="Fixtures & trim-out, 3-4 weeks">
+                                Trim 3-4 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 8: POOL & LANDSCAPING -->
+                    <div class="gantt-row phase-header" data-phase="finishes">
+                        <div class="row-phase">
+                            <span>🏊</span>
+                            <span>POOL & OUTDOOR</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Pool Construction</div>
+                        <div class="row-vendor">BYOP (Design)</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-inprogress" style="left: 65%; width: 16%;" data-tooltip="BYOP - Jay Hale designing, runs parallel to interiors">
+                                Pool 8-10 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Hardscape & Driveway</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 75%; width: 8%;" data-tooltip="4-5 weeks for hardscaping">
+                                Hardscape 4-5 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Landscaping</div>
+                        <div class="row-vendor">
+                            <span class="badge badge-tbd">Need Bid</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 80%; width: 8%;" data-tooltip="Final landscaping & irrigation, 4-6 weeks">
+                                Landscape 4-6 wks
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PHASE 9: FINAL -->
+                    <div class="gantt-row phase-header" data-phase="finishes">
+                        <div class="row-phase">
+                            <span>✅</span>
+                            <span>CLOSEOUT</span>
+                        </div>
+                        <div class="row-vendor"></div>
+                        <div class="row-timeline"></div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Final Inspections</div>
+                        <div class="row-vendor">Williamson County</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 85%; width: 6%;" data-tooltip="Certificate of Occupancy">
+                                CO & Inspections
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px;">Punch List</div>
+                        <div class="row-vendor">Various</div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-tbd" style="left: 87%; width: 5%;" data-tooltip="Final walk-through and corrections">
+                                Final Touch-Ups
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="gantt-row" data-phase="finishes">
+                        <div class="row-phase" style="padding-left: 36px; font-weight: 700; color: #10b981;">🏡 MOVE-IN READY</div>
+                        <div class="row-vendor">
+                            <span class="badge" style="background: #10b981; color: white;">TARGET</span>
+                        </div>
+                        <div class="row-timeline">
+                            <div class="timeline-bar status-complete" style="left: 92%; width: 2%;" data-tooltip="Target completion: August 2027">
+                                Aug '27
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color status-complete"></div>
+                    <span>Complete</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color status-inprogress"></div>
+                    <span>In Progress</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color status-pending"></div>
+                    <span>Ready to Start</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color status-tbd"></div>
+                    <span>TBD (Needs Bid)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color status-blocked"></div>
+                    <span>Blocked</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color status-critical"></div>
+                    <span>Critical Path</span>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="notes">
+                <h3>📌 Important Notes</h3>
+                <ul>
+                    <li><strong>Critical Path:</strong> Windows/doors decision drives framing timeline (8-15 week lead time)</li>
+                    <li><strong>Blocked Items:</strong> Septic design awaiting site plan from Kipp Flores to Travis Weiser</li>
+                    <li><strong>Long Lead Items:</strong> La Cornue range (16+ weeks), windows/doors (8-15 weeks), custom cabinetry (6-8 weeks)</li>
+                    <li><strong>Parallel Work:</strong> Pool construction can run parallel to interior finishes to save time</li>
+                    <li><strong>TBD Contractors:</strong> Need bids for foundation, framing, roofing, HVAC, plumbing, electrical, drywall, cabinets, countertops</li>
+                    <li><strong>Budget Target:</strong> $1.2M value-engineered; $292K spent to date; major decisions pending (~$275K-$500K)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Filter functionality
+        function filterPhase(phase) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            const rows = document.querySelectorAll('.gantt-row');
+            rows.forEach(row => {
+                if (phase === 'all') {
+                    row.style.display = 'flex';
+                } else {
+                    const rowPhase = row.getAttribute('data-phase');
+                    if (rowPhase === phase || row.classList.contains('phase-header')) {
+                        row.style.display = 'flex';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Enhanced tooltip
+        const tooltip = document.getElementById('tooltip');
+        document.querySelectorAll('.timeline-bar').forEach(bar => {
+            bar.addEventListener('mouseenter', function(e) {
+                const tooltipText = this.getAttribute('data-tooltip');
+                if (tooltipText) {
+                    tooltip.textContent = tooltipText;
+                    tooltip.style.display = 'block';
+                }
+            });
+
+            bar.addEventListener('mousemove', function(e) {
+                tooltip.style.left = (e.pageX + 15) + 'px';
+                tooltip.style.top = (e.pageY + 15) + 'px';
+            });
+
+            bar.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

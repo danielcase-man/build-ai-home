@@ -1,0 +1,35 @@
+Phase,Task,Vendor,Status,Start Month,Duration (Weeks),Dependencies,Budget Estimate,Notes
+PRE-CONSTRUCTION,Civil Engineering (Grading),Four A Engineering,In Progress,Feb 2026,4,None,$5275,Draft delivered Jan 26
+PRE-CONSTRUCTION,Septic Design,Travis Weiser,BLOCKED,Feb 2026,3,Site Plan CAD,TBD,Waiting for site plan from Matt Bonnette
+PRE-CONSTRUCTION,Structural Details,Asiri Design,In Progress,Feb 2026,5,None,Retainer Basis,3 of 11 details delivered
+PRE-CONSTRUCTION,Windows/Doors Decision,Doorwin vs Prestige,CRITICAL,Feb 2026,2,None,$60K-$287K,8-15 week lead time
+PRE-CONSTRUCTION,HOA Approval,Mesa Vista POA,Pending,Mar 2026,4,Finalized Plans,Application Fee,Needs final plans + materials
+PRE-CONSTRUCTION,Building Permit,Williamson County,Pending,Apr 2026,6,HOA Approval,Permit Fees,After HOA approval
+PRE-CONSTRUCTION,Construction Financing,Guild Mortgage,In Progress,Mar 2026,8,None,$1.2M Loan,Docs on file
+SITE WORK,Site Clearing & Grading,Chuck F.,Ready,May 2026,2,Building Permit,$15000,Bid accepted
+SITE WORK,Well Drilling,Bee Cave Drilling,Ready,May 2026,3,Site Clearing,$56481,560 ft well + storage
+SITE WORK,Septic System Installation,TBD,Pending,Jun 2026,4,Septic Design,$21K-$45K,Awaiting design completion
+SITE WORK,Underground Utilities,TBD,Pending,Jun 2026,3,Well & Septic,TBD,Electric/water/gas lines
+FOUNDATION,Foundation (Post-Tension Slab),TBD,Need Bid,Jul 2026,6,Underground Utilities,TBD,Engineering complete (Synergetic REV3)
+FRAMING,Framing (Main + Casita + Cabana),TBD,Need Bid,Aug 2026,10,Foundation,TBD,~7526 SF total
+FRAMING,Windows & Doors Installation,Doorwin/Prestige,Pending,Sep 2026,4,Framing + Lead Time,$60K-$287K,Order early (8-15 wk lead)
+FRAMING,Roofing,TBD,Need Bid,Oct 2026,6,Framing,TBD,After framing complete
+ROUGH-IN,Plumbing Rough-In,TBD,Need Bid,Nov 2026,5,Framing Complete,TBD,MEP coordination
+ROUGH-IN,Electrical Rough-In,TBD,Need Bid,Nov 2026,5,Framing Complete,TBD,MEP coordination
+ROUGH-IN,HVAC Rough-In,TBD,Need Bid,Nov 2026,4,Framing Complete,TBD,MEP coordination
+EXTERIORS,Exterior Stone/Masonry,CobraStone,Bid Pending,Dec 2026,8,Framing,TBD,Bid requested Feb 13
+EXTERIORS,Stucco/Siding,TBD,Need Bid,Dec 2026,6,Framing,TBD,After exterior sheathing
+INTERIORS,Drywall & Texture,TBD,Need Bid,Jan 2027,5,Rough-In Complete,TBD,After MEP inspections
+INTERIORS,Interior Painting,TBD,Need Bid,Feb 2027,4,Drywall,TBD,Prime + 2 coats
+INTERIORS,Flooring Installation,Kristynik Hardwood,Committed,Mar 2027,5,Painting,$105448,Deposit paid ($38507)
+INTERIORS,Countertops & Stone,TBD,Need Bid,Mar 2027,3,Cabinets,TBD,Multiple kitchens + baths
+INTERIORS,Kitchen Cabinets & Millwork,TBD,Need Bid,Feb 2027,8,Drywall,TBD,Custom cabinetry - long lead
+INTERIORS,Appliance Installation,FBS,Committed,Mar 2027,2,Cabinets + Counters,$165000,La Cornue 16+ wk lead - order early
+INTERIORS,Plumbing Fixtures & Trim,TBD,Need Bid,Mar 2027,3,Drywall,TBD,Finish plumbing
+INTERIORS,Electrical Fixtures & Trim,TBD,Need Bid,Mar 2027,3,Drywall,TBD,Lighting + switches
+POOL & OUTDOOR,Pool Construction,BYOP (Jay Hale),In Design,Dec 2026,10,Site Work,TBD,Can run parallel to interiors
+POOL & OUTDOOR,Hardscaping & Driveway,TBD,Need Bid,Apr 2027,4,Pool,TBD,Coordinate with pool
+POOL & OUTDOOR,Landscaping & Irrigation,TBD,Need Bid,May 2027,4,Hardscaping,TBD,Final landscaping
+CLOSEOUT,Final Inspections & CO,Williamson County,Pending,Jun 2027,2,All Work Complete,Inspection Fees,Certificate of Occupancy
+CLOSEOUT,Punch List & Touch-Ups,Various,Pending,Jun 2027,3,Inspections,Contingency,Final corrections
+CLOSEOUT,MOVE-IN READY,N/A,TARGET,Aug 2027,0,Punch List Complete,N/A,Target completion date

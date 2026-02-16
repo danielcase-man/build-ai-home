@@ -1,0 +1,4162 @@
+[
+  {
+    "file": "Amendment - Price change (version 4).pdf",
+    "filename": "Amendment - Price change (version 4).pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Appraisal 200k.docx",
+    "filename": "Appraisal 200k.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Appraisal 200k.pdf",
+    "filename": "Appraisal 200k.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "ClosingStatementBuyer_6-2-2025_9-39.pdf",
+    "filename": "ClosingStatementBuyer_6-2-2025_9-39.pdf",
+    "category": "Land Purchase",
+    "confidence": 0.95,
+    "reasoning": "Matched Land Purchase based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Land_Purchase"
+  },
+  {
+    "file": "Complete_with_Docusign_708_Purple_Salvia_Cov.pdf",
+    "filename": "Complete_with_Docusign_708_Purple_Salvia_Cov.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\Appliance Information Sheet 100323_DC - FILLED.pdf",
+    "filename": "Appliance Information Sheet 100323_DC - FILLED.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Construction Management\\Appliance Information Sheet 100323_DC.pdf",
+    "filename": "Appliance Information Sheet 100323_DC.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\Appliance_Information_Sheet_FILLED.md",
+    "filename": "Appliance_Information_Sheet_FILLED.md",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\Construction Tasks.txt",
+    "filename": "Construction Tasks.txt",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Construction Management\\Document1.docx",
+    "filename": "Document1.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Construction Management\\Liberty Hill Custom Home Summary-1.pdf",
+    "filename": "Liberty Hill Custom Home Summary-1.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Construction Management\\Notion_Construction_Management_Setup_Guide.md",
+    "filename": "Notion_Construction_Management_Setup_Guide.md",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Construction Management\\PRN 25-0058 708 PURPLE SILVIA COVE 04-29-25 Case Edit.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-29-25 Case Edit.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Construction Management\\README.md",
+    "filename": "README.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\1 How to use this manual.pdf",
+    "filename": "1 How to use this manual.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\1. DIRECTIONS TO New.pdf",
+    "filename": "1. DIRECTIONS TO New.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\10. Soil Septic Engineers.pdf",
+    "filename": "10. Soil Septic Engineers.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\11. Advanced Engineering Solutions.pdf",
+    "filename": "11. Advanced Engineering Solutions.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\12. AmeriSurveyors copy.pdf",
+    "filename": "12. AmeriSurveyors copy.pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\13. AmeriSurveyors Survey Request copy.pdf",
+    "filename": "13. AmeriSurveyors Survey Request copy.pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\14. Required Insurance.pdf",
+    "filename": "14. Required Insurance.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\15. Builders Risk Ins copy.pdf",
+    "filename": "15. Builders Risk Ins copy.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\16. Septic Systems.pdf",
+    "filename": "16. Septic Systems.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\17. Obtaining a Septic System.pdf",
+    "filename": "17. Obtaining a Septic System.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\18. Obtaining a Building Permit.pdf",
+    "filename": "18. Obtaining a Building Permit.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\19. Setting Up Utilities.pdf",
+    "filename": "19. Setting Up Utilities.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\2. Dream Home.pdf",
+    "filename": "2. Dream Home.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\2. How to use this manual.pdf",
+    "filename": "2. How to use this manual.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\20. Things To Do copy.pdf",
+    "filename": "20. Things To Do copy.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\21. Ballpark Budget.pdf",
+    "filename": "21. Ballpark Budget.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\22. Site Review & Eval.pdf",
+    "filename": "22. Site Review & Eval.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\23. Site Review & Eval.pdf",
+    "filename": "23. Site Review & Eval.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\24. Remodel site review.pdf",
+    "filename": "24. Remodel site review.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\25. Plan Development.pdf",
+    "filename": "25. Plan Development.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\26. Pre Plan Review 1st Draft.pdf",
+    "filename": "26. Pre Plan Review 1st Draft.pdf",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\27. Pre Plan Review 2nd Draft.pdf",
+    "filename": "27. Pre Plan Review 2nd Draft.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\28. Plan Development Process.pdf",
+    "filename": "28. Plan Development Process.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\29. Square Footage and Cost Planner.pdf",
+    "filename": "29. Square Footage and Cost Planner.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\3. UBI Williamson Team.pdf",
+    "filename": "3. UBI Williamson Team.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\30. Plan Checklist.pdf",
+    "filename": "30. Plan Checklist.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\31. Architectural Plan Timeline Agreement.pdf",
+    "filename": "31. Architectural Plan Timeline Agreement.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\32. Green Ideas.pdf",
+    "filename": "32. Green Ideas.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\33. Specifications.pdf",
+    "filename": "33. Specifications.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\34. Home Finishes_Specifications.pdf",
+    "filename": "34. Home Finishes_Specifications.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\35. Estimated Budget.pdf",
+    "filename": "35. Estimated Budget.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\36. Cost Review.pdf",
+    "filename": "36. Cost Review.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\37. Lender Flyer.pdf",
+    "filename": "37. Lender Flyer.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\39. Moving into Construction.pdf",
+    "filename": "39. Moving into Construction.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\4. Orientation.pdf",
+    "filename": "4. Orientation.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\5. UBI Contract.pdf",
+    "filename": "5. UBI Contract.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\6. Milestone Checklist.pdf",
+    "filename": "6. Milestone Checklist.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\7. Planning Phase Timeline.pdf",
+    "filename": "7. Planning Phase Timeline.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\8. Items & Vendors Needed.pdf",
+    "filename": "8. Items & Vendors Needed.pdf",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\9. Architects & Designers (2).pdf",
+    "filename": "9. Architects & Designers (2).pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Anchor Ventana.pdf",
+    "filename": "Anchor Ventana.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Build Your Own Pool.pdf",
+    "filename": "Build Your Own Pool.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Builder Benefits Lighting Inc.pdf",
+    "filename": "Builder Benefits Lighting Inc.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Burgess Energy.pdf",
+    "filename": "Burgess Energy.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Burgess Inspections.pdf",
+    "filename": "Burgess Inspections.pdf",
+    "category": "Design Selections",
+    "confidence": 0.75,
+    "reasoning": "Matched Design Selections based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Final_Selections"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\BYOP Flyer.pdf",
+    "filename": "BYOP Flyer.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Consultant Planning Meeting Checklist.pdf",
+    "filename": "Consultant Planning Meeting Checklist.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Contractor's Supplemental Application (2).pdf",
+    "filename": "Contractor's Supplemental Application (2).pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Doorwingroup.pdf",
+    "filename": "Doorwingroup.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\FBS Appiances_20241015_0001.pdf",
+    "filename": "FBS Appiances_20241015_0001.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Floor and Decor.pdf",
+    "filename": "Floor and Decor.pdf",
+    "category": "Design Selections",
+    "confidence": 0.75,
+    "reasoning": "Matched Design Selections based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Final_Selections"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Ongoing Docs\\1. Land Review.pdf",
+    "filename": "1. Land Review.pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Parrish & Company.pdf",
+    "filename": "Parrish & Company.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\ProSource - Austin.pdf",
+    "filename": "ProSource - Austin.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\ProSource - UBuildIt National.pdf",
+    "filename": "ProSource - UBuildIt National.pdf",
+    "category": "Design Selections",
+    "confidence": 0.75,
+    "reasoning": "Matched Design Selections based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Final_Selections"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Ringer Windows.pdf",
+    "filename": "Ringer Windows.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\SimpliSafe.pdf",
+    "filename": "SimpliSafe.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Step-by-Step-Guide AGD.pdf",
+    "filename": "Step-by-Step-Guide AGD.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\UBuildIt - How to receive Behr Paint Discount.pdf",
+    "filename": "UBuildIt - How to receive Behr Paint Discount.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\UBuildIt - Mr Truss Flyer.pdf",
+    "filename": "UBuildIt - Mr Truss Flyer.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\UBuildIt Shopping ListUpdated 9 26 24.docx",
+    "filename": "UBuildIt Shopping ListUpdated 9 26 24.docx",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\UBuildIt_Process_Complete_Guide.md",
+    "filename": "UBuildIt_Process_Complete_Guide.md",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Construction Management\\UbuildIt Process\\Waterloo Intergrations.pdf",
+    "filename": "Waterloo Intergrations.pdf",
+    "category": "UBuildIt Process",
+    "confidence": 0.95,
+    "reasoning": "Matched UBuildIt Process based on content and filename analysis",
+    "targetFolder": "09_REFERENCE_AND_TEMPLATES/UBuildIt_Process"
+  },
+  {
+    "file": "Development\\1.jpg",
+    "filename": "1.jpg",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\169879108_modified_floorp_first_floor_first_design_20250307_1dd8fa.jpg",
+    "filename": "169879108_modified_floorp_first_floor_first_design_20250307_1dd8fa.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\169879108_modified_floorp_first_floor_first_design_20250307_a2e032.jpg",
+    "filename": "169879108_modified_floorp_first_floor_first_design_20250307_a2e032.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\2.jpg",
+    "filename": "2.jpg",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\2024 WARRANTY  New Construction PRINCE DEVELOPMENT LLC.pdf",
+    "filename": "2024 WARRANTY  New Construction PRINCE DEVELOPMENT LLC.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\2025-04-21_0-00-38.jpg",
+    "filename": "2025-04-21_0-00-38.jpg",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\ACTION_ITEMS.md",
+    "filename": "ACTION_ITEMS.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\Bids\\ALL_BIDS_SUMMARY_with_Chucks_Bids.md",
+    "filename": "ALL_BIDS_SUMMARY_with_Chucks_Bids.md",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\410012 - FULL SPECS.pdf",
+    "filename": "410012 - FULL SPECS.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\Appliance_Bid_Template.xlsx",
+    "filename": "Appliance_Bid_Template.xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\FBS Appliances\\410012 - FULL SPECS.pdf",
+    "filename": "410012 - FULL SPECS.pdf",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\FBS Appliances\\LaCornue_Chateau_150_G45_G44.pdf",
+    "filename": "LaCornue_Chateau_150_G45_G44.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\FBS Appliances\\Quote 410012.pdf",
+    "filename": "Quote 410012.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\LaCanche\\LaCanche Color Options.docx",
+    "filename": "LaCanche Color Options.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\LaCanche\\~$Canche Color Options.docx",
+    "filename": "~$Canche Color Options.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\LaCornue_Rôtisserie_BFG_09.21.pdf",
+    "filename": "LaCornue_Rôtisserie_BFG_09.21.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\Quote # m32224 Manna Distributors.pdf",
+    "filename": "Quote # m32224 Manna Distributors.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\Quote 410012.pdf",
+    "filename": "Quote 410012.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Appliances\\stacked miele height.pdf (002).jpeg",
+    "filename": "stacked miele height.pdf (002).jpeg",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Architectural Services\\2 Applied roof rafter diagram.pdf",
+    "filename": "2 Applied roof rafter diagram.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Bids\\Ballpark Estimate 10_14_25 (002) (version 1).xlsx",
+    "filename": "Ballpark Estimate 10_14_25 (002) (version 1).xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Ballpark Estimate WIth Itemization.xlsx",
+    "filename": "Ballpark Estimate WIth Itemization.xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Ballpark_Estimate_10_14_25_v1_NB_Master_Shower_Filled (version 1).xlsx",
+    "filename": "Ballpark_Estimate_10_14_25_v1_NB_Master_Shower_Filled (version 1).xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Ballpark_Estimate_10_14_25_v1_NB_Master_Shower_Filled (version 2).xlsx",
+    "filename": "Ballpark_Estimate_10_14_25_v1_NB_Master_Shower_Filled (version 2).xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Budget_Summary_FINAL_Oct_2025.md",
+    "filename": "Budget_Summary_FINAL_Oct_2025.md",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Bids\\Complete_Plumbing_Specification_with_Pricing.md",
+    "filename": "Complete_Plumbing_Specification_with_Pricing.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\CONTRACTOR_Plumbing_Fixtures_List.md",
+    "filename": "CONTRACTOR_Plumbing_Fixtures_List.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Electrical\\Estimate 11711 - Case Outdoor Lighting.pdf",
+    "filename": "Estimate 11711 - Case Outdoor Lighting.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Bids\\Electrical\\preliminary_plumbing_electrical_takedown_1st_builder_checkset.md",
+    "filename": "preliminary_plumbing_electrical_takedown_1st_builder_checkset.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\708 Purple Salvia Cove Engineering Proposal- Foundation Design  Certification 09-23-25.pdf",
+    "filename": "708 Purple Salvia Cove Engineering Proposal- Foundation Design  Certification 09-23-25.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\Civil Engineering\\LSA - Daniel Case - 708 Purple Salvia Cove Drainage and Grading Plan (002).pdf",
+    "filename": "LSA - Daniel Case - 708 Purple Salvia Cove Drainage and Grading Plan (002).pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\Civil Engineering\\MUP CIVIL GRADING 2.pdf",
+    "filename": "MUP CIVIL GRADING 2.pdf",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\Civil Engineering\\Proposal-708 Purple Salvia - Signed.pdf",
+    "filename": "Proposal-708 Purple Salvia - Signed.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\Civil Engineering\\Proposal-708 Purple Salvia.pdf",
+    "filename": "Proposal-708 Purple Salvia.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\Complete_with_Docusign_708_Purple_Salvia_Cov (1).pdf",
+    "filename": "Complete_with_Docusign_708_Purple_Salvia_Cov (1).pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\Proposal-708 Purple Salvia.pdf",
+    "filename": "Proposal-708 Purple Salvia.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Engineering Plans\\VTReceipt.pdf",
+    "filename": "VTReceipt.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Bids\\Excavation and Septic\\Estimate 13027 (1).pdf",
+    "filename": "Estimate 13027 (1).pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Excavation and Septic\\Estimate Notes and Disclosures.pdf",
+    "filename": "Estimate Notes and Disclosures.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Development\\Bids\\Excavation and Septic\\Proposal 708 Purple Salvia Cv - Land CLearning 15k Chuck F.docx",
+    "filename": "Proposal 708 Purple Salvia Cv - Land CLearning 15k Chuck F.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Excavation and Septic\\Proposal 708 Purple Salvia Cv - Septic Design and implementaton Chuck.docx",
+    "filename": "Proposal 708 Purple Salvia Cv - Septic Design and implementaton Chuck.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Excavation and Septic\\Site Requirements.pdf",
+    "filename": "Site Requirements.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Development\\Bids\\Excavation and Septic\\Spray System Standard Installation.pdf",
+    "filename": "Spray System Standard Installation.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Final Budget\\Comprehensive_Budget_Formatted original.xlsx",
+    "filename": "Comprehensive_Budget_Formatted original.xlsx",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Development\\Bids\\Final Budget\\Comprehensive_Budget_Formatted.xlsx",
+    "filename": "Comprehensive_Budget_Formatted.xlsx",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Development\\Bids\\Final Budget\\Comprehensive_Budget_Formatted_BACKUP.xlsx",
+    "filename": "Comprehensive_Budget_Formatted_BACKUP.xlsx",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Development\\Bids\\FINAL_PLUMBING_FIXTURES_for_Contractor.md",
+    "filename": "FINAL_PLUMBING_FIXTURES_for_Contractor.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Bids\\Flooring\\Est_21646R_from_Kristynik_Hardwood_Flooring_Inc._15476.pdf",
+    "filename": "Est_21646R_from_Kristynik_Hardwood_Flooring_Inc._15476.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Flooring\\Est_21721_from_Kristynik_Hardwood_Flooring_Inc._16928.pdf",
+    "filename": "Est_21721_from_Kristynik_Hardwood_Flooring_Inc._16928.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Bids\\Flooring\\KHF Terms & Conditions.pdf",
+    "filename": "KHF Terms & Conditions.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Garage Doors\\Browns Garage Door Bid.pdf",
+    "filename": "Browns Garage Door Bid.pdf",
+    "category": "Design Selections",
+    "confidence": 0.75,
+    "reasoning": "Matched Design Selections based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Final_Selections"
+  },
+  {
+    "file": "Development\\Bids\\Master_Bathroom_Pricing_Summary_2025-11-08.md",
+    "filename": "Master_Bathroom_Pricing_Summary_2025-11-08.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Plumbing and Lighting Fixtures\\CASE - PLUMBING QUOTE - 10102025.pdf",
+    "filename": "CASE - PLUMBING QUOTE - 10102025.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Plumbing and Lighting Fixtures\\CASE - V1 RENDERS - 10102025.pdf",
+    "filename": "CASE - V1 RENDERS - 10102025.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\plumbing-cart-automation\\README.md",
+    "filename": "README.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\plumbing-cart-automation\\SOLUTION.md",
+    "filename": "SOLUTION.md",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Plumbing_Budget_REVISED_with_Price_Notes.md",
+    "filename": "Plumbing_Budget_REVISED_with_Price_Notes.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Adjustments.pdf",
+    "filename": "Adjustments.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_001 W feedback.pdf",
+    "filename": "Case_001 W feedback.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_001.pdf",
+    "filename": "Case_001.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_004.jpg",
+    "filename": "Case_004.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_005.jpg",
+    "filename": "Case_005.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_006.jpg",
+    "filename": "Case_006.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_007.jpg",
+    "filename": "Case_007.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Case_008.jpg",
+    "filename": "Case_008.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Case 2.pdf",
+    "filename": "Case 2.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Case 2_001.jpg",
+    "filename": "Case 2_001.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Case 2_002.jpg",
+    "filename": "Case 2_002.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Case 2_003.jpg",
+    "filename": "Case 2_003.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Case 2_004.jpg",
+    "filename": "Case 2_004.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Final Final\\Case 4_001.jpg",
+    "filename": "Case 4_001.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Final Final\\Case 4_001.pdf",
+    "filename": "Case 4_001.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Final Final\\Case 4_002.jpg",
+    "filename": "Case 4_002.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Final Final\\Case 4_003.jpg",
+    "filename": "Case 4_003.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Final Final\\Case 4_004.jpg",
+    "filename": "Case 4_004.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Final\\Final Final\\Case 4_005.jpg",
+    "filename": "Case 4_005.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\IMG_0801.jpeg",
+    "filename": "IMG_0801.jpeg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\IMG_0802.jpeg",
+    "filename": "IMG_0802.jpeg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\Pool Design sketch.jpg",
+    "filename": "Pool Design sketch.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\Pool Design\\SIte plan notes.jpg",
+    "filename": "SIte plan notes.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Bids\\PRICING_WORKFLOW_Instructions.md",
+    "filename": "PRICING_WORKFLOW_Instructions.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Receipts\\VTReceipt.pdf",
+    "filename": "VTReceipt.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Bids\\Septic\\Paul Swoyer Septic Estimate 13027 (1) 44,850.pdf",
+    "filename": "Paul Swoyer Septic Estimate 13027 (1) 44,850.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\Case Liberty Hill Custom Home Estimate.xlsx",
+    "filename": "Case Liberty Hill Custom Home Estimate.xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\Case Liberty Hill Home Kitchen and Bathroom Estimate.xlsx",
+    "filename": "Case Liberty Hill Home Kitchen and Bathroom Estimate.xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\Case, Daniel countertop bid 10.09.25.pdf",
+    "filename": "Case, Daniel countertop bid 10.09.25.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\D. Case Labor ONLY Estimate 13198.pdf",
+    "filename": "D. Case Labor ONLY Estimate 13198.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\D. Case Material Allowance ONLY Estimate 13201.pdf",
+    "filename": "D. Case Material Allowance ONLY Estimate 13201.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\Daniel Case Bid Drawing 10.15.25.pdf",
+    "filename": "Daniel Case Bid Drawing 10.15.25.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\QUOTE - CALCATTA BORGHINI - 708 PURPLE SALVIA CV.pdf",
+    "filename": "QUOTE - CALCATTA BORGHINI - 708 PURPLE SALVIA CV.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Stone Fabricator\\QUOTE - CALCATTA GOLD - 708 PURPLE SALVIA CV.pdf",
+    "filename": "QUOTE - CALCATTA GOLD - 708 PURPLE SALVIA CV.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Survey\\Paid Invoice - 210038-TOPO_708 Purple Salvia Cove.pdf",
+    "filename": "Paid Invoice - 210038-TOPO_708 Purple Salvia Cove.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Bids\\TOTO_Lavatory_Sink_Options.md",
+    "filename": "TOTO_Lavatory_Sink_Options.md",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Well Drilling\\Case, Daniel Estimate 13791.pdf",
+    "filename": "Case, Daniel Estimate 13791.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Bids\\Windows and Doors\\Case Residence - Weather Shield and Valor Steel - Exclusive Windows  Doors Proposal-05.15.25.pdf",
+    "filename": "Case Residence - Weather Shield and Valor Steel - Exclusive Windows  Doors Proposal-05.15.25.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Bids\\Windows and Doors\\Citadel_Case Res Hybrid Estimate 05.16.2025.pdf",
+    "filename": "Citadel_Case Res Hybrid Estimate 05.16.2025.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Bids\\Windows and Doors\\Estimate #2670 - Prestige Steel Doors & WIndows.pdf",
+    "filename": "Estimate #2670 - Prestige Steel Doors & WIndows.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Development\\Bids\\Windows and Doors\\Estimate #2670 Thermally Broken.pdf",
+    "filename": "Estimate #2670 Thermally Broken.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Development\\Bids\\Windows and Doors\\FSC - Quote #Q3163 - 448 Bold Sundown 198k.pdf",
+    "filename": "FSC - Quote #Q3163 - 448 Bold Sundown 198k.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Bids\\~$Ballpark_Estimate_10_14_25_v1_NB_Master_Shower_Filled (version 1).xlsx",
+    "filename": "~$Ballpark_Estimate_10_14_25_v1_NB_Master_Shower_Filled (version 1).xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Budget_Reality_Check_Actual_Bids_vs_Estimates.md",
+    "filename": "Budget_Reality_Check_Actual_Bids_vs_Estimates.md",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Budget_Summary_and_Recommendations.md",
+    "filename": "Budget_Summary_and_Recommendations.md",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Development\\CHANGELOG.md",
+    "filename": "CHANGELOG.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\Civil_Engineering_RFP_Summary.md",
+    "filename": "Civil_Engineering_RFP_Summary.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\Cropped.jpg",
+    "filename": "Cropped.jpg",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\1604-09-Modern-Bolection-Italian-Arabescato-Mantel.jpg",
+    "filename": "1604-09-Modern-Bolection-Italian-Arabescato-Mantel.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\2025-11-13_17-55-40.jpg",
+    "filename": "2025-11-13_17-55-40.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\2025-11-26_15-57-42.jpg",
+    "filename": "2025-11-26_15-57-42.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Bathroom Floor Inspirations\\marble bathroom floor.jpg",
+    "filename": "marble bathroom floor.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Bathroom Floor Inspirations\\Marble mosaic floor.jpg",
+    "filename": "Marble mosaic floor.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Bathroom Floor Inspirations\\Marble mosaic flooring 2.jpg",
+    "filename": "Marble mosaic flooring 2.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Bathroom Floor Inspirations\\Marble mosaic flooring 3.jpg",
+    "filename": "Marble mosaic flooring 3.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Bathroom Floor Inspirations\\Marble mosaic.jpg",
+    "filename": "Marble mosaic.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Bathroom Floor Inspirations\\Neutral Limestone with Organic Feel.jpg",
+    "filename": "Neutral Limestone with Organic Feel.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\bb363c2ad17139d584616b46ee740a5a.jpg",
+    "filename": "bb363c2ad17139d584616b46ee740a5a.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Case Residence - Proposal 08-20-2025 (002).pdf",
+    "filename": "Case Residence - Proposal 08-20-2025 (002).pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Coutnertop Examples\\straight-edge-countertop-min-800x800.jpg",
+    "filename": "straight-edge-countertop-min-800x800.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\den-french-limestone-fireplace.jpg",
+    "filename": "den-french-limestone-fireplace.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Doors\\TS3160-201 Trustile.pdf",
+    "filename": "TS3160-201 Trustile.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\708 Purple Salvia Cove foundation plan 10-06-25 (002).pdf",
+    "filename": "708 Purple Salvia Cove foundation plan 10-06-25 (002).pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Foundation\\708 Purple Salvia Cove foundation plan REV 10-27-25.pdf",
+    "filename": "708 Purple Salvia Cove foundation plan REV 10-27-25.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Foundation\\708 Purple Salvia Cove foundation plan REV2 11-05-25.pdf",
+    "filename": "708 Purple Salvia Cove foundation plan REV2 11-05-25.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Roof to wall detail.png",
+    "filename": "Roof to wall detail.png",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Roofing\\Applied roof rafter diagram.pdf",
+    "filename": "Applied roof rafter diagram.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Sample slab to wall detail (we aren't using stucco, so that is different).png",
+    "filename": "Sample slab to wall detail (we aren't using stucco, so that is different).png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Sample slab to wall detail 2 (we aren't using stucco, so that is different).png",
+    "filename": "Sample slab to wall detail 2 (we aren't using stucco, so that is different).png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Structural\\2504901A - 708 Purple Salvia Cove - Liberty Hill 1.pdf",
+    "filename": "2504901A - 708 Purple Salvia Cove - Liberty Hill 1.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Structural\\708 Purple Salvia Cove foundation plan REV3 12-04-25.pdf",
+    "filename": "708 Purple Salvia Cove foundation plan REV3 12-04-25.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Structural\\Applied roof rafter diagram.pdf",
+    "filename": "Applied roof rafter diagram.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Structural\\FINAL\\Case Residence Main House -11-19-25.pdf",
+    "filename": "Case Residence Main House -11-19-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Structural\\FINAL\\Case Residence RV Garage -11-19-25.pdf",
+    "filename": "Case Residence RV Garage -11-19-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\T-Stud Vertical Wall Detail.png",
+    "filename": "T-Stud Vertical Wall Detail.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Window head detail brick assembly.png",
+    "filename": "Window head detail brick assembly.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\Window Jamb Detail.png",
+    "filename": "Window Jamb Detail.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Engineering Plans\\WIndow sill detail.png",
+    "filename": "WIndow sill detail.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\250991988fa4937a41372afe424d7b92.jpg",
+    "filename": "250991988fa4937a41372afe424d7b92.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\3364f26cd1fc2aec563bae28b42fb918.jpg",
+    "filename": "3364f26cd1fc2aec563bae28b42fb918.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\66e68e1aaecbb40ac6e55e6052658c45.jpg",
+    "filename": "66e68e1aaecbb40ac6e55e6052658c45.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\717e4e601cebe4d9d43085218dcd78ee.jpg",
+    "filename": "717e4e601cebe4d9d43085218dcd78ee.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\80edf5835d7cdceac8b75bc79ab30aaf.jpg",
+    "filename": "80edf5835d7cdceac8b75bc79ab30aaf.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\ac9f2fce43c5f900caefb006858b4047.jpg",
+    "filename": "ac9f2fce43c5f900caefb006858b4047.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\ALmost.png",
+    "filename": "ALmost.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\b6fcb683-7188-4f2a-bbe7-fbecaeca5555.jpg",
+    "filename": "b6fcb683-7188-4f2a-bbe7-fbecaeca5555.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\CH-27-2lt-copper-top-loop-copy.jpg",
+    "filename": "CH-27-2lt-copper-top-loop-copy.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\CH27-full-scroll.jpg",
+    "filename": "CH27-full-scroll.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\d49c974216e162e6e9389bad5c0d50d1.jpg",
+    "filename": "d49c974216e162e6e9389bad5c0d50d1.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\Front 2.jpg",
+    "filename": "Front 2.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\Front.jpg",
+    "filename": "Front.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\OV-240-E-with-CH-23-copper.jpg",
+    "filename": "OV-240-E-with-CH-23-copper.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\Rear.jpg",
+    "filename": "Rear.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\sample 2.png",
+    "filename": "sample 2.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Exterior inspiration\\Sample elevation.png",
+    "filename": "Sample elevation.png",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\fireplace-with-french-mirrors.jpg",
+    "filename": "fireplace-with-french-mirrors.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Framing\\Monopoly Concept w Conventional Frame.jpg",
+    "filename": "Monopoly Concept w Conventional Frame.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Framing\\Monopoly House.jpg",
+    "filename": "Monopoly House.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Framing\\Rafter Tails On Monopoly.jpg",
+    "filename": "Rafter Tails On Monopoly.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Front Elevation.jpg",
+    "filename": "Front Elevation.jpg",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\ftimage.jpg",
+    "filename": "ftimage.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Garage Doors\\Brochure_Amarr_Heritage-B634.pdf",
+    "filename": "Brochure_Amarr_Heritage-B634.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Design\\GxQU8LU5WUONtP6.jpg",
+    "filename": "GxQU8LU5WUONtP6.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\Imprint+house5063+Low+Res.png",
+    "filename": "Imprint+house5063+Low+Res.png",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\KFA-0465 CASE RES 07-17-25 Case Notes.pdf",
+    "filename": "KFA-0465 CASE RES 07-17-25 Case Notes.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\KFA-0465 CASE RES 07-17-25.pdf",
+    "filename": "KFA-0465 CASE RES 07-17-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\KFA-0465 CASE RES 08-19-2025 Case feedback.pdf",
+    "filename": "KFA-0465 CASE RES 08-19-2025 Case feedback.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\La Cornue\\Cooktop COnfig Question.jpg",
+    "filename": "Cooktop COnfig Question.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\La Cornue\\Montagne.jpg",
+    "filename": "Montagne.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\La Cornue\\ONLY LOOK AT COLOR WHAT COLOR IS THIS.jpg",
+    "filename": "ONLY LOOK AT COLOR WHAT COLOR IS THIS.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\La Cornue\\Pebble Grey.jpg",
+    "filename": "Pebble Grey.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\La Cornue\\Tranquil.jpg",
+    "filename": "Tranquil.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\La Cornue Grand Palais 180 Pure White.pdf",
+    "filename": "La Cornue Grand Palais 180 Pure White.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Design\\limestone-fireplace-with-smoked-mirrors.jpg",
+    "filename": "limestone-fireplace-with-smoked-mirrors.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\LindsaySalazar-5-1_EhTb7hwL4x78OWwdnC9rdg-de0ce222f4ec4702b3bf16b80092da78.jpg",
+    "filename": "LindsaySalazar-5-1_EhTb7hwL4x78OWwdnC9rdg-de0ce222f4ec4702b3bf16b80092da78.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\m_limestone-fireplace-with-smoked-mirrors.jpg",
+    "filename": "m_limestone-fireplace-with-smoked-mirrors.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Design\\PRN 25-0058 708 PURPLE SILVIA COVE - Case Modification Requests April 21.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE - Case Modification Requests April 21.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Development\\Design\\PRN 25-0058 708 PURPLE SILVIA COVE 04-18-25.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-18-25.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Development\\Design\\PRN 25-0058 708 PURPLE SILVIA COVE 04-25-25.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-25-25.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Development\\Design\\PRN 25-0058 708 PURPLE SILVIA COVE 04-26-25 Case Redlines.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-26-25 Case Redlines.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Development\\Design\\PRN 25-0058 708 PURPLE SILVIA COVE 04-29-25 Case Edit.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-29-25 Case Edit.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Development\\Design\\PRN 25-0058 708 PURPLE SILVIA COVE 04-29-25.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-29-25.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Development\\Design\\PRN-708 Purple Salvia Cove-1st bldr chkst 05-20-25.pdf",
+    "filename": "PRN-708 Purple Salvia Cove-1st bldr chkst 05-20-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\PRN-708 Purple Salvia Cove-1st bldr chkst 06-06-25 (002).pdf",
+    "filename": "PRN-708 Purple Salvia Cove-1st bldr chkst 06-06-25 (002).pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\PRN-708 Purple Salvia Cove-1st bldr chkst 06-06-25 (July 3 Notes).pdf",
+    "filename": "PRN-708 Purple Salvia Cove-1st bldr chkst 06-06-25 (July 3 Notes).pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Rotisserie.pdf",
+    "filename": "Rotisserie.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Case Feedback\\KFA-0465 CASE RES SITE 09-16-25 (002) Redlined.pdf",
+    "filename": "KFA-0465 CASE RES SITE 09-16-25 (002) Redlined.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Case Feedback\\KFA-5283-708 Purple Salvia Cv-1st bldr chkst 09-23-25 (002) Case Feedback.pdf",
+    "filename": "KFA-5283-708 Purple Salvia Cv-1st bldr chkst 09-23-25 (002) Case Feedback.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Case Residence - 708 Purple Salvia Cove.pdf",
+    "filename": "Case Residence - 708 Purple Salvia Cove.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Case Residence - Proposal 08-25-2025.pdf",
+    "filename": "Case Residence - Proposal 08-25-2025.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\KFA-0465 CASE RES SITE 09-05-25.pdf",
+    "filename": "KFA-0465 CASE RES SITE 09-05-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\KFA-0465 CASE RES SITE 09-11-25 (002) Case feedback.pdf",
+    "filename": "KFA-0465 CASE RES SITE 09-11-25 (002) Case feedback.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\KFA-0465 CASE RES SITE 09-11-25.pdf",
+    "filename": "KFA-0465 CASE RES SITE 09-11-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\KFA-0465 CASE RES SITE 09-16-25.pdf",
+    "filename": "KFA-0465 CASE RES SITE 09-16-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\KFA-0465 CASE RES SITE 09-30-25.pdf",
+    "filename": "KFA-0465 CASE RES SITE 09-30-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\KFA-5283-708 Purple Salvia Cv-1st bldr chkst 09-23-25 (002) Case Feedback.pdf",
+    "filename": "KFA-5283-708 Purple Salvia Cv-1st bldr chkst 09-23-25 (002) Case Feedback.pdf",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Latest\\708 Purple Salvia Cove 10-30-25.pdf",
+    "filename": "708 Purple Salvia Cove 10-30-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Latest\\FINAL\\708 PURPLE SALVIA COVE 01-28-26 30x42.pdf",
+    "filename": "708 PURPLE SALVIA COVE 01-28-26 30x42.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Latest\\FINAL\\Case Residence - 708 Purple Salvia Cove 12-17-25.pdf",
+    "filename": "Case Residence - 708 Purple Salvia Cove 12-17-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Latest\\FINAL\\Case Residence Main House -11-19-25.pdf",
+    "filename": "Case Residence Main House -11-19-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Latest\\FINAL\\Case Residence RV Garage -11-19-25.pdf",
+    "filename": "Case Residence RV Garage -11-19-25.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\Site Plan and Latest\\Latest\\FINAL\\KFA-0465 CASE CABANA 01-13-26.pdf",
+    "filename": "KFA-0465 CASE CABANA 01-13-26.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Design\\The-Gatehouse-Bare-Plaster-Country-Locations.jpg",
+    "filename": "The-Gatehouse-Bare-Plaster-Country-Locations.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Dirty Kitchen Big Pantry.jpg",
+    "filename": "Dirty Kitchen Big Pantry.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Expenses\\01_Prince_Development_Architectural\\Plan Drawing Agreement.pdf",
+    "filename": "Plan Drawing Agreement.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\01_Prince_Development_Architectural\\Receipt 11533.pdf",
+    "filename": "Receipt 11533.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\01_Prince_Development_Architectural\\Receipt 11581.pdf",
+    "filename": "Receipt 11581.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\02_Kipp_Flores_Architects\\Case_Residence_-_Contract__Proposal.pdf",
+    "filename": "Case_Residence_-_Contract__Proposal.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Expenses\\02_Kipp_Flores_Architects\\Oct 2025 - 862.50 Invoice Receipt Kipp Flores.jpg",
+    "filename": "Oct 2025 - 862.50 Invoice Receipt Kipp Flores.jpg",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\02_Kipp_Flores_Architects\\Payment Receipt from Kipp Flores Architects LLC for $2,000.00 Inv Oct 1 #90039.pdf",
+    "filename": "Payment Receipt from Kipp Flores Architects LLC for $2,000.00 Inv Oct 1 #90039.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\02_Kipp_Flores_Architects\\Payment Receipt from Kipp Flores Architects LLC for $2,000.00.pdf",
+    "filename": "Payment Receipt from Kipp Flores Architects LLC for $2,000.00.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\02_Kipp_Flores_Architects\\Plan Drawing Agreement_Case.pdf",
+    "filename": "Plan Drawing Agreement_Case.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\03_Land_Survey_Texas_Land_Surveying\\210038-TOPO_708 Purple Salvia Cove - TOPO & TREE SURVEY.pdf",
+    "filename": "210038-TOPO_708 Purple Salvia Cove - TOPO & TREE SURVEY.pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Development\\Expenses\\03_Land_Survey_Texas_Land_Surveying\\Paid Invoice - 210038-TOPO_708 Purple Salvia Cove.pdf",
+    "filename": "Paid Invoice - 210038-TOPO_708 Purple Salvia Cove.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\03_Land_Survey_Texas_Land_Surveying\\Receipt.pdf",
+    "filename": "Receipt.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\04_Foundation_Engineering_Synergetic\\708 Purple Salvia Cove Agreement for Engineering Services v.3.2.pdf",
+    "filename": "708 Purple Salvia Cove Agreement for Engineering Services v.3.2.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Expenses\\04_Foundation_Engineering_Synergetic\\VTReceipt - Foundation Engineering Receipt.pdf",
+    "filename": "VTReceipt - Foundation Engineering Receipt.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\Est_21646R_from_Kristynik_Hardwood_Flooring_Inc._15476.pdf",
+    "filename": "Est_21646R_from_Kristynik_Hardwood_Flooring_Inc._15476.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\Est_21721_from_Kristynik_Hardwood_Flooring_Inc._16928 (1).pdf",
+    "filename": "Est_21721_from_Kristynik_Hardwood_Flooring_Inc._16928 (1).pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\Est_21721_from_Kristynik_Hardwood_Flooring_Inc._16928.pdf",
+    "filename": "Est_21721_from_Kristynik_Hardwood_Flooring_Inc._16928.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\File Nov 23 2025, 10 39 47 AM.txt",
+    "filename": "File Nov 23 2025, 10 39 47 AM.txt",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\File Nov 23 2025, 10 41 00 AM.txt",
+    "filename": "File Nov 23 2025, 10 41 00 AM.txt",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\Inv_37287_from_Kristynik_Hardwood_Flooring_Inc._47256 Stairs and Attic Deposit $14,217.pdf",
+    "filename": "Inv_37287_from_Kristynik_Hardwood_Flooring_Inc._47256 Stairs and Attic Deposit $14,217.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\KHF E-Check Authorization Stairs and Attics.pdf",
+    "filename": "KHF E-Check Authorization Stairs and Attics.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\05_Flooring_Kristynik\\KHF E-Check Authorization(1).pdf",
+    "filename": "KHF E-Check Authorization(1).pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\06_UBuildIt_Construction_Consulting\\Case_2024 UBuildIt Classic - Williamson - 11212024.pdf",
+    "filename": "Case_2024 UBuildIt Classic - Williamson - 11212024.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\06_UBuildIt_Construction_Consulting\\UBuildIt Classic Contract Signed - Williamson - 11212024.pdf",
+    "filename": "UBuildIt Classic Contract Signed - Williamson - 11212024.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\07_Land_Purchase\\ClosingStatementBuyer_6-2-2025_9-39.pdf",
+    "filename": "ClosingStatementBuyer_6-2-2025_9-39.pdf",
+    "category": "Land Purchase",
+    "confidence": 0.95,
+    "reasoning": "Matched Land Purchase based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Land_Purchase"
+  },
+  {
+    "file": "Development\\Expenses\\07_Land_Purchase\\Complete_with_Docusign_708_Purple_Salvia_Cov.pdf",
+    "filename": "Complete_with_Docusign_708_Purple_Salvia_Cov.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Expenses\\07_Land_Purchase\\Sales Contract.pdf",
+    "filename": "Sales Contract.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Asiri Design\\Consulting Services Agreement - Daniel Case - 12_2_25, 3_43 PM.pdf",
+    "filename": "Consulting Services Agreement - Daniel Case - 12_2_25, 3_43 PM.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Case_Residence_-_Contract__Proposal.pdf",
+    "filename": "Case_Residence_-_Contract__Proposal.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\James Hardie siding samples $70.pdf",
+    "filename": "James Hardie siding samples $70.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Payment Receipt from Kipp Flores Architects LLC for $2,000.00 Inv Oct 1 #90039.pdf",
+    "filename": "Payment Receipt from Kipp Flores Architects LLC for $2,000.00 Inv Oct 1 #90039.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Payment Receipt from Kipp Flores Architects LLC for $2,000.00.pdf",
+    "filename": "Payment Receipt from Kipp Flores Architects LLC for $2,000.00.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Plan Drawing Agreement_Case.pdf",
+    "filename": "Plan Drawing Agreement_Case.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Receipt 11533.pdf",
+    "filename": "Receipt 11533.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\Architectural Design\\Receipt 11581.pdf",
+    "filename": "Receipt 11581.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\Ballpark Estimate 10_10_25.pdf",
+    "filename": "Ballpark Estimate 10_10_25.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Expenses\\Ballpark Estimate 10_14_25.xlsx",
+    "filename": "Ballpark Estimate 10_14_25.xlsx",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\708 Purple Salvia Cove Agreement for Engineering Services v.3.2.pdf",
+    "filename": "708 Purple Salvia Cove Agreement for Engineering Services v.3.2.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\Asiri Designs\\Case Residence Transition Details 1 02132026.pdf",
+    "filename": "Case Residence Transition Details 1 02132026.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\Asiri Designs\\Consulting Services Agreement - Daniel Case - 12_2_25, 3_43 PM.pdf",
+    "filename": "Consulting Services Agreement - Daniel Case - 12_2_25, 3_43 PM.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\Asiri Designs\\Invoice-AD-0148 4,150.pdf",
+    "filename": "Invoice-AD-0148 4,150.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\Copelan Invoce 2,650 Paid in Full.pdf",
+    "filename": "Copelan Invoce 2,650 Paid in Full.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\Receipt 142857.pdf",
+    "filename": "Receipt 142857.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\Expenses\\Engineering Plans\\VTReceipt - Foundation Engineering Receipt.pdf",
+    "filename": "VTReceipt - Foundation Engineering Receipt.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Back dig hole 1.jpeg",
+    "filename": "Back dig hole 1.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Back dig hole 2.jpeg",
+    "filename": "Back dig hole 2.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Back dig hole.jpeg",
+    "filename": "Back dig hole.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Front dig 2.jpeg",
+    "filename": "Front dig 2.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Front dig Second Hole 1.jpeg",
+    "filename": "Front dig Second Hole 1.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Front Dig second Hole 2.jpeg",
+    "filename": "Front Dig second Hole 2.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\Excavation Work\\Front Dig.jpeg",
+    "filename": "Front Dig.jpeg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Development\\Expenses\\README_EXPENSES_SUMMARY.md",
+    "filename": "README_EXPENSES_SUMMARY.md",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Expenses\\Receipt 143083.pdf",
+    "filename": "Receipt 143083.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Development\\fireplace.png",
+    "filename": "fireplace.png",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Gmail_Authentication_Fix.md",
+    "filename": "Gmail_Authentication_Fix.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Gmail_Fix_Access_Blocked.md",
+    "filename": "Gmail_Fix_Access_Blocked.md",
+    "category": "Design Selections",
+    "confidence": 0.75,
+    "reasoning": "Matched Design Selections based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Final_Selections"
+  },
+  {
+    "file": "Development\\Gmail_Integration_Options_and_Plan.md",
+    "filename": "Gmail_Integration_Options_and_Plan.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Gmail_Next_Steps.md",
+    "filename": "Gmail_Next_Steps.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Gmail_Setup_Instructions.md",
+    "filename": "Gmail_Setup_Instructions.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Guild Mortgage discount new home.pdf",
+    "filename": "Guild Mortgage discount new home.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Gym-Design-Layout-3D.jpg",
+    "filename": "Gym-Design-Layout-3D.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Development\\Insulation Specs with Foam.pdf",
+    "filename": "Insulation Specs with Foam.pdf",
+    "category": "Design Selections",
+    "confidence": 0.75,
+    "reasoning": "Matched Design Selections based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Final_Selections"
+  },
+  {
+    "file": "Development\\Matrix.jpg",
+    "filename": "Matrix.jpg",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Mesa Vista Restrictions from Independence Title Sep 5, 2024.pdf",
+    "filename": "Mesa Vista Restrictions from Independence Title Sep 5, 2024.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\Modified floorplan.png",
+    "filename": "Modified floorplan.png",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Development\\One-Time Close Bank Account Authorization Form F (1).pdf",
+    "filename": "One-Time Close Bank Account Authorization Form F (1).pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\One-Time Close Construction Loan Request Authorization Form E.pdf",
+    "filename": "One-Time Close Construction Loan Request Authorization Form E.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Development\\One-Time Close Granite Conventional Contractor Package.pdf",
+    "filename": "One-Time Close Granite Conventional Contractor Package.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\One-Time Close Granite Conventional Project Review Package.pdf",
+    "filename": "One-Time Close Granite Conventional Project Review Package.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Development\\One-Time Close New Construction Conventional Standard Budget Form C (1).pdf",
+    "filename": "One-Time Close New Construction Conventional Standard Budget Form C (1).pdf",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\One-Time Close Prepaid Accounting Worksheet Form D1.pdf",
+    "filename": "One-Time Close Prepaid Accounting Worksheet Form D1.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Development\\Permitting\\Mesa Vista HOA\\New Home Construction Applicaton.pdf",
+    "filename": "New Home Construction Applicaton.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Plan Drawing Agreement.pdf",
+    "filename": "Plan Drawing Agreement.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Development\\PROJECT_HUB.md",
+    "filename": "PROJECT_HUB.md",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\test_write.txt",
+    "filename": "test_write.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\URGENT_Budget_Reality_Check_and_Value_Engineering_Plan.md",
+    "filename": "URGENT_Budget_Reality_Check_and_Value_Engineering_Plan.md",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Development\\Value_Engineering_to_1.2M_Budget_NO_Floorplan_Changes.md",
+    "filename": "Value_Engineering_to_1.2M_Budget_NO_Floorplan_Changes.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Development\\VENDOR_DIRECTORY.md",
+    "filename": "VENDOR_DIRECTORY.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Development\\Weekly_Status_Report_2026-02-13.md",
+    "filename": "Weekly_Status_Report_2026-02-13.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Development\\WI-M2021_157435 Neighborhood Plat.pdf",
+    "filename": "WI-M2021_157435 Neighborhood Plat.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Development\\_archive\\README.md",
+    "filename": "README.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Directions.pdf",
+    "filename": "Directions.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Email_to_Agent_Seth_Koppel.txt",
+    "filename": "Email_to_Agent_Seth_Koppel.txt",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Email_to_Joe_Spillman_Excavating.md",
+    "filename": "Email_to_Joe_Spillman_Excavating.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Estimates\\Appliances\\410012 - FULL SPECS.pdf",
+    "filename": "410012 - FULL SPECS.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Appliances\\Appliance_Bid_Request_Template_708_Purple_Salvia.md",
+    "filename": "Appliance_Bid_Request_Template_708_Purple_Salvia.md",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Estimates\\Appliances\\LaCornue_Rôtisserie_BFG_09.21.pdf",
+    "filename": "LaCornue_Rôtisserie_BFG_09.21.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Appliances\\Quote 410012.pdf",
+    "filename": "Quote 410012.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\.clinerules\\workflows\\Start Perplexity Research.md",
+    "filename": "Start Perplexity Research.md",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\708 Purple Silvia Cv  -Attachment A.pdf",
+    "filename": "708 Purple Silvia Cv  -Attachment A.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\architecture-diagram.md",
+    "filename": "architecture-diagram.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\architecture-summary.md",
+    "filename": "architecture-summary.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\backend\\README.md",
+    "filename": "README.md",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Case Residence - Weather Shield and Valor Steel - Exclusive Windows  Doors Proposal-05.15.25.pdf",
+    "filename": "Case Residence - Weather Shield and Valor Steel - Exclusive Windows  Doors Proposal-05.15.25.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\ci-cd-docs.md",
+    "filename": "ci-cd-docs.md",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\ci-cd-technical-documentation.md",
+    "filename": "ci-cd-technical-documentation.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Citadel_Case Res Hybrid Estimate 05.16.2025.pdf",
+    "filename": "Citadel_Case Res Hybrid Estimate 05.16.2025.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\ClineRule_WebResearch.md",
+    "filename": "ClineRule_WebResearch.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\component-diagram.md",
+    "filename": "component-diagram.md",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\construction-research\\construction_research_construction_contractor_2025-07-01.txt",
+    "filename": "construction_research_construction_contractor_2025-07-01.txt",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\construction-research\\README.md",
+    "filename": "README.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\construction-research\\requirements.txt",
+    "filename": "requirements.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\construction-research\\results\\Comprehensive Analysis of Stainless Steel Windows.pdf",
+    "filename": "Comprehensive Analysis of Stainless Steel Windows.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\construction-research\\results\\Comprehensive Owner-Builder Construction Plan.pdf",
+    "filename": "Comprehensive Owner-Builder Construction Plan.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\construction_research_construction_contractor_2025-07-01.txt",
+    "filename": "construction_research_construction_contractor_2025-07-01.txt",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\current-architecture-and-next-steps.md",
+    "filename": "current-architecture-and-next-steps.md",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\data-flow-diagram.md",
+    "filename": "data-flow-diagram.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\deployment-diagram.md",
+    "filename": "deployment-diagram.md",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\diagrams\\png\\component-diagram.png",
+    "filename": "component-diagram.png",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\diagrams\\png\\data-flow-diagram.png",
+    "filename": "data-flow-diagram.png",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\diagrams\\png\\deployment-diagram.png",
+    "filename": "deployment-diagram.png",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\diagrams\\png\\high-level-architecture.png",
+    "filename": "high-level-architecture.png",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Estimate #2670 - Prestige Steel Doors & WIndows.pdf",
+    "filename": "Estimate #2670 - Prestige Steel Doors & WIndows.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Estimate #2670 Thermally Broken.pdf",
+    "filename": "Estimate #2670 Thermally Broken.pdf",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\FSC - Quote #Q3163 - 448 Bold Sundown 198k.pdf",
+    "filename": "FSC - Quote #Q3163 - 448 Bold Sundown 198k.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\client\\build\\static\\js\\main.7109316a.js.LICENSE.txt",
+    "filename": "main.7109316a.js.LICENSE.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\client\\README.md",
+    "filename": "README.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\complete-home-build-checklist.md",
+    "filename": "complete-home-build-checklist.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\database-setup-guide.md",
+    "filename": "database-setup-guide.md",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\home-build-budget-template.md",
+    "filename": "home-build-budget-template.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\vendor-coverage-analysis.md",
+    "filename": "vendor-coverage-analysis.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\vendor-rfp-system-architecture.md",
+    "filename": "vendor-rfp-system-architecture.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\vendor-selection-plan.md",
+    "filename": "vendor-selection-plan.md",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\docs\\vendor-subcontractor-contact-list.md",
+    "filename": "vendor-subcontractor-contact-list.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\README.md",
+    "filename": "README.md",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\scripts\\README.md",
+    "filename": "README.md",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\scripts\\sample-appliance-budget-output.txt",
+    "filename": "sample-appliance-budget-output.txt",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\scripts\\sample-material-list-output.txt",
+    "filename": "sample-material-list-output.txt",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\templates\\construction-budget-template.xlsx",
+    "filename": "construction-budget-template.xlsx",
+    "category": "Budget/Financial",
+    "confidence": 0.8,
+    "reasoning": "Matched Budget/Financial based on content and filename analysis",
+    "targetFolder": "00_PROJECT_ESSENTIALS/Current_Budget"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\home-build-manager\\templates\\README.md",
+    "filename": "README.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Liberty Hill Custom Home - Tight Building Envelope Engineering Summary.md",
+    "filename": "Liberty Hill Custom Home - Tight Building Envelope Engineering Summary.md",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\marble-fireplace-comparison.md",
+    "filename": "marble-fireplace-comparison.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\marble-fireplace-executive-summary.md",
+    "filename": "marble-fireplace-executive-summary.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\mcp_test.txt",
+    "filename": "mcp_test.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\mermaid-preview.md",
+    "filename": "mermaid-preview.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Permits\\Liberty Hill, TX Permitting Agencies.pdf",
+    "filename": "Liberty Hill, TX Permitting Agencies.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Email to Builder of Record.md",
+    "filename": "Email to Builder of Record.md",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Liberty Hill Custom Home - Appliance Budget.txt",
+    "filename": "Liberty Hill Custom Home - Appliance Budget.txt",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Liberty Hill Custom Home Summary-1.pdf",
+    "filename": "Liberty Hill Custom Home Summary-1.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Liberty Hill Custom Home Summary-Detailed.pdf",
+    "filename": "Liberty Hill Custom Home Summary-Detailed.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Liberty Hill Custom Home Summary-Final.md",
+    "filename": "Liberty Hill Custom Home Summary-Final.md",
+    "category": "Engineering - Structural",
+    "confidence": 0.88,
+    "reasoning": "Matched Engineering - Structural based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Structural"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Liberty Hill Custom Home Summary-Final.pdf",
+    "filename": "Liberty Hill Custom Home Summary-Final.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Liberty Hill Custom Home Summary-Updated.pdf",
+    "filename": "Liberty Hill Custom Home Summary-Updated.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Mesa_Vista_Project_Management_Document.pdf",
+    "filename": "Mesa_Vista_Project_Management_Document.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Project Documents and Details\\Mesa_Vista_Project_Management_Workbook.xlsx",
+    "filename": "Mesa_Vista_Project_Management_Workbook.xlsx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\README.md",
+    "filename": "README.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\Roofing Selections Options.txt",
+    "filename": "Roofing Selections Options.txt",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Estimates\\Cline Builder\\visual-architecture-summary.md",
+    "filename": "visual-architecture-summary.md",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\UBuildIt Classic Contract Signed - Williamson - 11212024.pdf",
+    "filename": "UBuildIt Classic Contract Signed - Williamson - 11212024.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Estimates\\Well\\Case, Daniel Estimate 13791.pdf",
+    "filename": "Case, Daniel Estimate 13791.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "File Aug 04 2025, 7 21 03 PM.txt",
+    "filename": "File Aug 04 2025, 7 21 03 PM.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\2024 W2-1.pdf",
+    "filename": "2024 W2-1.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\20250320-statements-7728- April 2025.pdf",
+    "filename": "20250320-statements-7728- April 2025.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Financial docs\\20250418-statements-7728- Chase Mar 2025.pdf",
+    "filename": "20250418-statements-7728- Chase Mar 2025.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\280 W WIsteria 2nd Mortgage PNC.pdf",
+    "filename": "280 W WIsteria 2nd Mortgage PNC.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\280 W WIsteria Mortgage.pdf",
+    "filename": "280 W WIsteria Mortgage.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\Appraisal 200k.docx",
+    "filename": "Appraisal 200k.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\correction_email_draft.txt",
+    "filename": "correction_email_draft.txt",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\draft_email.txt",
+    "filename": "draft_email.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\email_content.txt",
+    "filename": "email_content.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\Sales Contract.docx",
+    "filename": "Sales Contract.docx",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\Strategy and e-mails.txt",
+    "filename": "Strategy and e-mails.txt",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Financial docs\\Appraisal Negotiation\\strategy_summary.txt",
+    "filename": "strategy_summary.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Bold SUndown Utility Statement Daniel Case SPectrum.pdf",
+    "filename": "Bold SUndown Utility Statement Daniel Case SPectrum.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Chase Bank Statement April.pdf",
+    "filename": "Chase Bank Statement April.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\2023 tax return - Case.pdf",
+    "filename": "2023 tax return - Case.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\2023 W2-1.pdf",
+    "filename": "2023 W2-1.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\2024 tax return - Case.pdf",
+    "filename": "2024 tax return - Case.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\2024 W2-2.pdf",
+    "filename": "2024 W2-2.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\20250721-statements-7728-.pdf",
+    "filename": "20250721-statements-7728-.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\20250820-statements-7728-.pdf",
+    "filename": "20250820-statements-7728-.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\20250919-statements-7728-.pdf",
+    "filename": "20250919-statements-7728-.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Amazon RSU Stock Plan.jpg",
+    "filename": "Amazon RSU Stock Plan.jpg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Asset_List_for_Construction_Loan.md",
+    "filename": "Asset_List_for_Construction_Loan.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Daniel Case DL.jpg",
+    "filename": "Daniel Case DL.jpg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Daniel Case Driver's License Back.jpg",
+    "filename": "Daniel Case Driver's License Back.jpg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Fidelity Account Summaries.docx",
+    "filename": "Fidelity Account Summaries.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Gayane Case Driver's License Back.jpg",
+    "filename": "Gayane Case Driver's License Back.jpg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Gayane Case Driver's License.jpg",
+    "filename": "Gayane Case Driver's License.jpg",
+    "category": "Progress Photos",
+    "confidence": 0.75,
+    "reasoning": "Matched Progress Photos based on content and filename analysis",
+    "targetFolder": "07_SITE_PROGRESS/Photos"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Pay Date 2025-05-23.pdf",
+    "filename": "Pay Date 2025-05-23.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Pay Date 2025-06-17.pdf",
+    "filename": "Pay Date 2025-06-17.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Pay Date 2025-06-30.pdf",
+    "filename": "Pay Date 2025-06-30.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Pay Date 2025-07-31.pdf",
+    "filename": "Pay Date 2025-07-31.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Pay Date 2025-08-29.pdf",
+    "filename": "Pay Date 2025-08-29.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Pay Date 2025-09-30.pdf",
+    "filename": "Pay Date 2025-09-30.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Statement6302025 - Fidelity BrokerageLink.pdf",
+    "filename": "Statement6302025 - Fidelity BrokerageLink.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Statement6302025 -Fidelity Roth.pdf",
+    "filename": "Statement6302025 -Fidelity Roth.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Statement8312025 - Fidelity Mixed Aug 2025.pdf",
+    "filename": "Statement8312025 - Fidelity Mixed Aug 2025.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Statement9302025 - Fidelity BrokerageLink.pdf",
+    "filename": "Statement9302025 - Fidelity BrokerageLink.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Statement9302025 - Fidelity Mixed Sep 2025.pdf",
+    "filename": "Statement9302025 - Fidelity Mixed Sep 2025.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\Statement9302025 -Fidelity Roth.pdf",
+    "filename": "Statement9302025 -Fidelity Roth.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Construction Loan\\~$delity Account Summaries.docx",
+    "filename": "~$delity Account Summaries.docx",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Distribution Schedule_ Fidelity Investments.pdf",
+    "filename": "Distribution Schedule_ Fidelity Investments.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Financial docs\\Fidelity BrokerageLink Jan-Mar 2025.pdf",
+    "filename": "Fidelity BrokerageLink Jan-Mar 2025.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Fidelity BrokerageLink Roth Jan-Mar 2025.pdf",
+    "filename": "Fidelity BrokerageLink Roth Jan-Mar 2025.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Fidelity NetBenefits - 401k Statement Details Q1 2025.pdf",
+    "filename": "Fidelity NetBenefits - 401k Statement Details Q1 2025.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Financial docs\\Fidelity NetBenefits - 401k Statement Details Q4 2024.pdf",
+    "filename": "Fidelity NetBenefits - 401k Statement Details Q4 2024.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Financial docs\\HOA 280 Wisteria Pl statement.pdf",
+    "filename": "HOA 280 Wisteria Pl statement.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "Financial docs\\Lenders Offering Owner-Builder Construction Loans (Liberty Hill, TX Area).pdf",
+    "filename": "Lenders Offering Owner-Builder Construction Loans (Liberty Hill, TX Area).pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Financial docs\\LON Statements MORTGAGE Ln 62765617998 DANIEL CASE 4_17_2025 10165 Joy Ranch Rd.pdf",
+    "filename": "LON Statements MORTGAGE Ln 62765617998 DANIEL CASE 4_17_2025 10165 Joy Ranch Rd.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Financial docs\\LON Statements MORTGAGE Ln 62766083091 DANIEL CASE 4_17_2025 0 Chuckwalla Trl.pdf",
+    "filename": "LON Statements MORTGAGE Ln 62766083091 DANIEL CASE 4_17_2025 0 Chuckwalla Trl.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Financial docs\\Portfolio Activity & Orders Fidelity.pdf",
+    "filename": "Portfolio Activity & Orders Fidelity.pdf",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Financial docs\\Stae Farm Homeownsers Insurance Declaration Page 280 W Wisteria Pl.pdf",
+    "filename": "Stae Farm Homeownsers Insurance Declaration Page 280 W Wisteria Pl.pdf",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Financial docs\\Statement for Apr 11, 2025.pdf",
+    "filename": "Statement for Apr 11, 2025.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Statement for Apr 17, 2025.pdf",
+    "filename": "Statement for Apr 17, 2025.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Statement for Apr 25, 2025 (1).pdf",
+    "filename": "Statement for Apr 25, 2025 (1).pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Financial docs\\Statement12312024 2024 Year End Statement.pdf",
+    "filename": "Statement12312024 2024 Year End Statement.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Statement3312025 Fidelity Feb 2025.pdf",
+    "filename": "Statement3312025 Fidelity Feb 2025.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Financial docs\\Statement3312025 Fidelity march 2025.pdf",
+    "filename": "Statement3312025 Fidelity march 2025.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Fireplace examples\\1566-03-Versailles-French-Fireplace-Marble-Mantel.jpg",
+    "filename": "1566-03-Versailles-French-Fireplace-Marble-Mantel.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "Fireplace examples\\2025-07-09_21-05-38.jpg",
+    "filename": "2025-07-09_21-05-38.jpg",
+    "category": "Design Inspiration",
+    "confidence": 0.7,
+    "reasoning": "Matched Design Inspiration based on content and filename analysis",
+    "targetFolder": "06_DESIGN_AND_SPECIFICATIONS/Design_Inspiration"
+  },
+  {
+    "file": "French_Country_Bathroom_Design_Recommendations.md",
+    "filename": "French_Country_Bathroom_Design_Recommendations.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Generic_Excavation_Septic_Email_Template.md",
+    "filename": "Generic_Excavation_Septic_Email_Template.md",
+    "category": "Engineering - Grading/Drainage",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Grading/Drainage based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Site_Work"
+  },
+  {
+    "file": "HOA\\Mesa Vista Deed Restrictions.pdf",
+    "filename": "Mesa Vista Deed Restrictions.pdf",
+    "category": "Architectural Plans - Archive",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans - Archive based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/ARCHIVE"
+  },
+  {
+    "file": "HOA\\Mesa Vista HOA Management Certificate.pdf",
+    "filename": "Mesa Vista HOA Management Certificate.pdf",
+    "category": "HOA Documents",
+    "confidence": 0.9,
+    "reasoning": "Matched HOA Documents based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/HOA/Submissions"
+  },
+  {
+    "file": "HOA\\Mesa Vista Ranch Certificate of FIling.pdf",
+    "filename": "Mesa Vista Ranch Certificate of FIling.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "HOA\\Mesa Vista Ranch Property Owners Association Bylaws.pdf",
+    "filename": "Mesa Vista Ranch Property Owners Association Bylaws.pdf",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "HOA\\Send Welcome Letter.pdf",
+    "filename": "Send Welcome Letter.pdf",
+    "category": "Tax Documents",
+    "confidence": 0.95,
+    "reasoning": "Matched Tax Documents based on content and filename analysis",
+    "targetFolder": "10_ARCHIVE/Financial_Documents"
+  },
+  {
+    "file": "Invoices\\Case_2024 UBuildIt Classic - Williamson - 11212024.pdf",
+    "filename": "Case_2024 UBuildIt Classic - Williamson - 11212024.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Invoices\\Est_21646R_from_Kristynik_Hardwood_Flooring_Inc._15476.pdf",
+    "filename": "Est_21646R_from_Kristynik_Hardwood_Flooring_Inc._15476.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Invoices\\File Aug 04 2025, 7 21 47 PM.txt",
+    "filename": "File Aug 04 2025, 7 21 47 PM.txt",
+    "category": "Uncategorized",
+    "confidence": 0.6,
+    "reasoning": "No classification rule matched",
+    "targetFolder": "10_ARCHIVE/Uncategorized"
+  },
+  {
+    "file": "Invoices\\KHF E-Check Authorization(1).pdf",
+    "filename": "KHF E-Check Authorization(1).pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Invoices\\Paid Invoice - 210038-TOPO_708 Purple Salvia Cove.pdf",
+    "filename": "Paid Invoice - 210038-TOPO_708 Purple Salvia Cove.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "La_Cornue_Color_Sample_Request.md",
+    "filename": "La_Cornue_Color_Sample_Request.md",
+    "category": "Vendor Bid",
+    "confidence": 0.8,
+    "reasoning": "Matched Vendor Bid based on content and filename analysis",
+    "targetFolder": "03_BIDS_AND_ESTIMATES/BY_CATEGORY"
+  },
+  {
+    "file": "Liberty Hill Custom Home Summary-1.pdf",
+    "filename": "Liberty Hill Custom Home Summary-1.pdf",
+    "category": "Engineering - Roofing",
+    "confidence": 0.85,
+    "reasoning": "Matched Engineering - Roofing based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Roofing"
+  },
+  {
+    "file": "Phishing email\\Re_ 708 Purple Salvia Cove foundation design +++ INVOICE +++.pdf",
+    "filename": "Re_ 708 Purple Salvia Cove foundation design +++ INVOICE +++.pdf",
+    "category": "Engineering - Foundation",
+    "confidence": 0.9,
+    "reasoning": "Matched Engineering - Foundation based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Engineering/Foundation"
+  },
+  {
+    "file": "PRN 25-0058 708 PURPLE SILVIA COVE - Case Modification Requests April 21.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE - Case Modification Requests April 21.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "PRN 25-0058 708 PURPLE SILVIA COVE - Case Modification Requests.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE - Case Modification Requests.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "PRN 25-0058 708 PURPLE SILVIA COVE 04-18-25.docx",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-18-25.docx",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "PRN 25-0058 708 PURPLE SILVIA COVE 04-18-25.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-18-25.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "PRN 25-0058 708 PURPLE SILVIA COVE 04-21-25 Feedback List.docx",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE 04-21-25 Feedback List.docx",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "PRN 25-0058 708 PURPLE SILVIA COVE.pdf",
+    "filename": "PRN 25-0058 708 PURPLE SILVIA COVE.pdf",
+    "category": "Building Permits",
+    "confidence": 0.92,
+    "reasoning": "Matched Building Permits based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Building_Permits"
+  },
+  {
+    "file": "Receipt 11581.pdf",
+    "filename": "Receipt 11581.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Receipt.pdf",
+    "filename": "Receipt.pdf",
+    "category": "Receipt/Invoice",
+    "confidence": 0.85,
+    "reasoning": "Matched Receipt/Invoice based on content and filename analysis",
+    "targetFolder": "05_EXPENSES_AND_RECEIPTS/BY_VENDOR"
+  },
+  {
+    "file": "Sales Contract.docx",
+    "filename": "Sales Contract.docx",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Sales Contract.pdf",
+    "filename": "Sales Contract.pdf",
+    "category": "Contract",
+    "confidence": 0.88,
+    "reasoning": "Matched Contract based on content and filename analysis",
+    "targetFolder": "04_CONTRACTS_AND_AGREEMENTS/Vendors"
+  },
+  {
+    "file": "Short_Excavation_Email.md",
+    "filename": "Short_Excavation_Email.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "Short_Well_Drilling_Email.md",
+    "filename": "Short_Well_Drilling_Email.md",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  },
+  {
+    "file": "Survey 708 Purple Salvia (1) (1).pdf",
+    "filename": "Survey 708 Purple Salvia (1) (1).pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Surveys\\210038-TOPO_708 Purple Salvia Cove - TOPO & TREE SURVEY.pdf",
+    "filename": "210038-TOPO_708 Purple Salvia Cove - TOPO & TREE SURVEY.pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Surveys\\Survey 708 Purple Salvia (1) (1).pdf",
+    "filename": "Survey 708 Purple Salvia (1) (1).pdf",
+    "category": "Survey",
+    "confidence": 0.95,
+    "reasoning": "Matched Survey based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Survey"
+  },
+  {
+    "file": "Well_Drilling_Bid_Request_Email.md",
+    "filename": "Well_Drilling_Bid_Request_Email.md",
+    "category": "Architectural Plans",
+    "confidence": 0.85,
+    "reasoning": "Matched Architectural Plans based on content and filename analysis",
+    "targetFolder": "01_PLANS_AND_ENGINEERING/Architectural/CURRENT"
+  },
+  {
+    "file": "White_Appliance_Research_Summary.md",
+    "filename": "White_Appliance_Research_Summary.md",
+    "category": "Utilities",
+    "confidence": 0.85,
+    "reasoning": "Matched Utilities based on content and filename analysis",
+    "targetFolder": "02_PERMITS_AND_REGULATORY/Utilities"
+  }
+]
