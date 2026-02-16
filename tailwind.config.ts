@@ -20,6 +20,7 @@ const config = {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -65,6 +66,11 @@ const config = {
           red: "hsl(var(--construction-red))",
           slate: "hsl(var(--construction-slate))",
         },
+        "chart-1": "hsl(var(--chart-1, 220 70% 50%))",
+        "chart-2": "hsl(var(--chart-2, 160 60% 45%))",
+        "chart-3": "hsl(var(--chart-3, 30 80% 55%))",
+        "chart-4": "hsl(var(--chart-4, 280 65% 60%))",
+        "chart-5": "hsl(var(--chart-5, 340 75% 55%))",
       },
       borderRadius: {
         lg: "var(--radius)",
