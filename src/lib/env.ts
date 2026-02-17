@@ -34,6 +34,10 @@ export const env = {
   // Cron
   get cronSecret() { return optionalEnv('CRON_SECRET') },
 
+  // Project
+  get projectAddress() { return optionalEnv('PROJECT_ADDRESS', '708 Purple Salvia Cove, Liberty Hill, TX') },
+  get projectName() { return optionalEnv('PROJECT_NAME', 'Purple Salvia Cove Construction') },
+
   // App
   get vercelUrl() { return optionalEnv('VERCEL_URL') },
   get nodeEnv() { return optionalEnv('NODE_ENV', 'development') },

@@ -70,8 +70,11 @@ export async function GET(request: NextRequest) {
       refresh_token: refreshToken?.value
     })
 
-    // Fetch emails from UBuildIt team, project vendors, and any emails mentioning the property
-    const searchQuery = '(from:(mike.trevino@ubuildit.com OR harry.savio@ubuildit.com OR aaron.mischenko@ubuildit.com OR @ubuildit.com OR @kippflores.com OR @krystinik.com) OR "708 Purple Salvia Cove") newer_than:7d'
+    // Build search query dynamically from project contacts
+    const projectId = await db.getOrCreateProject()
+    const searchQuery = projectId
+      ? await db.buildEmailSearchQuery(projectId, 7)
+      : 'label:inbox newer_than:7d'
     const emails = await gmailService.getEmails(searchQuery)
 
     // Add individual AI insights and triage to each email

@@ -59,8 +59,9 @@ export async function POST(request: NextRequest) {
       throw new Error('Could not get or create project')
     }
 
-    // Fetch emails from Gmail (only new ones since last sync)
-    const searchQuery = '(from:(mike.trevino@ubuildit.com OR harry.savio@ubuildit.com OR aaron.mischenko@ubuildit.com OR @ubuildit.com OR @kippflores.com OR @krystinik.com) OR "708 Purple Salvia Cove") newer_than:2d'
+    // Build search query dynamically from project contacts
+    console.log('Building email search query from contacts...')
+    const searchQuery = await db.buildEmailSearchQuery(projectId, 2)
 
     console.log('Fetching emails from Gmail...')
     const gmailEmails = await gmailService.getEmails(searchQuery)

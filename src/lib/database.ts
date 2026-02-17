@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { env } from './env'
 import type { EmailRecord, EmailAccountRecord } from '@/types'
 
 export class DatabaseService {
@@ -183,7 +184,8 @@ export class DatabaseService {
 
   // Project Management
   async getOrCreateProject(address?: string): Promise<string | null> {
-    const projectAddress = address || '708 Purple Salvia Cove, Liberty Hill, TX'
+    const projectAddress = address || env.projectAddress || '708 Purple Salvia Cove, Liberty Hill, TX'
+    const projectName = env.projectName || 'Construction Project'
 
     try {
       const { data } = await supabase
@@ -200,7 +202,7 @@ export class DatabaseService {
       const { data: newProject, error: createError } = await supabase
         .from('projects')
         .insert({
-          name: 'Purple Salvia Cove Construction',
+          name: projectName,
           address: projectAddress,
           phase: 'planning',
           budget_total: 450000
@@ -218,6 +220,67 @@ export class DatabaseService {
       console.error('Database error:', error)
       return null
     }
+  }
+
+  // Contact-based email query builder
+  async getProjectContactEmails(projectId: string): Promise<string[]> {
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('email')
+        .eq('project_id', projectId)
+        .eq('track_emails', true)
+
+      if (error) {
+        console.error('Error fetching contact emails:', error)
+        return []
+      }
+
+      return (data || [])
+        .map(c => c.email)
+        .filter((email): email is string => !!email)
+    } catch (error) {
+      console.error('Database error:', error)
+      return []
+    }
+  }
+
+  async buildEmailSearchQuery(projectId: string, daysBack: number = 7): Promise<string> {
+    const contactEmails = await this.getProjectContactEmails(projectId)
+
+    // Get project address for property-mention matching
+    const { data: project } = await supabase
+      .from('projects')
+      .select('address')
+      .eq('id', projectId)
+      .single()
+
+    const parts: string[] = []
+
+    // Add contact email filters
+    if (contactEmails.length > 0) {
+      const emailFilters = contactEmails.map(e => `from:${e}`).join(' OR ')
+      parts.push(`(${emailFilters})`)
+    }
+
+    // Always include @ubuildit.com domain
+    parts.push('from:@ubuildit.com')
+
+    // Add property address match if available
+    const address = project?.address
+    if (address) {
+      // Extract the street portion for matching (e.g. "708 Purple Salvia Cove")
+      const streetMatch = address.match(/^[\d]+\s+[^,]+/)
+      if (streetMatch) {
+        parts.push(`"${streetMatch[0]}"`)
+      }
+    }
+
+    const queryBody = parts.length > 0
+      ? `(${parts.join(' OR ')})`
+      : 'label:inbox'
+
+    return `${queryBody} newer_than:${daysBack}d`
   }
 }
 
