@@ -26,7 +26,6 @@ export const env = {
   get googleRedirectUri() { return requiredEnv('GOOGLE_REDIRECT_URI') },
 
   // AI
-  get openaiApiKey() { return optionalEnv('OPENAI_API_KEY') },
   get anthropicApiKey() { return optionalEnv('ANTHROPIC_API_KEY') },
 
   // Gmail

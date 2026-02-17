@@ -152,6 +152,10 @@ export const a11y = {
     if (typeof window === 'undefined') return 'light'
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   },
+
+  generateId(prefix: string): string {
+    return `${prefix}-${Math.random().toString(36).slice(2, 9)}`
+  },
 }
 
 // ─── Construction Namespace ──────────────────────────────────────────────────

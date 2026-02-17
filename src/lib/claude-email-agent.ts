@@ -33,7 +33,7 @@ Return valid JSON only, no markdown or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 1024,
       temperature: 0.2,
       messages: [{
@@ -100,7 +100,7 @@ Return valid JSON only, no markdown or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2048,
       temperature: 0.2,
       messages: [{
@@ -155,7 +155,7 @@ Return valid JSON only.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 256,
       temperature: 0,
       messages: [{
@@ -253,7 +253,7 @@ Return valid JSON only, no markdown fences or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 3000,
       temperature: 0.3,
       messages: [{ role: 'user', content: prompt }]

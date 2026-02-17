@@ -125,7 +125,7 @@ If this is NOT a bid/quote email, return: {"bids": []}`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       temperature: 0.1,
       messages: [{
@@ -186,7 +186,7 @@ Return ONLY valid JSON with the bids array.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       temperature: 0.1,
       messages: [{
@@ -246,7 +246,7 @@ Return ONLY valid JSON with the updated bid in the same format.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4096,
       temperature: 0.1,
       messages: [{
@@ -347,7 +347,7 @@ Return valid JSON:
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 2048,
       temperature: 0.3,
       messages: [{
