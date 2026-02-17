@@ -135,3 +135,39 @@
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground));
 }
+
+/* Mobile layout touch optimizations */
+.mobile-layout input[type="text"],
+.mobile-layout input[type="number"],
+.mobile-layout input[type="email"],
+.mobile-layout input[type="password"],
+.mobile-layout input[type="search"],
+.mobile-layout input[type="tel"],
+.mobile-layout input[type="url"],
+.mobile-layout input[type="time"],
+.mobile-layout select,
+.mobile-layout textarea {
+  font-size: 16px; /* Prevent iOS zoom on focus */
+}
+
+.mobile-layout button {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.mobile-layout {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.mobile-layout input,
+.mobile-layout textarea,
+.mobile-layout select {
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  -ms-user-select: auto;
+  user-select: auto;
+}
