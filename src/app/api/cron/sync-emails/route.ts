@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { GmailService } from '@/lib/gmail'
-import { summarizeIndividualEmail } from '@/lib/openai'
+import { summarizeIndividualEmail } from '@/lib/ai-summarization'
 import { db } from '@/lib/database'
 import { extractEmailAddress, extractSenderName } from '@/lib/ui-helpers'
 import { successResponse, errorResponse } from '@/lib/api-utils'

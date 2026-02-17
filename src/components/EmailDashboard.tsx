@@ -86,6 +86,7 @@ export default function EmailDashboard() {
 
   useEffect(() => {
     fetchEmails()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const toggleEmailExpanded = (emailId: string) => {

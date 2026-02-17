@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import Image from 'next/image'
 import { Button, type ButtonProps } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn, construction } from '@/lib/utils'
@@ -90,15 +91,17 @@ const ProjectButton = React.forwardRef<HTMLButtonElement, ProjectButtonProps>(
             {image ? (
               <div
                 className={cn(
-                  'rounded-md bg-muted overflow-hidden',
+                  'relative rounded-md bg-muted overflow-hidden',
                   compact ? 'h-12 w-12' : 'h-16 w-16',
                   fieldOptimized && 'h-20 w-20'
                 )}
               >
-                <img
+                <Image
                   src={image}
                   alt={`${title} project thumbnail`}
                   className="h-full w-full object-cover"
+                  fill
+                  sizes="(max-width: 80px) 100vw, 80px"
                 />
               </div>
             ) : Icon ? (
