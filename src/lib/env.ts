@@ -38,6 +38,15 @@ export const env = {
   get projectAddress() { return optionalEnv('PROJECT_ADDRESS', '708 Purple Salvia Cove, Liberty Hill, TX') },
   get projectName() { return optionalEnv('PROJECT_NAME', 'Purple Salvia Cove Construction') },
 
+  // Document Repository
+  get documentRepositoryPath() {
+    return optionalEnv('DOCUMENT_REPOSITORY_PATH',
+      '/mnt/c/Users/danie/Dropbox/Properties/Austin, TX/Liberty Hill/708 Purple Salvia Cove')
+  },
+
+  // Supabase Service Role (for seed scripts)
+  get supabaseServiceRoleKey() { return optionalEnv('SUPABASE_SERVICE_ROLE_KEY') },
+
   // App
   get vercelUrl() { return optionalEnv('VERCEL_URL') },
   get nodeEnv() { return optionalEnv('NODE_ENV', 'development') },

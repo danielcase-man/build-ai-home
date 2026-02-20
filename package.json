@@ -19,6 +19,10 @@
     "docs:packages": "node scripts/create-shareable-packages.js --all",
     "docs:watch": "node scripts/watch-folder.js",
     "docs:audit": "node scripts/monthly-audit.js",
+    "seed": "npx tsx scripts/seed-from-docs.ts",
+    "add-transactions": "npx tsx scripts/add-transactions.ts",
+    "seed:selections": "npx tsx scripts/seed-selections.ts",
+    "seed:bids": "npx tsx scripts/seed-bids.ts",
     "schedule:view": "start CONSTRUCTION_SCHEDULE.html",
     "schedule:edit": "start CONSTRUCTION_SCHEDULE.csv"
   },
