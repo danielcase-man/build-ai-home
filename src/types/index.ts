@@ -214,7 +214,9 @@ export interface BidExtractionResult {
 export interface Bid {
   id: string
   vendor_name: string
+  vendor_contact?: string
   vendor_email?: string
+  vendor_phone?: string
   category: string
   subcategory?: string
   description: string
@@ -234,6 +236,9 @@ export interface Bid {
   needs_review: boolean
   bid_date: string
   received_date: string
+  source?: string
+  source_document?: string
+  internal_notes?: string
   pros?: string
   cons?: string
   selection_notes?: string

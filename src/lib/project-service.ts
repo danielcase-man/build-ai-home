@@ -22,56 +22,60 @@ export async function getProjectDashboard(): Promise<DashboardData> {
     return getDefaultDashboard()
   }
 
-  // Get planning steps count
-  const { count: completedSteps } = await supabase
-    .from('planning_phase_steps')
-    .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
-    .eq('status', 'completed')
+  // Run all independent queries in parallel
+  const [
+    { data: planningSteps },
+    { data: budgetItems },
+    { count: unreadEmails },
+    { count: pendingTasks },
+    { data: nextMilestone },
+  ] = await Promise.all([
+    supabase
+      .from('planning_phase_steps')
+      .select('step_number, status')
+      .eq('project_id', project.id)
+      .order('step_number', { ascending: true }),
+    supabase
+      .from('budget_items')
+      .select('estimated_cost, actual_cost')
+      .eq('project_id', project.id),
+    supabase
+      .from('emails')
+      .select('*', { count: 'exact', head: true })
+      .eq('project_id', project.id)
+      .eq('is_read', false),
+    supabase
+      .from('tasks')
+      .select('*', { count: 'exact', head: true })
+      .eq('project_id', project.id)
+      .in('status', ['pending', 'in_progress']),
+    supabase
+      .from('milestones')
+      .select('name, target_date')
+      .eq('project_id', project.id)
+      .in('status', ['pending', 'in_progress'])
+      .order('target_date', { ascending: true })
+      .limit(1),
+  ])
 
-  const { count: totalSteps } = await supabase
-    .from('planning_phase_steps')
-    .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
+  const totalSteps = planningSteps?.length || 6
 
-  // Get budget info
-  const { data: budgetItems } = await supabase
-    .from('budget_items')
-    .select('estimated_cost, actual_cost')
-    .eq('project_id', project.id)
+  const inProgressStep = planningSteps?.filter(s => s.status === 'in_progress')
+    .sort((a, b) => b.step_number - a.step_number)[0]
+  const highestCompleted = planningSteps?.filter(s => s.status === 'completed')
+    .sort((a, b) => b.step_number - a.step_number)[0]
+  const currentStep = inProgressStep?.step_number
+    || (highestCompleted ? Math.min(highestCompleted.step_number + 1, totalSteps) : 1)
 
   const budgetUsed = budgetItems?.reduce((sum, item) =>
-    sum + (parseFloat(item.actual_cost) || parseFloat(item.estimated_cost) || 0), 0) || 0
-
-  // Get unread email count
-  const { count: unreadEmails } = await supabase
-    .from('emails')
-    .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
-    .eq('is_read', false)
-
-  // Get pending tasks
-  const { count: pendingTasks } = await supabase
-    .from('tasks')
-    .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
-    .in('status', ['pending', 'in_progress'])
-
-  // Get next milestone
-  const { data: nextMilestone } = await supabase
-    .from('milestones')
-    .select('name, target_date')
-    .eq('project_id', project.id)
-    .in('status', ['pending', 'in_progress'])
-    .order('target_date', { ascending: true })
-    .limit(1)
+    sum + (parseFloat(item.actual_cost) || 0), 0) || 0
 
   const createdAt = new Date(project.created_at)
   const daysElapsed = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
 
   return {
     phase: project.phase || 'Planning',
-    currentStep: (completedSteps || 0) + 1,
+    currentStep,
     totalSteps: totalSteps || 6,
     daysElapsed,
     totalDays: project.estimated_duration_days || 117,
@@ -91,90 +95,78 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
     return null
   }
 
-  // Get latest project_status record
-  const { data: statusRecord } = await supabase
-    .from('project_status')
-    .select('*')
-    .eq('project_id', project.id)
-    .order('date', { ascending: false })
-    .limit(1)
+  // Run all independent queries in parallel (removed duplicate project_status query)
+  const [
+    { data: statusRecord },
+    { data: tasks },
+    { data: emails },
+    { data: budgetItems },
+    { data: planningSteps },
+    { data: nextMilestone },
+  ] = await Promise.all([
+    supabase
+      .from('project_status')
+      .select('*')
+      .eq('project_id', project.id)
+      .order('date', { ascending: false })
+      .limit(1),
+    supabase
+      .from('tasks')
+      .select('title, status')
+      .eq('project_id', project.id)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('emails')
+      .select('sender_name, ai_summary')
+      .eq('project_id', project.id)
+      .order('received_date', { ascending: false })
+      .limit(5),
+    supabase
+      .from('budget_items')
+      .select('estimated_cost, actual_cost')
+      .eq('project_id', project.id),
+    supabase
+      .from('planning_phase_steps')
+      .select('step_number, status')
+      .eq('project_id', project.id)
+      .order('step_number', { ascending: true }),
+    supabase
+      .from('milestones')
+      .select('name, target_date')
+      .eq('project_id', project.id)
+      .in('status', ['pending', 'in_progress'])
+      .order('target_date', { ascending: true })
+      .limit(1),
+  ])
 
   const latestStatus = statusRecord?.[0]
-
-  // Get hot topics
-  const { data: hotTopicsData } = await supabase
-    .from('project_status')
-    .select('hot_topics')
-    .eq('project_id', project.id)
-    .order('date', { ascending: false })
-    .limit(1)
-
-  const hotTopics = (hotTopicsData?.[0]?.hot_topics || []) as Array<{ priority: string; text: string }>
-
-  // Get action items (tasks)
-  const { data: tasks } = await supabase
-    .from('tasks')
-    .select('title, status')
-    .eq('project_id', project.id)
-    .order('created_at', { ascending: false })
-    .limit(10)
+  const hotTopics = (latestStatus?.hot_topics || []) as Array<{ priority: string; text: string }>
+  const recentDecisions = (latestStatus?.recent_decisions || []) as Array<{ decision: string; impact: string }>
 
   const actionItems = (tasks || []).map(t => ({
     status: t.status === 'completed' ? 'completed' : t.status === 'in_progress' ? 'in-progress' : 'pending',
     text: t.title
   }))
 
-  // Get recent communications
-  const { data: emails } = await supabase
-    .from('emails')
-    .select('sender_name, ai_summary')
-    .eq('project_id', project.id)
-    .order('received_date', { ascending: false })
-    .limit(5)
-
   const recentCommunications = (emails || []).map(e => ({
     from: e.sender_name || 'Unknown',
     summary: e.ai_summary || 'No summary available'
   }))
 
-  // Get recent decisions
-  const recentDecisions = (latestStatus?.recent_decisions || []) as Array<{ decision: string; impact: string }>
-
-  // Get budget info
-  const { data: budgetItems } = await supabase
-    .from('budget_items')
-    .select('estimated_cost, actual_cost')
-    .eq('project_id', project.id)
-
   const budgetUsed = budgetItems?.reduce((sum, item) =>
-    sum + (parseFloat(item.actual_cost) || parseFloat(item.estimated_cost) || 0), 0) || 0
+    sum + (parseFloat(item.actual_cost) || 0), 0) || 0
 
-  // Get planning steps
-  const { count: completedSteps } = await supabase
-    .from('planning_phase_steps')
-    .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
-    .eq('status', 'completed')
-
-  const { count: totalSteps } = await supabase
-    .from('planning_phase_steps')
-    .select('*', { count: 'exact', head: true })
-    .eq('project_id', project.id)
-
-  const stepNum = (completedSteps || 0) + 1
-  const stepsTotal = totalSteps || 6
+  const stepsTotal = planningSteps?.length || 6
+  const inProgressStep = planningSteps?.filter(s => s.status === 'in_progress')
+    .sort((a, b) => b.step_number - a.step_number)[0]
+  const highestCompleted = planningSteps?.filter(s => s.status === 'completed')
+    .sort((a, b) => b.step_number - a.step_number)[0]
+  const stepNum = inProgressStep?.step_number
+    || (highestCompleted ? Math.min(highestCompleted.step_number + 1, stepsTotal) : 1)
   const createdAt = new Date(project.created_at)
   const daysElapsed = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
   const totalDays = project.estimated_duration_days || 117
-
-  // Get next milestone
-  const { data: nextMilestone } = await supabase
-    .from('milestones')
-    .select('name, target_date')
-    .eq('project_id', project.id)
-    .in('status', ['pending', 'in_progress'])
-    .order('target_date', { ascending: true })
-    .limit(1)
 
   return {
     date: new Date(),

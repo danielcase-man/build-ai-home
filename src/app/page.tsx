@@ -4,15 +4,12 @@ import HomeClient from './HomeClient'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 
 async function DashboardData() {
-  const [dashboardData, project] = await Promise.all([
-    getProjectDashboard(),
-    getProject()
-  ])
+  const project = await getProject()
 
-  let hotTopics: string[] = []
-  if (project?.id) {
-    hotTopics = await getActiveHotTopics(project.id)
-  }
+  const [dashboardData, hotTopics] = await Promise.all([
+    getProjectDashboard(),
+    project?.id ? getActiveHotTopics(project.id) : Promise.resolve([]),
+  ])
 
   return <HomeClient initialData={dashboardData} initialHotTopics={hotTopics} />
 }
