@@ -16,6 +16,9 @@ npm start
 
 # Run linting
 npm run lint
+
+# Run tests
+npm test
 ```
 
 ## Tech Stack
@@ -24,8 +27,7 @@ npm run lint
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS with shadcn/ui components
 - **Database**: Supabase (PostgreSQL)
-- **State Management**: Zustand
-- **External APIs**: Gmail API, OpenAI API
+- **External APIs**: Gmail API, Anthropic Claude API
 - **Deployment**: Vercel
 
 ## High-Level Architecture
@@ -48,13 +50,14 @@ The application models the **UBuildIt construction process** with two main phase
 
 ### Key Integration Patterns
 
-#### Gmail Integration (`src/lib/gmail.ts`)
+#### Gmail Integration (`src/lib/gmail.ts`, `src/lib/gmail-auth.ts`)
 - **OAuth2 Flow**: Uses Google OAuth with offline access for token refresh
+- **Token Management**: Centralized in `gmail-auth.ts` — tokens stored encrypted (AES-256-GCM) in `email_accounts.oauth_tokens` (JSONB), with automatic refresh and legacy plaintext migration
 - **Email Sync**: Queries Gmail API with custom filters (e.g., tracking vendor communications)
-- **Storage**: OAuth tokens stored encrypted in `email_accounts.oauth_tokens` (JSONB)
-- **Parsing**: Base64-decodes Gmail payloads, extracts plain text from multipart messages
+- **Parsing**: Recursive MIME traversal extracts plain text from multipart messages, base64-decodes payloads
 
-#### OpenAI Integration (`src/lib/openai.ts`)
+#### Anthropic Claude Integration (`src/lib/ai-clients.ts`, `src/lib/ai-summarization.ts`, `src/lib/claude-email-agent.ts`)
+- **Dual-Model Strategy**: Claude Haiku 3.5 for fast tasks (individual email summaries, triage), Claude Sonnet 4.5 for complex analysis (status reports, bid extraction, cross-email insights)
 - **Email Summarization**: Generates actionable insights from construction emails
 - **Context Aware**: Passed project context for relevant summaries
 - **Stored Results**: AI summaries cached in `emails.ai_summary` and `project_status.ai_summary`
@@ -140,14 +143,17 @@ GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
 
-# OpenAI
-OPENAI_API_KEY=
+# Anthropic Claude
+ANTHROPIC_API_KEY=
+
+# Token Encryption
+TOKEN_ENCRYPTION_KEY=
 
 # Optional: Vercel-specific
 VERCEL_URL=
 ```
 
-**Security Note**: OAuth tokens from Gmail are stored in `email_accounts.oauth_tokens` but should be encrypted before storage. The current implementation stores them as-is (JSONB).
+**Security Note**: OAuth tokens from Gmail are stored in `email_accounts.oauth_tokens` encrypted with AES-256-GCM via `src/lib/token-encryption.ts`. Legacy unencrypted tokens are automatically migrated on first access.
 
 ## Key Architectural Decisions
 
@@ -169,24 +175,27 @@ Currently using **client-side Supabase client** (`createClient` with anon key) r
 - Uses Vercel Cron for periodic syncing (`/api/cron/sync-emails`)
 
 ### 4. State Management
-**Zustand for client state** when needed, but primarily relies on:
-- Server Components for initial data
-- React hooks for local state
-- Supabase Realtime for live updates (if implemented)
+No global state library. Relies on:
+- **React `cache()`** for server-side request deduplication (e.g., `getProject()`)
+- **Server Components** for initial data fetching
+- **React hooks** (`useState`, `useEffect`) for local component state
+- **API routes** as mutation endpoints called via `fetch()`
 
 ### 5. Type Safety
-No centralized types directory (`src/types/` is empty). Types are:
-- Inferred from Supabase schema
-- Co-located with components/services
-- Consider using Supabase CLI to generate types: `supabase gen types typescript`
+All shared types are centralized in `src/types/index.ts`. Types are:
+- Manually maintained (not auto-generated from Supabase)
+- Includes interfaces for Email, EmailRecord, Bid, ProjectStatusData, DashboardData, API envelopes, and more
+- Co-located types used for component-specific concerns
 
 ## Important Patterns
 
 ### 1. OAuth Token Refresh
-Gmail OAuth tokens expire. The `GmailService` class should handle token refresh:
-- Check token expiry before API calls
-- Use `refresh_token` to get new `access_token`
-- Update `email_accounts.oauth_tokens` with new tokens
+Gmail OAuth tokens expire. The centralized `getAuthenticatedGmailService()` in `src/lib/gmail-auth.ts` handles the full lifecycle:
+- Loads encrypted tokens from `email_accounts.oauth_tokens` in the database
+- Decrypts with AES-256-GCM via `token-encryption.ts`
+- Checks token expiry (5-minute buffer) and refreshes via Google OAuth if needed
+- Re-encrypts and persists updated tokens back to the database
+- Transparently migrates legacy unencrypted tokens on first access
 
 ### 2. Email Deduplication
 Use `emails.message_id` (from Gmail) as unique identifier:
@@ -196,10 +205,10 @@ ON CONFLICT (message_id) DO UPDATE SET ...
 ```
 
 ### 3. AI Cost Management
-OpenAI API calls are expensive. Strategies:
+Anthropic Claude API cost optimization strategies:
+- **Dual-model approach**: Claude Haiku 3.5 for fast, cheap tasks (individual email summaries, triage classification); Claude Sonnet 4.5 for complex analysis (status reports, bid extraction, cross-email insights, draft generation)
 - Only summarize unread or recent emails
-- Cache summaries in database
-- Use cheaper models (gpt-4o-mini) for batch operations
+- Cache summaries in database (`emails.ai_summary`, `project_status.ai_summary`)
 
 ### 4. Document Storage
 Documents use Supabase Storage:
@@ -235,9 +244,9 @@ Based on docs in `/docs` directory:
 
 2. **Email Sync Automation**: Reference `docs/automated-email-sync.md` for Vercel Cron setup and webhook configuration
 
-3. **Token Encryption**: OAuth tokens in `email_accounts.oauth_tokens` are stored unencrypted (JSONB). Should encrypt before storage
+3. ~~**Token Encryption**~~: **Resolved** — OAuth tokens are now encrypted with AES-256-GCM via `src/lib/token-encryption.ts`
 
-4. **Type Generation**: Types directory is empty - consider generating from Supabase schema
+4. ~~**Type Generation**~~: **Resolved** — Types are centralized in `src/types/index.ts` (manually maintained)
 
 ## Project Context
 

@@ -14,7 +14,7 @@ The system automatically:
 ## System Components
 
 ### 1. Database Storage
-- **Email accounts**: Stores OAuth tokens for automated access
+- **Email accounts**: Stores OAuth tokens encrypted with AES-256-GCM for automated access
 - **Emails**: Stores email content and AI summaries
 - **Projects**: Links emails to your construction project
 
@@ -236,9 +236,9 @@ Visit `/emails` in your app - emails should load quickly from the database.
 - Ensure senders' domains are included in the search
 
 **3. AI Summary Failures**
-- Check OpenAI API key is valid and has credits
+- Check `ANTHROPIC_API_KEY` is valid and has credits
 - Monitor API rate limits
-- Review error logs for specific OpenAI errors
+- Review error logs for specific Anthropic API errors
 
 ### Monitoring Tips
 
@@ -246,7 +246,7 @@ Visit `/emails` in your app - emails should load quickly from the database.
 - Failed cron job executions
 - Database connection errors
 - Gmail API quota usage
-- OpenAI API usage and costs
+- Anthropic Claude API usage and costs
 
 **Log important metrics:**
 - Number of emails synced per day
@@ -259,7 +259,7 @@ Visit `/emails` in your app - emails should load quickly from the database.
 
 ### Security
 - Use environment-specific CRON_SECRET values
-- Ensure OAuth tokens are encrypted in the database
+- ~~Ensure OAuth tokens are encrypted in the database~~ ✅ Implemented (AES-256-GCM via `token-encryption.ts`)
 - Set up proper CORS and rate limiting
 
 ### Performance

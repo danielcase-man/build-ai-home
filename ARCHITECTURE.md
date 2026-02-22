@@ -26,9 +26,8 @@ UBuildIt Manager is a **single-user construction project management application*
 | Styling | Tailwind CSS + tailwindcss-animate | 3.4.17 |
 | UI Components | shadcn/ui (Radix primitives) + Lucide icons | Various |
 | Database | Supabase (PostgreSQL) | @supabase/supabase-js 2.54.0 |
-| AI | Anthropic Claude Sonnet 4.5 | @anthropic-ai/sdk 0.74.0 |
+| AI | Anthropic Claude (Haiku 3.5 + Sonnet 4.5) | @anthropic-ai/sdk 0.74.0 |
 | Email | Google Gmail API | googleapis 155.0.1 |
-| State | Zustand (declared dep, not actively used) | 5.0.7 |
 | Auth | next-auth (declared dep, not actively used) | 4.24.13 |
 | Charts | Recharts | 3.7.0 |
 | Animations | Framer Motion | 12.34.0 |
@@ -128,12 +127,13 @@ page.tsx (client) → useEffect → fetch('/api/...') → setState → render
 
 ### 3.3 State Management
 
-Despite Zustand being a declared dependency, **no Zustand stores exist**. State management relies on:
+No global state library. State management relies on:
 
-1. **Server Components** for initial data (fetched at render time)
-2. **React useState/useEffect** for local component state
-3. **API routes** as data mutation endpoints called via `fetch()`
-4. **No global client state** - each page manages its own data independently
+1. **React `cache()`** for server-side request deduplication (e.g., `getProject()`)
+2. **Server Components** for initial data (fetched at render time)
+3. **React useState/useEffect** for local component state
+4. **API routes** as data mutation endpoints called via `fetch()`
+5. **No global client state** - each page manages its own data independently
 
 ---
 
@@ -159,7 +159,7 @@ All methods are error-safe (return null/empty on failure, never throw).
 | `storeEmail(email)` / `storeEmails(emails[])` | Upsert emails (onConflict: message_id for dedup) |
 | `emailExists(messageId)` | Check deduplication |
 | `getRecentEmails(days)` | Fetch emails within N days |
-| `getOrCreateProject(address?)` | Find project by address or create with defaults |
+| `getOrCreateProject(address?)` | Find project by address or create with defaults (**unused** — superseded by `getProject()` in project-service.ts) |
 | `getLatestProjectStatus(projectId)` | Fetch most recent status row |
 | `upsertProjectStatus(projectId, data)` | Insert/update daily status (onConflict: project_id+date) |
 | `getProjectContactEmails(projectId)` | Get tracked contact email addresses |
@@ -188,23 +188,23 @@ All methods are error-safe (return null/empty on failure, never throw).
 | `sendEmail(to, subject, htmlBody)` | Compose RFC 2822 message and send via Gmail API |
 | `markAsRead(messageId)` | Remove UNREAD label |
 
-OAuth tokens stored in httpOnly cookies (access: 7-day, refresh: 30-day) and in `email_accounts.oauth_tokens` (JSONB, **currently unencrypted**).
+OAuth tokens are encrypted with AES-256-GCM and stored in `email_accounts.oauth_tokens` (JSONB). Token lifecycle (decrypt, refresh, re-encrypt, persist) is managed by `gmail-auth.ts`.
 
 ### 4.2 AI Services
 
-All AI calls use **Claude Sonnet 4.5** (`claude-sonnet-4-5-20250929`) via the Anthropic SDK.
+AI calls use a **dual-model strategy** via the Anthropic SDK: **Claude Haiku 3.5** (`claude-haiku-3-5-20241022`) for fast/cheap tasks and **Claude Sonnet 4.5** (`claude-sonnet-4-5-20250929`) for complex analysis.
 
 #### `ai-clients.ts` - Client Management
 - Lazy singleton `getAnthropicClient()` (instantiated on first call)
 - `parseAIJsonResponse(text)` - strips markdown code fences, parses JSON
 
 #### `ai-summarization.ts` - Summarization & Status
-| Function | Temp | Max Tokens | Purpose |
-|----------|------|------------|---------|
-| `summarizeIndividualEmail(email)` | 0.3 | 200 | 2-3 sentence email summary |
-| `summarizeEmails(emails[])` | 0.2 | 2048 | Batch analysis → ProjectSummary |
-| `generateDailyProjectSummary(data, emails, activity)` | 0.7 | 600 | Friendly narrative summary |
-| `generateProjectStatusSnapshot(emails, context, previousStatus?)` | 0.2 | 3000 | **Iterative** status with hot_topics, action_items, decisions, summary |
+| Function | Model | Temp | Max Tokens | Purpose |
+|----------|-------|------|------------|---------|
+| `summarizeIndividualEmail(email)` | Haiku | 0.3 | 200 | 2-3 sentence email summary |
+| `summarizeEmails(emails[])` | Sonnet | 0.2 | 2048 | Batch analysis → ProjectSummary |
+| `generateDailyProjectSummary(data, emails, activity)` | Sonnet | 0.7 | 600 | Friendly narrative summary |
+| `generateProjectStatusSnapshot(emails, context, previousStatus?)` | Sonnet | 0.2 | 3000 | **Iterative** status with hot_topics, action_items, decisions, summary |
 
 The status snapshot function is **iterative** - it receives the previous report and instructs the AI to:
 - KEEP relevant hot topics, REMOVE resolved ones, ADD new ones
@@ -213,20 +213,20 @@ The status snapshot function is **iterative** - it receives the previous report 
 - REWRITE the narrative summary incorporating both old and new context
 
 #### `claude-email-agent.ts` - Email Intelligence
-| Function | Temp | Max Tokens | Purpose |
-|----------|------|------------|---------|
-| `summarizeEmail(email)` | 0.2 | 1024 | Deep email analysis → EmailInsights |
-| `analyzeProjectEmails(emails[])` | 0.2 | 2048 | Cross-email analysis → ProjectInsights |
-| `triageEmail(email)` | 0.0 | 256 | Priority classification (critical/high/medium/low) |
-| `generateDraftEmails(insights, emails[])` | 0.3 | 3000 | Up to 5 recommended email drafts (HTML) |
+| Function | Model | Temp | Max Tokens | Purpose |
+|----------|-------|------|------------|---------|
+| `summarizeEmail(email)` | Haiku | 0.2 | 1024 | Deep email analysis → EmailInsights |
+| `analyzeProjectEmails(emails[])` | Sonnet | 0.2 | 2048 | Cross-email analysis → ProjectInsights |
+| `triageEmail(email)` | Haiku | 0.0 | 256 | Priority classification (critical/high/medium/low) |
+| `generateDraftEmails(insights, emails[])` | Sonnet | 0.3 | 3000 | Up to 5 recommended email drafts (HTML) |
 
 #### `bid-extractor.ts` - Bid Intelligence
-| Function | Temp | Max Tokens | Purpose |
-|----------|------|------------|---------|
-| `extractBidFromEmail(subject, body, sender, name?)` | 0.1 | 4096 | Extract structured bid data from email text |
-| `extractBidFromDocument(text, vendor?, filename?)` | 0.1 | 4096 | Extract bid from document content |
-| `refineBidExtraction(bid, context, feedback?)` | 0.1 | 4096 | Re-analyze with additional context |
-| `compareBids(bids[], context?)` | 0.2 | 3000 | Side-by-side analysis with recommendation |
+| Function | Model | Temp | Max Tokens | Purpose |
+|----------|-------|------|------------|---------|
+| `extractBidFromEmail(subject, body, sender, name?)` | Sonnet | 0.1 | 4096 | Extract structured bid data from email text |
+| `extractBidFromDocument(text, vendor?, filename?)` | Sonnet | 0.1 | 4096 | Extract bid from document content |
+| `refineBidExtraction(bid, context, feedback?)` | Sonnet | 0.1 | 4096 | Re-analyze with additional context |
+| `compareBids(bids[], context?)` | Sonnet | 0.2 | 3000 | Side-by-side analysis with recommendation |
 
 #### `document-analyzer.ts` - Document Processing
 | Function | Purpose |
@@ -258,7 +258,7 @@ The status snapshot function is **iterative** - it receives the previous report 
 | Route | Method | Purpose |
 |-------|--------|---------|
 | `/api/gmail/auth` | GET | Generate Google OAuth URL → redirect user |
-| `/api/auth/google/callback` | GET | Exchange auth code → store tokens in DB + cookies → redirect to `/?success=connected` |
+| `/api/auth/google/callback` | GET | Exchange auth code → encrypt tokens (AES-256-GCM) → store in DB → redirect to `/?success=connected` |
 
 ### 5.2 Email Operations
 
@@ -375,21 +375,22 @@ Performance indexes exist on all foreign keys (`project_id`), query fields (`sen
 User clicks "Connect Gmail"
   → GET /api/gmail/auth → returns OAuth URL
   → User authorizes in Google → callback to /api/auth/google/callback
-  → Exchange code for tokens → store in DB (email_accounts) + httpOnly cookies
+  → Exchange code for tokens → encrypt (AES-256-GCM) → store in DB (email_accounts)
   → Redirect to /?success=connected
 
 Email Fetch (on-demand):
   GET /api/emails/fetch
-  → Check cookies for tokens → refresh if expired
+  → getAuthenticatedGmailService() (gmail-auth.ts):
+      load encrypted tokens from DB → decrypt → refresh if expired → re-encrypt & persist
   → db.buildEmailSearchQuery() → Gmail API search
-  → For each email: summarizeIndividualEmail() via Claude
+  → For each email: summarizeIndividualEmail() via Claude Haiku
   → Store in emails table (dedup by message_id)
-  → If analyze=true: analyzeProjectEmails() for cross-email insights
+  → If analyze=true: analyzeProjectEmails() via Claude Sonnet for cross-email insights
   → Return structured response
 
 Email Fetch (automated):
   Vercel Cron → POST /api/cron/sync-emails (daily 8 AM UTC)
-  → Get tokens from DB → Gmail API → AI summaries → store → update project status
+  → getAuthenticatedGmailService() → Gmail API → AI summaries → store → update project status
 ```
 
 ### 7.2 AI Status Report Flow
@@ -492,11 +493,11 @@ The entire app assumes one project and one user. `getProject()` returns the firs
 ### Client-Side Supabase with RLS
 All database access (even from server components) uses the **public anon key**. RLS policies check `auth.uid() IS NOT NULL` but don't scope to specific projects or users. Security relies on the app being single-user.
 
-### Cookie-Based OAuth Token Passing
-Gmail tokens are passed to API routes via httpOnly cookies. The `email_accounts` table also stores tokens for the cron job. This creates two token storage locations that can drift.
+### Database-Only Encrypted OAuth Tokens
+Gmail tokens are stored exclusively in `email_accounts.oauth_tokens`, encrypted with AES-256-GCM. The centralized `getAuthenticatedGmailService()` in `gmail-auth.ts` handles decrypt → refresh → re-encrypt → persist. No cookies are used for token passing.
 
-### All AI on Claude Sonnet 4.5
-Every AI call (email summaries, bid extraction, status reports, draft generation, document analysis) uses the same model. No cost optimization with cheaper models for simpler tasks.
+### Dual-Model AI Strategy (Haiku + Sonnet)
+Cost-sensitive tasks (individual email summaries, triage classification) use **Claude Haiku 3.5**. Complex analysis (status reports, bid extraction, cross-email insights, draft generation, document analysis) uses **Claude Sonnet 4.5**.
 
 ### JSONB for Flexible Schema
 Hot topics, action items, decisions, bid line items, site data, and building specs all use JSONB columns. This provides flexibility but means no referential integrity or type enforcement at the database level. Legacy format normalization (string vs. array) is handled in application code.

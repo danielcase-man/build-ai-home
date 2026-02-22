@@ -24,7 +24,9 @@
     "seed:selections": "npx tsx scripts/seed-selections.ts",
     "seed:bids": "npx tsx scripts/seed-bids.ts",
     "schedule:view": "start CONSTRUCTION_SCHEDULE.html",
-    "schedule:edit": "start CONSTRUCTION_SCHEDULE.csv"
+    "schedule:edit": "start CONSTRUCTION_SCHEDULE.csv",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "construction",
@@ -86,6 +88,7 @@
     "@eslint/compat": "^2.0.2",
     "@eslint/eslintrc": "^3.3.3",
     "eslint": "^9.39.2",
-    "eslint-config-next": "^15.5.12"
+    "eslint-config-next": "^15.5.12",
+    "vitest": "^4.0.18"
   }
 }
