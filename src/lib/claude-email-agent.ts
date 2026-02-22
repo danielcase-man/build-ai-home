@@ -33,7 +33,7 @@ Return valid JSON only, no markdown or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-haiku-3-5-20241022',
       max_tokens: 1024,
       temperature: 0.2,
       messages: [{
@@ -44,8 +44,8 @@ Return valid JSON only, no markdown or explanation.`
 
     const content = response.content[0]
     if (content.type === 'text') {
-      const parsed = JSON.parse(content.text)
-      return parsed as EmailInsights
+      const parsed = parseAIJsonResponse(content.text) as EmailInsights
+      return parsed
     }
 
     return getEmptyInsights()
@@ -111,8 +111,8 @@ Return valid JSON only, no markdown or explanation.`
 
     const content = response.content[0]
     if (content.type === 'text') {
-      const parsed = JSON.parse(content.text)
-      return parsed as ProjectInsights
+      const parsed = parseAIJsonResponse(content.text) as ProjectInsights
+      return parsed
     }
 
     return getEmptyProjectInsights()
@@ -155,7 +155,7 @@ Return valid JSON only.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-haiku-3-5-20241022',
       max_tokens: 256,
       temperature: 0,
       messages: [{
@@ -166,7 +166,12 @@ Return valid JSON only.`
 
     const content = response.content[0]
     if (content.type === 'text') {
-      return JSON.parse(content.text)
+      return parseAIJsonResponse(content.text) as {
+        urgent: boolean
+        priority: 'critical' | 'high' | 'medium' | 'low'
+        reason: string
+        suggestedAction: string
+      }
     }
 
     return {

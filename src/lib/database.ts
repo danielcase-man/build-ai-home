@@ -222,6 +222,68 @@ export class DatabaseService {
     }
   }
 
+  // Project Status Management
+  async getLatestProjectStatus(projectId: string): Promise<{
+    hot_topics: unknown[]
+    action_items: unknown[]
+    recent_decisions: unknown[]
+    ai_summary: string
+    date: string
+  } | null> {
+    try {
+      const { data, error } = await supabase
+        .from('project_status')
+        .select('hot_topics, action_items, recent_decisions, ai_summary, date')
+        .eq('project_id', projectId)
+        .order('date', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching latest project status:', error)
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error('Database error:', error)
+      return null
+    }
+  }
+
+  async upsertProjectStatus(projectId: string, data: {
+    phase?: string
+    current_step?: number
+    progress_percentage?: number
+    hot_topics: unknown[]
+    action_items: unknown[]
+    recent_decisions: unknown[]
+    budget_status?: string
+    budget_used?: number
+    ai_summary: string
+  }): Promise<void> {
+    try {
+      const today = new Date().toISOString().split('T')[0]
+
+      const { error } = await supabase
+        .from('project_status')
+        .upsert({
+          project_id: projectId,
+          date: today,
+          ...data,
+          last_updated: new Date().toISOString()
+        }, {
+          onConflict: 'project_id,date'
+        })
+
+      if (error) {
+        console.error('Error upserting project status:', error)
+      }
+    } catch (error) {
+      console.error('Database error:', error)
+    }
+  }
+
   // Contact-based email query builder
   async getProjectContactEmails(projectId: string): Promise<string[]> {
     try {

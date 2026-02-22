@@ -2,18 +2,77 @@
 
 import { useState } from 'react'
 import { format } from 'date-fns'
-import { Calendar, CheckCircle, AlertTriangle, DollarSign, MessageSquare, TrendingUp, Clock, Square, Timer } from 'lucide-react'
+import { Calendar, CheckCircle, AlertTriangle, DollarSign, MessageSquare, TrendingUp, Clock, Square, Timer, Mail, Send, Edit3, X, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import type { ProjectStatusData } from '@/types'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
+} from '@/components/ui/dialog'
+import { toast } from 'sonner'
+import type { ProjectStatusData, DraftEmail } from '@/types'
 
 export default function ProjectStatusClient({ initialData }: { initialData: ProjectStatusData }) {
   const [statusData] = useState<ProjectStatusData>({
     ...initialData,
     date: new Date(initialData.date)
   })
+  const [generatingDraftFor, setGeneratingDraftFor] = useState<number | null>(null)
+  const [activeDraft, setActiveDraft] = useState<DraftEmail | null>(null)
+  const [editingDraft, setEditingDraft] = useState<DraftEmail | null>(null)
+  const [sendingDraft, setSendingDraft] = useState(false)
+
+  const handleGenerateDraft = async (index: number, item: ProjectStatusData['actionItems'][0]) => {
+    setGeneratingDraftFor(index)
+    try {
+      const response = await fetch('/api/emails/drafts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: item.action_context?.to,
+          toName: item.action_context?.to_name,
+          subjectHint: item.action_context?.subject_hint,
+          context: item.action_context?.context || item.text
+        })
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to generate draft')
+      setActiveDraft(data.data.draft)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate draft')
+    } finally {
+      setGeneratingDraftFor(null)
+    }
+  }
+
+  const handleSendDraft = async (draft: DraftEmail) => {
+    setSendingDraft(true)
+    try {
+      const response = await fetch('/api/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: draft.to,
+          subject: draft.subject,
+          body: draft.body
+        })
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to send email')
+      toast.success(`Email sent to ${draft.toName || draft.to}`)
+      setActiveDraft(null)
+      setEditingDraft(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send email')
+    } finally {
+      setSendingDraft(false)
+    }
+  }
 
   const getPriorityVariant = (priority: string): 'destructive' | 'warning' | 'secondary' => {
     switch(priority) {
@@ -129,9 +188,25 @@ export default function ProjectStatusClient({ initialData }: { initialData: Proj
               {statusData.actionItems.map((item, index) => (
                 <li key={index} className="flex items-center gap-2">
                   {getStatusIcon(item.status)}
-                  <span className={`text-sm ${item.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
+                  <span className={`text-sm flex-1 ${item.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
                     {item.text}
                   </span>
+                  {item.action_type === 'draft_email' && item.status !== 'completed' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0"
+                      disabled={generatingDraftFor === index}
+                      onClick={() => handleGenerateDraft(index, item)}
+                    >
+                      {generatingDraftFor === index ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Mail className="h-3 w-3 mr-1" />
+                      )}
+                      Draft Email
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -224,6 +299,127 @@ export default function ProjectStatusClient({ initialData }: { initialData: Proj
         <p>Last updated: {format(new Date(), 'h:mm a')}</p>
         <p className="mt-1">This report is automatically generated daily</p>
       </div>
+
+      {/* Draft Email Review Dialog */}
+      <Dialog open={!!activeDraft && !editingDraft} onOpenChange={(open) => { if (!open) setActiveDraft(null) }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Review Draft Email
+            </DialogTitle>
+            <DialogDescription>
+              AI-generated draft for your review
+            </DialogDescription>
+          </DialogHeader>
+
+          {activeDraft && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">To: </span>
+                {activeDraft.toName ? `${activeDraft.toName} <${activeDraft.to}>` : activeDraft.to}
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Subject: </span>
+                {activeDraft.subject}
+              </div>
+              {activeDraft.reason && (
+                <div className="text-xs text-primary/80 italic">
+                  {activeDraft.reason}
+                </div>
+              )}
+              <div className="border rounded p-3 bg-white text-sm max-h-64 overflow-y-auto">
+                <div dangerouslySetInnerHTML={{ __html: activeDraft.body }} />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => setActiveDraft(null)}>
+              <X className="h-3 w-3 mr-1" />
+              Dismiss
+            </Button>
+            <Button variant="outline" onClick={() => { setEditingDraft(activeDraft); }}>
+              <Edit3 className="h-3 w-3 mr-1" />
+              Edit
+            </Button>
+            <Button onClick={() => activeDraft && handleSendDraft(activeDraft)} disabled={sendingDraft}>
+              {sendingDraft ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Send className="h-3 w-3 mr-1" />
+              )}
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Draft Dialog */}
+      <Dialog open={!!editingDraft} onOpenChange={(open) => { if (!open) setEditingDraft(null) }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5" />
+              Edit Draft Email
+            </DialogTitle>
+            <DialogDescription>
+              Modify before sending
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="draft-to">To</Label>
+                <Input
+                  id="draft-to"
+                  value={editingDraft.to}
+                  onChange={e => setEditingDraft({ ...editingDraft, to: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="draft-subject">Subject</Label>
+                <Input
+                  id="draft-subject"
+                  value={editingDraft.subject}
+                  onChange={e => setEditingDraft({ ...editingDraft, subject: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="draft-body">Body (HTML)</Label>
+                <Textarea
+                  id="draft-body"
+                  value={editingDraft.body}
+                  onChange={e => setEditingDraft({ ...editingDraft, body: e.target.value })}
+                  rows={12}
+                  className="font-mono text-xs"
+                />
+              </div>
+              <div>
+                <Label>Preview</Label>
+                <div className="mt-1 border rounded p-3 bg-white text-sm max-h-48 overflow-y-auto">
+                  <div dangerouslySetInnerHTML={{ __html: editingDraft.body }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingDraft(null)}>
+              Cancel
+            </Button>
+            <Button onClick={() => editingDraft && handleSendDraft(editingDraft)} disabled={sendingDraft}>
+              {sendingDraft ? (
+                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+              ) : (
+                <Send className="h-3 w-3 mr-1" />
+              )}
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

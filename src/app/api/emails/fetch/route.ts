@@ -1,10 +1,13 @@
 import { NextRequest } from 'next/server'
-import { GmailService } from '@/lib/gmail'
 import { summarizeEmail, analyzeProjectEmails, triageEmail } from '@/lib/claude-email-agent'
-import { cookies } from 'next/headers'
 import { db } from '@/lib/database'
+import { getProject } from '@/lib/project-service'
+import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { successResponse, errorResponse } from '@/lib/api-utils'
 import { AuthenticationError } from '@/lib/errors'
+
+// Process emails in batches to avoid overwhelming the AI API
+const AI_BATCH_SIZE = 3
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,17 +33,16 @@ export async function GET(request: NextRequest) {
         aiSummary: email.ai_summary
       }))
 
-      // Format emails for overall project summary
-      const formattedEmails = emailsWithSummaries.map(email => ({
-        subject: email.subject,
-        from: email.from,
-        body: email.body.substring(0, 1000),
-        date: email.date
-      }))
-
-      // Get overall AI summary if there are emails
+      // Only run AI analysis if explicitly requested via ?analyze=true
+      const analyze = searchParams.get('analyze') === 'true'
       let projectInsights = null
-      if (formattedEmails.length > 0) {
+      if (analyze && emailsWithSummaries.length > 0) {
+        const formattedEmails = emailsWithSummaries.map(email => ({
+          subject: email.subject,
+          from: email.from,
+          body: email.body.substring(0, 1000),
+          date: email.date
+        }))
         projectInsights = await analyzeProjectEmails(formattedEmails)
       }
 
@@ -56,50 +58,53 @@ export async function GET(request: NextRequest) {
     // Fall back to live Gmail API if no stored emails or forcing refresh
     console.log('Fetching emails from Gmail API...')
 
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('gmail_access_token')
-    const refreshToken = cookieStore.get('gmail_refresh_token')
-
-    if (!accessToken) {
+    const gmailService = await getAuthenticatedGmailService()
+    if (!gmailService) {
       throw new AuthenticationError()
     }
 
-    const gmailService = new GmailService()
-    gmailService.setCredentials({
-      access_token: accessToken.value,
-      refresh_token: refreshToken?.value
-    })
-
     // Build search query dynamically from project contacts
-    const projectId = await db.getOrCreateProject()
-    const searchQuery = projectId
-      ? await db.buildEmailSearchQuery(projectId, 7)
+    const project = await getProject()
+    const searchQuery = project
+      ? await db.buildEmailSearchQuery(project.id, 7)
       : 'label:inbox newer_than:7d'
     const emails = await gmailService.getEmails(searchQuery)
 
-    // Add individual AI insights and triage to each email
-    const emailsWithInsights = await Promise.all(
-      emails.map(async (email) => {
-        const emailData = {
-          subject: email.subject,
-          from: email.from,
-          body: email.body.substring(0, 2000),
-          date: email.date
-        }
+    // Add individual AI insights and triage in batches to avoid rate limits
+    const emailsWithInsights: Array<{
+      id: string; threadId: string; subject: string; from: string;
+      date: string; body: string; snippet: string;
+      insights: Awaited<ReturnType<typeof summarizeEmail>>;
+      triage: Awaited<ReturnType<typeof triageEmail>>;
+      aiSummary: string;
+    }> = []
 
-        const [insights, triage] = await Promise.all([
-          summarizeEmail(emailData),
-          triageEmail(emailData)
-        ])
+    for (let i = 0; i < emails.length; i += AI_BATCH_SIZE) {
+      const batch = emails.slice(i, i + AI_BATCH_SIZE)
+      const batchResults = await Promise.all(
+        batch.map(async (email) => {
+          const emailData = {
+            subject: email.subject,
+            from: email.from,
+            body: email.body.substring(0, 2000),
+            date: email.date
+          }
 
-        return {
-          ...email,
-          insights,
-          triage,
-          aiSummary: insights.summary
-        }
-      })
-    )
+          const [insights, triage] = await Promise.all([
+            summarizeEmail(emailData),
+            triageEmail(emailData)
+          ])
+
+          return {
+            ...email,
+            insights,
+            triage,
+            aiSummary: insights.summary
+          }
+        })
+      )
+      emailsWithInsights.push(...batchResults)
+    }
 
     // Format emails for project-wide analysis
     const formattedEmails = emailsWithInsights.map(email => ({

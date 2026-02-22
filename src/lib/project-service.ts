@@ -1,10 +1,30 @@
+import { cache } from 'react'
 import { supabase } from './supabase'
-import type { ProjectStatusData, DashboardData } from '@/types'
+import { db } from './database'
+import { generateProjectStatusSnapshot } from './ai-summarization'
+import type { ProjectStatusData, DashboardData, Email } from '@/types'
 
-export async function getProject() {
+/** Derive the current step number from planning_phase_steps rows. */
+export function calculateCurrentStep(
+  planningSteps: Array<{ step_number: number; status: string }> | null
+): { currentStep: number; totalSteps: number } {
+  const totalSteps = planningSteps?.length || 6
+  const inProgressStep = planningSteps
+    ?.filter(s => s.status === 'in_progress')
+    .sort((a, b) => b.step_number - a.step_number)[0]
+  const highestCompleted = planningSteps
+    ?.filter(s => s.status === 'completed')
+    .sort((a, b) => b.step_number - a.step_number)[0]
+  const currentStep = inProgressStep?.step_number
+    || (highestCompleted ? Math.min(highestCompleted.step_number + 1, totalSteps) : 1)
+  return { currentStep, totalSteps }
+}
+
+export const getProject = cache(async () => {
   const { data, error } = await supabase
     .from('projects')
     .select('*')
+    .order('created_at', { ascending: true })
     .limit(1)
     .single()
 
@@ -13,7 +33,7 @@ export async function getProject() {
   }
 
   return data
-}
+})
 
 export async function getProjectDashboard(): Promise<DashboardData> {
   const project = await getProject()
@@ -32,7 +52,7 @@ export async function getProjectDashboard(): Promise<DashboardData> {
   ] = await Promise.all([
     supabase
       .from('planning_phase_steps')
-      .select('step_number, status')
+      .select('step_number, name, status')
       .eq('project_id', project.id)
       .order('step_number', { ascending: true }),
     supabase
@@ -58,14 +78,7 @@ export async function getProjectDashboard(): Promise<DashboardData> {
       .limit(1),
   ])
 
-  const totalSteps = planningSteps?.length || 6
-
-  const inProgressStep = planningSteps?.filter(s => s.status === 'in_progress')
-    .sort((a, b) => b.step_number - a.step_number)[0]
-  const highestCompleted = planningSteps?.filter(s => s.status === 'completed')
-    .sort((a, b) => b.step_number - a.step_number)[0]
-  const currentStep = inProgressStep?.step_number
-    || (highestCompleted ? Math.min(highestCompleted.step_number + 1, totalSteps) : 1)
+  const { currentStep, totalSteps } = calculateCurrentStep(planningSteps)
 
   const budgetUsed = budgetItems?.reduce((sum, item) =>
     sum + (parseFloat(item.actual_cost) || 0), 0) || 0
@@ -76,7 +89,7 @@ export async function getProjectDashboard(): Promise<DashboardData> {
   return {
     phase: project.phase || 'Planning',
     currentStep,
-    totalSteps: totalSteps || 6,
+    totalSteps,
     daysElapsed,
     totalDays: project.estimated_duration_days || 117,
     budgetUsed,
@@ -84,7 +97,12 @@ export async function getProjectDashboard(): Promise<DashboardData> {
     unreadEmails: unreadEmails || 0,
     pendingTasks: pendingTasks || 0,
     upcomingMilestone: nextMilestone?.[0]?.name || '',
-    milestoneDate: nextMilestone?.[0]?.target_date || ''
+    milestoneDate: nextMilestone?.[0]?.target_date || '',
+    planningSteps: (planningSteps || []).map(s => ({
+      step_number: s.step_number,
+      name: s.name || '',
+      status: s.status || 'pending',
+    })),
   }
 }
 
@@ -128,7 +146,7 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
       .eq('project_id', project.id),
     supabase
       .from('planning_phase_steps')
-      .select('step_number, status')
+      .select('step_number, name, status')
       .eq('project_id', project.id)
       .order('step_number', { ascending: true }),
     supabase
@@ -157,13 +175,7 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
   const budgetUsed = budgetItems?.reduce((sum, item) =>
     sum + (parseFloat(item.actual_cost) || 0), 0) || 0
 
-  const stepsTotal = planningSteps?.length || 6
-  const inProgressStep = planningSteps?.filter(s => s.status === 'in_progress')
-    .sort((a, b) => b.step_number - a.step_number)[0]
-  const highestCompleted = planningSteps?.filter(s => s.status === 'completed')
-    .sort((a, b) => b.step_number - a.step_number)[0]
-  const stepNum = inProgressStep?.step_number
-    || (highestCompleted ? Math.min(highestCompleted.step_number + 1, stepsTotal) : 1)
+  const { currentStep: stepNum, totalSteps: stepsTotal } = calculateCurrentStep(planningSteps)
   const createdAt = new Date(project.created_at)
   const daysElapsed = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
   const totalDays = project.estimated_duration_days || 117
@@ -215,8 +227,103 @@ function getDefaultDashboard(): DashboardData {
     unreadEmails: 0,
     pendingTasks: 0,
     upcomingMilestone: '',
-    milestoneDate: ''
+    milestoneDate: '',
+    planningSteps: [],
   }
+}
+
+export async function updateProjectStatus(projectId: string): Promise<void> {
+  // Fetch project data
+  const { data: project } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single()
+
+  if (!project) {
+    console.error('updateProjectStatus: project not found', projectId)
+    return
+  }
+
+  // Fetch planning steps for progress calculation
+  const { data: planningSteps } = await supabase
+    .from('planning_phase_steps')
+    .select('step_number, status')
+    .eq('project_id', projectId)
+    .order('step_number', { ascending: true })
+
+  const { currentStep, totalSteps } = calculateCurrentStep(planningSteps)
+
+  const budgetItems = await supabase
+    .from('budget_items')
+    .select('actual_cost')
+    .eq('project_id', projectId)
+
+  const budgetUsed = budgetItems.data?.reduce((sum, item) =>
+    sum + (parseFloat(item.actual_cost) || 0), 0) || 0
+  const budgetTotal = parseFloat(project.budget_total) || 450000
+
+  // Fetch previous status report for iterative context
+  const previousStatus = await db.getLatestProjectStatus(projectId)
+
+  // Normalize legacy string formats in previous status
+  if (previousStatus) {
+    if (typeof previousStatus.hot_topics === 'string') {
+      try { previousStatus.hot_topics = JSON.parse(previousStatus.hot_topics as string) } catch { previousStatus.hot_topics = [] }
+    }
+    if (typeof previousStatus.action_items === 'string') {
+      try { previousStatus.action_items = JSON.parse(previousStatus.action_items as string) } catch { previousStatus.action_items = [] }
+    }
+    if (typeof previousStatus.recent_decisions === 'string') {
+      try { previousStatus.recent_decisions = JSON.parse(previousStatus.recent_decisions as string) } catch { previousStatus.recent_decisions = [] }
+    }
+  }
+
+  // Fetch recent emails — no project_id filter (single-user app, all emails are relevant)
+  const recentEmails = await db.getRecentEmails(14)
+
+  // Build project context for AI
+  const projectContext = {
+    phase: project.phase || 'planning',
+    currentStep,
+    totalSteps,
+    budgetUsed,
+    budgetTotal
+  }
+
+  // Generate AI snapshot if there are emails OR a previous status to iterate on
+  let snapshot
+  if (recentEmails.length > 0 || previousStatus) {
+    const emailsForAI: Email[] = recentEmails.map(e => ({
+      subject: e.subject,
+      from: e.sender_email,
+      body: e.body_text || '',
+      date: e.received_date
+    }))
+    snapshot = await generateProjectStatusSnapshot(emailsForAI, projectContext, previousStatus)
+  } else {
+    snapshot = {
+      hot_topics: [],
+      action_items: [],
+      recent_decisions: [],
+      ai_summary: 'No recent emails to analyze.'
+    }
+  }
+
+  // Write to database
+  await db.upsertProjectStatus(projectId, {
+    phase: project.phase || 'planning',
+    current_step: currentStep,
+    progress_percentage: Math.round((currentStep / totalSteps) * 100),
+    hot_topics: snapshot.hot_topics,
+    action_items: snapshot.action_items,
+    recent_decisions: snapshot.recent_decisions,
+    budget_status: budgetUsed <= budgetTotal ? 'On Track' : 'Over Budget',
+    budget_used: budgetUsed,
+    ai_summary: snapshot.ai_summary
+  })
+
+  console.log(`Project status updated for project ${projectId}`)
 }
 
 export async function getActiveHotTopics(projectId: string): Promise<string[]> {

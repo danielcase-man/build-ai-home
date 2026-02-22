@@ -9,6 +9,7 @@ interface GmailHeader {
 interface GmailPayloadPart {
   mimeType: string
   body: { data?: string }
+  parts?: GmailPayloadPart[]
 }
 
 interface GmailPayload {
@@ -35,7 +36,14 @@ export class GmailService {
     )
   }
 
-  setCredentials(tokens: { access_token?: string | null; refresh_token?: string | null }) {
+  setCredentials(tokens: {
+    access_token?: string | null
+    refresh_token?: string | null
+    expiry_date?: number | null
+    token_type?: string | null
+    scope?: string
+    id_token?: string | null
+  }) {
     this.oauth2Client.setCredentials(tokens)
   }
 
@@ -116,11 +124,35 @@ export class GmailService {
     const from = headers.find((h) => h.name === 'From')?.value || ''
     const date = headers.find((h) => h.name === 'Date')?.value || ''
 
+    // Recursively find a MIME part by type (handles nested multipart structures)
+    const findPart = (parts: GmailPayloadPart[] | undefined, mimeType: string): GmailPayloadPart | undefined => {
+      if (!parts) return undefined
+      for (const part of parts) {
+        if (part.mimeType === mimeType && part.body?.data) return part
+        if (part.parts) {
+          const nested = findPart(part.parts, mimeType)
+          if (nested) return nested
+        }
+      }
+      return undefined
+    }
+
     let body = ''
     if (email.payload.parts) {
-      const textPart = email.payload.parts.find((p) => p.mimeType === 'text/plain')
+      const textPart = findPart(email.payload.parts, 'text/plain')
       if (textPart && textPart.body.data) {
         body = Buffer.from(textPart.body.data, 'base64').toString()
+      } else {
+        // Fallback to text/html with tag stripping
+        const htmlPart = findPart(email.payload.parts, 'text/html')
+        if (htmlPart && htmlPart.body.data) {
+          const html = Buffer.from(htmlPart.body.data, 'base64').toString()
+          body = html.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/&nbsp;/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+        }
       }
     } else if (email.payload.body?.data) {
       body = Buffer.from(email.payload.body.data, 'base64').toString()

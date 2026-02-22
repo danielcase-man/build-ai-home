@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server'
-import { GmailService } from '@/lib/gmail'
 import { summarizeIndividualEmail } from '@/lib/ai-summarization'
 import { db } from '@/lib/database'
 import { extractEmailAddress, extractSenderName } from '@/lib/ui-helpers'
 import { successResponse, errorResponse } from '@/lib/api-utils'
+import { updateProjectStatus, getProject } from '@/lib/project-service'
+import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { AuthenticationError } from '@/lib/errors'
 import { env } from '@/lib/env'
 import type { EmailRecord } from '@/types'
@@ -25,10 +26,9 @@ export async function POST(request: NextRequest) {
 
     console.log('Starting automated email sync...')
 
-    // Get all email accounts that need syncing
+    // Check if we need to sync (respect sync frequency)
     const emailAccount = await db.getEmailAccount(env.gmailUserEmail || '')
-
-    if (!emailAccount || !emailAccount.oauth_tokens) {
+    if (!emailAccount) {
       console.log('No configured email account found')
       return successResponse({
         message: 'No email accounts configured for syncing',
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Check if we need to sync (respect sync frequency)
     const lastSync = emailAccount.last_sync ? new Date(emailAccount.last_sync) : new Date(0)
     const syncFrequency = emailAccount.sync_frequency || 30
     const nextSyncTime = new Date(lastSync.getTime() + syncFrequency * 60 * 1000)
@@ -49,15 +48,22 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Initialize Gmail service with stored tokens
-    const gmailService = new GmailService()
-    gmailService.setCredentials(emailAccount.oauth_tokens)
+    // Get authenticated Gmail service (handles decryption + token refresh + persist)
+    const gmailService = await getAuthenticatedGmailService()
+    if (!gmailService) {
+      console.log('No valid Gmail credentials found')
+      return successResponse({
+        message: 'Gmail authentication not available',
+        synced: 0
+      })
+    }
 
     // Get project ID
-    const projectId = await db.getOrCreateProject()
-    if (!projectId) {
-      throw new Error('Could not get or create project')
+    const project = await getProject()
+    if (!project) {
+      throw new Error('No project found')
     }
+    const projectId = project.id
 
     // Build search query dynamically from project contacts
     console.log('Building email search query from contacts...')
@@ -122,6 +128,15 @@ export async function POST(request: NextRequest) {
 
     // Update last sync time
     await db.updateLastSync(emailAccount.email_address)
+
+    // Update project status snapshot from recent emails
+    try {
+      console.log('Generating project status snapshot...')
+      await updateProjectStatus(projectId)
+      console.log('Project status snapshot updated')
+    } catch (statusError) {
+      console.error('Failed to update project status (non-fatal):', statusError)
+    }
 
     console.log(`Email sync completed. Processed ${emailsToStore.length} new emails`)
 

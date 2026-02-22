@@ -43,7 +43,7 @@ export default function EmailDashboard() {
     setError(null)
 
     try {
-      const response = await fetch('/api/emails/fetch')
+      const response = await fetch('/api/emails/fetch?analyze=true')
       const data = await response.json()
 
       if (response.status === 401) {

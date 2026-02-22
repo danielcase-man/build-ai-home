@@ -45,12 +45,20 @@ export interface EmailAccountRecord {
   user_id?: string
   email_address: string
   provider?: string
-  oauth_tokens?: OAuthTokens
+  oauth_tokens?: OAuthTokens | EncryptedTokens
   sync_enabled?: boolean
   last_sync?: string
   sync_frequency?: number
   created_at?: string
   updated_at?: string
+}
+
+/** AES-256-GCM encrypted token payload stored in oauth_tokens JSONB */
+export interface EncryptedTokens {
+  _encrypted: true
+  iv: string
+  data: string
+  tag: string
 }
 
 export interface OAuthTokens {
@@ -135,7 +143,17 @@ export interface ProjectStatusData {
   nextMilestone: string
   milestoneDate: string
   hotTopics: Array<{ priority: string; text: string }>
-  actionItems: Array<{ status: string; text: string }>
+  actionItems: Array<{
+    status: string
+    text: string
+    action_type?: 'draft_email' | null
+    action_context?: {
+      to?: string
+      to_name?: string
+      subject_hint?: string
+      context?: string
+    }
+  }>
   recentCommunications: Array<{ from: string; summary: string }>
   recentDecisions: Array<{ decision: string; impact: string }>
   aiSummary: string
@@ -153,6 +171,90 @@ export interface DashboardData {
   pendingTasks: number
   upcomingMilestone: string
   milestoneDate: string
+  planningSteps: PlanningStepRecord[]
+}
+
+export interface PlanningStepRecord {
+  step_number: number
+  name: string
+  status: string
+}
+
+// --- Site & Building Types (from existing-app migration) ---
+
+export interface SiteInformation {
+  id?: string
+  project_id: string
+  property_survey?: Record<string, unknown>
+  topographic_data?: Record<string, unknown>
+  utility_locations?: Record<string, unknown>
+  access_routes?: Record<string, unknown>
+  soil_conditions?: Record<string, unknown>
+  soil_bearing_capacity?: number
+  water_table_depth?: number
+  environmental_factors?: Record<string, unknown>
+  zoning_classification?: string
+  setback_requirements?: Record<string, unknown>
+  hoa_restrictions?: Record<string, unknown>
+  building_codes?: Record<string, unknown>
+  well_location?: { x: number; y: number }
+  septic_location?: { x: number; y: number }
+  flood_zone?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BuildingSpecifications {
+  id?: string
+  project_id: string
+  foundation_type?: string
+  foundation_dimensions?: Record<string, unknown>
+  concrete_requirements?: Record<string, unknown>
+  framing_type?: string
+  lumber_specifications?: Record<string, unknown>
+  structural_loads?: Record<string, unknown>
+  roof_specifications?: Record<string, unknown>
+  wall_specifications?: Record<string, unknown>
+  window_door_specifications?: Record<string, unknown>
+  exterior_materials?: Record<string, unknown>
+  hvac_specifications?: Record<string, unknown>
+  plumbing_specifications?: Record<string, unknown>
+  electrical_specifications?: Record<string, unknown>
+  flooring_specifications?: Record<string, unknown>
+  interior_finishes?: Record<string, unknown>
+  cabinetry_specifications?: Record<string, unknown>
+  appliance_specifications?: Record<string, unknown>
+  created_at?: string
+  updated_at?: string
+}
+
+export interface VendorCategoryRequirement {
+  id?: string
+  category_id: string
+  requirement_name: string
+  requirement_description?: string
+  data_type: 'text' | 'number' | 'boolean' | 'date' | 'file' | 'selection'
+  is_required: boolean
+  measurement_unit?: string
+  min_value?: number
+  max_value?: number
+  selection_options?: Record<string, unknown>
+  validation_pattern?: string
+  help_text?: string
+  display_order: number
+  field_group?: string
+  created_at?: string
+}
+
+export interface VendorBidRequirement {
+  id?: string
+  project_id: string
+  category: string
+  vendor_name: string
+  requirement_responses: Record<string, unknown>
+  completeness_score: number
+  created_at?: string
+  updated_at?: string
 }
 
 // --- Document Analysis Types ---

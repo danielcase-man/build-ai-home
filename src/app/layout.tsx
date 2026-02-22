@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
 import { Toaster } from '@/components/ui/sonner'
-import { ErrorBoundary } from '@/components/ui/error-boundary'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,12 +20,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <ErrorBoundary>
-          <div className="flex min-h-screen flex-col">
-            <Navigation />
-            <main className="flex-1">{children}</main>
-          </div>
-        </ErrorBoundary>
+        <div className="flex min-h-screen flex-col">
+          <Navigation />
+          <main className="flex-1">{children}</main>
+        </div>
         <Toaster />
       </body>
     </html>

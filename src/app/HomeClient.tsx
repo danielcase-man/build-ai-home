@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Calendar, CheckCircle2, DollarSign, Mail, FileText, Users, RefreshCw, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import FileUpload from '@/components/FileUpload'
+import UBuildItWorkflowBar from '@/components/UBuildItWorkflowBar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
@@ -56,7 +57,8 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
 
       if (payload.status) {
         const status = payload.status
-        setProjectData({
+        setProjectData(prev => ({
+          ...prev,
           phase: status.phase || 'Planning',
           currentStep: status.stepNumber || 1,
           totalSteps: status.totalSteps || 6,
@@ -67,8 +69,8 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
           unreadEmails: 0,
           pendingTasks: status.actionItems?.filter((i: { status: string }) => i.status !== 'completed').length || 0,
           upcomingMilestone: status.nextMilestone || '',
-          milestoneDate: status.milestoneDate || ''
-        })
+          milestoneDate: status.milestoneDate || '',
+        }))
 
         if (status.hotTopics && Array.isArray(status.hotTopics)) {
           setHotTopics(status.hotTopics.map((t: { text?: string } | string) =>
@@ -145,6 +147,11 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
           </div>
         </CardContent>
       </Card>
+
+      {/* UBuildIt Workflow Steps */}
+      {projectData.planningSteps.length > 0 && (
+        <UBuildItWorkflowBar steps={projectData.planningSteps} />
+      )}
 
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
