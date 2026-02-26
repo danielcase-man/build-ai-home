@@ -1,91 +1,435 @@
-import { describe, it, expect } from 'vitest'
-import { parseToolCall, ASSISTANT_TOOLS } from './assistant'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-describe('ASSISTANT_TOOLS', () => {
-  it('defines 7 tools', () => {
-    expect(ASSISTANT_TOOLS).toHaveLength(7)
+// Mock the service dependencies before importing
+vi.mock('./project-service', () => ({
+  getProject: vi.fn().mockResolvedValue({
+    id: 'proj-1',
+    address: '708 Purple Salvia Cove, Liberty Hill, TX',
+    phase: 'planning',
+    budget_total: '450000',
+    created_at: '2025-01-01T00:00:00Z',
+  }),
+  getBudgetSummary: vi.fn().mockResolvedValue({ total: 450000, spent: 12000, categories: [] }),
+}))
+
+vi.mock('./bids-service', () => ({
+  getBids: vi.fn().mockResolvedValue([
+    {
+      id: 'bid-1',
+      vendor_name: 'Pella Windows',
+      vendor_email: 'pella@example.com',
+      category: 'Windows',
+      subcategory: null,
+      description: 'All windows',
+      total_amount: 85000,
+      status: 'pending',
+      bid_date: '2025-06-01',
+      lead_time_weeks: 12,
+      scope_of_work: 'Supply and install',
+      inclusions: ['labor'],
+      exclusions: ['trim'],
+      pros: null,
+      cons: null,
+      internal_notes: null,
+      selection_notes: null,
+      vendor_phone: null,
+    },
+    {
+      id: 'bid-2',
+      vendor_name: 'Doorwin',
+      vendor_email: 'doorwin@example.com',
+      category: 'Windows',
+      subcategory: null,
+      description: 'Custom windows',
+      total_amount: 120000,
+      status: 'under_review',
+      bid_date: '2025-06-15',
+      lead_time_weeks: 16,
+      scope_of_work: 'Supply only',
+      inclusions: null,
+      exclusions: null,
+      pros: null,
+      cons: null,
+      internal_notes: null,
+      selection_notes: null,
+      vendor_phone: null,
+    },
+    {
+      id: 'bid-3',
+      vendor_name: 'CobraStone',
+      vendor_email: null,
+      category: 'Stone',
+      subcategory: null,
+      description: 'Exterior stone',
+      total_amount: 85000,
+      status: 'selected',
+      bid_date: '2025-05-20',
+      lead_time_weeks: 8,
+      scope_of_work: 'Supply and install stone veneer',
+      inclusions: null,
+      exclusions: null,
+      pros: null,
+      cons: null,
+      internal_notes: null,
+      selection_notes: null,
+      vendor_phone: null,
+    },
+  ]),
+}))
+
+vi.mock('./budget-service', () => ({
+  getBudgetItems: vi.fn().mockResolvedValue([
+    {
+      id: 'bi-1',
+      category: 'Foundation',
+      subcategory: null,
+      description: 'Foundation work',
+      estimated_cost: 50000,
+      actual_cost: 48000,
+      status: 'completed',
+      notes: null,
+    },
+    {
+      id: 'bi-2',
+      category: 'Windows',
+      subcategory: null,
+      description: 'Windows supply and install',
+      estimated_cost: 90000,
+      actual_cost: null,
+      status: 'estimated',
+      notes: null,
+    },
+  ]),
+}))
+
+vi.mock('./selections-service', () => ({
+  getSelections: vi.fn().mockResolvedValue([
+    {
+      id: 'sel-1',
+      room: 'Kitchen',
+      category: 'appliance',
+      subcategory: 'range',
+      product_name: 'AGA Professional',
+      brand: 'AGA',
+      model_number: 'AGA-PRO-48',
+      finish: 'Stainless',
+      color: null,
+      quantity: 1,
+      unit_price: 12000,
+      total_price: 12000,
+      status: 'selected',
+      lead_time: '8 weeks',
+      notes: null,
+      product_url: null,
+    },
+  ]),
+}))
+
+vi.mock('./database', () => ({
+  db: {
+    getRecentEmails: vi.fn().mockResolvedValue([
+      {
+        id: 'email-1',
+        subject: 'Window bid attached',
+        sender_email: 'vendor@pella.com',
+        sender_name: 'Pella Rep',
+        received_date: '2025-06-14T10:00:00Z',
+        ai_summary: 'Pella sent updated window quote for $85K',
+        is_read: true,
+        category: 'bid',
+        urgency_level: 'medium',
+      },
+    ]),
+    getLatestProjectStatus: vi.fn().mockResolvedValue({
+      date: '2025-06-14',
+      ai_summary: 'Project on track.',
+      hot_topics: [{ priority: 'high', text: 'Window vendor selection pending' }],
+      action_items: [{ status: 'pending', text: 'Compare window bids' }],
+      recent_decisions: [{ decision: 'Selected AGA range', impact: 'Budget +$2K over Viking estimate' }],
+    }),
+  },
+}))
+
+vi.mock('./supabase', () => ({
+  supabase: {
+    from: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          order: vi.fn().mockReturnValue({
+            then: vi.fn().mockResolvedValue({ data: [
+              { step_number: 1, name: 'Consultation', status: 'completed' },
+              { step_number: 2, name: 'Lot Analysis', status: 'in_progress' },
+            ]}),
+            limit: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({ data: null }),
+              then: vi.fn().mockResolvedValue({ data: [] }),
+            }),
+          }),
+        }),
+      }),
+    }),
+  },
+}))
+
+import {
+  ASSISTANT_TOOLS,
+  READ_TOOL_NAMES,
+  WRITE_TOOL_NAMES,
+  isReadTool,
+  isWriteTool,
+  buildSystemPrompt,
+  executeReadTool,
+  parseToolCall,
+  getToolStatusLabel,
+} from './assistant'
+
+describe('assistant', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
   })
 
-  it('all tools have name, description, and input_schema', () => {
-    for (const tool of ASSISTANT_TOOLS) {
-      expect(tool.name).toBeTruthy()
-      expect(tool.description).toBeTruthy()
-      expect(tool.input_schema).toBeDefined()
-      expect(tool.input_schema.type).toBe('object')
-      expect(tool.input_schema.required).toBeDefined()
-    }
+  // -------------------------------------------------------------------
+  // Tool definitions
+  // -------------------------------------------------------------------
+
+  describe('ASSISTANT_TOOLS', () => {
+    it('has 14 tools total (7 read + 7 write)', () => {
+      expect(ASSISTANT_TOOLS).toHaveLength(14)
+    })
+
+    it('contains all expected read tools', () => {
+      const names = ASSISTANT_TOOLS.map(t => t.name)
+      expect(names).toContain('get_project_overview')
+      expect(names).toContain('search_bids')
+      expect(names).toContain('get_budget_items')
+      expect(names).toContain('get_selections')
+      expect(names).toContain('search_emails')
+      expect(names).toContain('get_contacts')
+      expect(names).toContain('get_planning_steps')
+    })
+
+    it('contains all expected write tools', () => {
+      const names = ASSISTANT_TOOLS.map(t => t.name)
+      expect(names).toContain('update_bid')
+      expect(names).toContain('add_bid')
+      expect(names).toContain('update_selection')
+      expect(names).toContain('add_selection')
+      expect(names).toContain('update_budget_item')
+      expect(names).toContain('add_budget_item')
+      expect(names).toContain('update_milestone')
+    })
+
+    it('every tool has a valid input_schema', () => {
+      for (const tool of ASSISTANT_TOOLS) {
+        expect(tool.input_schema).toBeDefined()
+        expect(tool.input_schema.type).toBe('object')
+      }
+    })
   })
 
-  it('includes expected tool names', () => {
-    const names = ASSISTANT_TOOLS.map(t => t.name)
-    expect(names).toContain('update_bid')
-    expect(names).toContain('add_bid')
-    expect(names).toContain('update_budget_item')
-    expect(names).toContain('add_budget_item')
-    expect(names).toContain('update_selection')
-    expect(names).toContain('add_contact')
-    expect(names).toContain('update_planning_step')
-  })
-})
+  // -------------------------------------------------------------------
+  // isReadTool / isWriteTool
+  // -------------------------------------------------------------------
 
-describe('parseToolCall', () => {
-  it('creates update_bid action with amount', () => {
-    const action = parseToolCall('update_bid', { vendor_name: 'Prestige Steel', total_amount: 72000 }, 'call-1')
-    expect(action.type).toBe('update_bid')
-    expect(action.label).toContain('Prestige Steel')
-    expect(action.label).toContain('$72,000')
-    expect(action.status).toBe('pending')
-    expect(action.toolCallId).toBe('call-1')
-    expect(action.id).toMatch(/^action-/)
-  })
+  describe('isReadTool', () => {
+    it('returns true for read tools', () => {
+      for (const name of READ_TOOL_NAMES) {
+        expect(isReadTool(name)).toBe(true)
+      }
+    })
 
-  it('creates update_bid action without amount', () => {
-    const action = parseToolCall('update_bid', { vendor_name: 'CobraStone', status: 'selected' }, 'call-2')
-    expect(action.label).toContain('CobraStone')
-    expect(action.label).not.toContain('$')
+    it('returns false for write tools', () => {
+      for (const name of WRITE_TOOL_NAMES) {
+        expect(isReadTool(name)).toBe(false)
+      }
+    })
+
+    it('returns false for unknown tools', () => {
+      expect(isReadTool('unknown_tool')).toBe(false)
+    })
   })
 
-  it('creates add_bid action', () => {
-    const action = parseToolCall('add_bid', { vendor_name: 'NewCo', category: 'Roofing', total_amount: 50000 }, 'call-3')
-    expect(action.type).toBe('add_bid')
-    expect(action.label).toContain('NewCo')
-    expect(action.label).toContain('Roofing')
-    expect(action.label).toContain('$50,000')
+  describe('isWriteTool', () => {
+    it('returns true for write tools', () => {
+      for (const name of WRITE_TOOL_NAMES) {
+        expect(isWriteTool(name)).toBe(true)
+      }
+    })
+
+    it('returns false for read tools', () => {
+      for (const name of READ_TOOL_NAMES) {
+        expect(isWriteTool(name)).toBe(false)
+      }
+    })
   })
 
-  it('creates add_budget_item action', () => {
-    const action = parseToolCall('add_budget_item', { description: 'Landscaping', estimated_cost: 25000 }, 'call-4')
-    expect(action.label).toContain('Landscaping')
-    expect(action.label).toContain('$25,000')
+  // -------------------------------------------------------------------
+  // buildSystemPrompt
+  // -------------------------------------------------------------------
+
+  describe('buildSystemPrompt', () => {
+    it('returns a lightweight prompt with project metadata', async () => {
+      const prompt = await buildSystemPrompt('proj-1')
+
+      expect(prompt).toContain('Project Assistant')
+      expect(prompt).toContain('708 Purple Salvia Cove')
+      expect(prompt).toContain('planning')
+      expect(prompt).toContain('$450,000')
+      expect(prompt).toContain('READ tools')
+      expect(prompt).toContain('WRITE tools')
+    })
+
+    it('does not include detailed bid, selection, or email data', async () => {
+      const prompt = await buildSystemPrompt('proj-1')
+
+      expect(prompt).not.toContain('Pella')
+      expect(prompt).not.toContain('Doorwin')
+      expect(prompt).not.toContain('AGA')
+      expect(prompt).not.toContain('Window bid attached')
+      expect(prompt.length).toBeLessThan(1000)
+    })
   })
 
-  it('creates update_selection action', () => {
-    const action = parseToolCall('update_selection', { product_name: 'Monarch Manor', status: 'ordered' }, 'call-5')
-    expect(action.label).toContain('Monarch Manor')
-    expect(action.label).toContain('ordered')
+  // -------------------------------------------------------------------
+  // executeReadTool
+  // -------------------------------------------------------------------
+
+  describe('executeReadTool', () => {
+    it('search_bids returns filtered results by category', async () => {
+      const result = await executeReadTool('search_bids', { category: 'Windows' }, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(2)
+      expect(parsed.bids[0].vendor_name).toBe('Pella Windows')
+      expect(parsed.bids[1].vendor_name).toBe('Doorwin')
+    })
+
+    it('search_bids returns filtered results by vendor', async () => {
+      const result = await executeReadTool('search_bids', { vendor_name: 'Cobra' }, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(1)
+      expect(parsed.bids[0].category).toBe('Stone')
+    })
+
+    it('search_bids returns all bids when no filters', async () => {
+      const result = await executeReadTool('search_bids', {}, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(3)
+    })
+
+    it('get_budget_items returns filtered by category', async () => {
+      const result = await executeReadTool('get_budget_items', { category: 'Foundation' }, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(1)
+      expect(parsed.items[0].category).toBe('Foundation')
+      expect(parsed.total_estimated).toBe(50000)
+      expect(parsed.total_actual).toBe(48000)
+    })
+
+    it('get_selections returns filtered by room', async () => {
+      const result = await executeReadTool('get_selections', { room: 'Kitchen' }, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(1)
+      expect(parsed.selections[0].product_name).toBe('AGA Professional')
+    })
+
+    it('search_emails filters by query', async () => {
+      const result = await executeReadTool('search_emails', { query: 'window' }, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(1)
+      expect(parsed.emails[0].subject).toContain('Window')
+    })
+
+    it('search_emails returns empty for non-matching query', async () => {
+      const result = await executeReadTool('search_emails', { query: 'nonexistent' }, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.count).toBe(0)
+    })
+
+    it('returns error for unknown tool', async () => {
+      const result = await executeReadTool('not_a_tool', {}, 'proj-1')
+      const parsed = JSON.parse(result)
+
+      expect(parsed.error).toContain('Unknown read tool')
+    })
   })
 
-  it('creates add_contact action', () => {
-    const action = parseToolCall('add_contact', { name: 'John Doe', role: 'Plumber' }, 'call-6')
-    expect(action.label).toContain('John Doe')
-    expect(action.label).toContain('Plumber')
+  // -------------------------------------------------------------------
+  // parseToolCall
+  // -------------------------------------------------------------------
+
+  describe('parseToolCall', () => {
+    it('creates a PendingAction for add_bid', () => {
+      const action = parseToolCall(
+        'add_bid',
+        { vendor_name: 'TestCo', category: 'Roofing', description: 'Roof', total_amount: 50000 },
+        'tool-123'
+      )
+
+      expect(action.type).toBe('add_bid')
+      expect(action.tool_use_id).toBe('tool-123')
+      expect(action.description).toContain('TestCo')
+      expect(action.description).toContain('Roofing')
+      expect(action.description).toContain('$50,000')
+      expect(action.data.vendor_name).toBe('TestCo')
+      expect(action.id).toMatch(/^action_/)
+    })
+
+    it('creates a PendingAction for update_bid with status', () => {
+      const action = parseToolCall(
+        'update_bid',
+        { bid_id: 'bid-1', status: 'selected' },
+        'tool-456'
+      )
+
+      expect(action.type).toBe('update_bid')
+      expect(action.description).toContain('selected')
+    })
+
+    it('creates a PendingAction for add_selection', () => {
+      const action = parseToolCall(
+        'add_selection',
+        { product_name: 'Brizo Faucet', room: 'Master Bath', category: 'plumbing', quantity: 1 },
+        'tool-789'
+      )
+
+      expect(action.type).toBe('add_selection')
+      expect(action.description).toContain('Brizo Faucet')
+      expect(action.description).toContain('Master Bath')
+    })
+
+    it('creates a PendingAction for add_budget_item', () => {
+      const action = parseToolCall(
+        'add_budget_item',
+        { category: 'Landscaping', description: 'Front yard', estimated_cost: 25000 },
+        'tool-abc'
+      )
+
+      expect(action.type).toBe('add_budget_item')
+      expect(action.description).toContain('Landscaping')
+      expect(action.description).toContain('$25,000')
+    })
   })
 
-  it('creates update_planning_step action', () => {
-    const action = parseToolCall('update_planning_step', { step_number: 3, status: 'completed' }, 'call-7')
-    expect(action.label).toContain('Step 3')
-    expect(action.label).toContain('completed')
-  })
+  // -------------------------------------------------------------------
+  // getToolStatusLabel
+  // -------------------------------------------------------------------
 
-  it('handles unknown tool with fallback label', () => {
-    const action = parseToolCall('unknown_tool', { foo: 'bar' }, 'call-8')
-    expect(action.type).toBe('unknown_tool')
-    expect(action.label).toContain('unknown_tool')
-  })
+  describe('getToolStatusLabel', () => {
+    it('returns a human-readable label for known tools', () => {
+      expect(getToolStatusLabel('search_bids')).toContain('bids')
+      expect(getToolStatusLabel('get_project_overview')).toContain('project')
+      expect(getToolStatusLabel('search_emails')).toContain('emails')
+    })
 
-  it('stores data payload in action', () => {
-    const input = { vendor_name: 'Test', total_amount: 100 }
-    const action = parseToolCall('update_bid', input, 'call-9')
-    expect(action.data).toEqual(input)
+    it('returns a fallback for unknown tools', () => {
+      expect(getToolStatusLabel('unknown')).toContain('unknown')
+    })
   })
 })

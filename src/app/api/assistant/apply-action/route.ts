@@ -1,26 +1,31 @@
-import { executeAction } from '@/lib/assistant-actions'
-import { successResponse, errorResponse, validationError } from '@/lib/api-utils'
-import type { PendingAction } from '@/types'
+/**
+ * POST /api/assistant/apply-action
+ *
+ * Executes a user-confirmed write action (PendingAction) against the database.
+ */
 
-export async function POST(request: Request) {
+import { NextRequest, NextResponse } from 'next/server'
+import type { PendingAction } from '@/types'
+import { executeAction } from '@/lib/assistant-actions'
+
+export async function POST(req: NextRequest) {
   try {
-    const { action } = await request.json() as { action: PendingAction }
+    const action = (await req.json()) as PendingAction
 
     if (!action?.type || !action?.data) {
-      return validationError('action with type and data is required')
+      return NextResponse.json(
+        { success: false, error: 'Invalid action payload' },
+        { status: 400 }
+      )
     }
 
     const result = await executeAction(action)
-
-    if (!result.success) {
-      return errorResponse(new Error(result.message), result.message)
-    }
-
-    return successResponse({
-      message: result.message,
-      data: result.data,
-    })
-  } catch (error) {
-    return errorResponse(error, 'Failed to apply action')
+    return NextResponse.json(result)
+  } catch (err) {
+    console.error('Apply action error:', err)
+    return NextResponse.json(
+      { success: false, error: err instanceof Error ? err.message : 'Internal error' },
+      { status: 500 }
+    )
   }
 }

@@ -393,6 +393,48 @@ export interface DraftEmail {
   status: 'draft' | 'editing' | 'sent' | 'dismissed'
 }
 
+// --- Assistant Types ---
+
+export type ReadToolName =
+  | 'get_project_overview'
+  | 'search_bids'
+  | 'get_budget_items'
+  | 'get_selections'
+  | 'search_emails'
+  | 'get_contacts'
+  | 'get_planning_steps'
+
+export type WriteToolName =
+  | 'update_bid'
+  | 'add_bid'
+  | 'update_selection'
+  | 'add_selection'
+  | 'update_budget_item'
+  | 'add_budget_item'
+  | 'update_milestone'
+
+export interface PendingAction {
+  id: string
+  tool_use_id: string
+  type: WriteToolName
+  description: string
+  data: Record<string, unknown>
+}
+
+export interface AssistantStreamEvent {
+  type: 'text_delta' | 'tool_call' | 'tool_status' | 'done' | 'error'
+  content?: string
+  action?: PendingAction
+  toolName?: string
+  error?: string
+}
+
+export interface AssistantMessage {
+  role: 'user' | 'assistant'
+  content: string
+  actions?: PendingAction[]
+}
+
 // --- API Response Types ---
 
 export interface ApiResponse<T> {
@@ -406,40 +448,3 @@ export interface ApiErrorResponse {
   details?: string
 }
 
-// --- Assistant Types ---
-
-export type AssistantRole = 'user' | 'assistant'
-
-export interface ChatMessage {
-  id: string
-  role: AssistantRole
-  content: string
-  timestamp: Date
-  pendingActions?: PendingAction[]
-}
-
-export type ActionType =
-  | 'update_bid'
-  | 'add_bid'
-  | 'update_budget_item'
-  | 'add_budget_item'
-  | 'update_selection'
-  | 'add_contact'
-  | 'update_planning_step'
-
-export interface PendingAction {
-  id: string
-  type: ActionType
-  label: string
-  description: string
-  data: Record<string, unknown>
-  status: 'pending' | 'applied' | 'dismissed'
-  toolCallId: string
-}
-
-export interface AssistantStreamEvent {
-  type: 'text_delta' | 'tool_call' | 'done' | 'error'
-  content?: string
-  action?: PendingAction
-  error?: string
-}
