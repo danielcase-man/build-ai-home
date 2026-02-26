@@ -26,7 +26,11 @@
     "schedule:view": "start CONSTRUCTION_SCHEDULE.html",
     "schedule:edit": "start CONSTRUCTION_SCHEDULE.csv",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npx playwright test",
+    "test:e2e:ui": "npx playwright test --ui",
+    "test:all": "vitest run && npx playwright test"
   },
   "keywords": [
     "construction",
@@ -87,6 +91,8 @@
   "devDependencies": {
     "@eslint/compat": "^2.0.2",
     "@eslint/eslintrc": "^3.3.3",
+    "@playwright/test": "^1.58.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
     "eslint-config-next": "^15.5.12",
     "vitest": "^4.0.18"

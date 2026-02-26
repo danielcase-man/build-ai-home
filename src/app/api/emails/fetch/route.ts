@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     const project = await getProject()
     const searchQuery = project
       ? await db.buildEmailSearchQuery(project.id, 7)
-      : 'label:inbox newer_than:7d'
+      : '(label:inbox OR in:sent OR is:important) newer_than:7d'
     const emails = await gmailService.getEmails(searchQuery)
 
     // Add individual AI insights and triage in batches to avoid rate limits

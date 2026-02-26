@@ -319,22 +319,35 @@ export class DatabaseService {
 
     const parts: string[] = []
 
-    // Add contact email filters
+    // Add contact email filters — match both received AND sent emails
     if (contactEmails.length > 0) {
-      const emailFilters = contactEmails.map(e => `from:${e}`).join(' OR ')
-      parts.push(`(${emailFilters})`)
+      const fromFilters = contactEmails.map(e => `from:${e}`)
+      const toFilters = contactEmails.map(e => `to:${e}`)
+      parts.push(...fromFilters, ...toFilters)
     }
 
-    // Always include @ubuildit.com domain
-    parts.push('from:@ubuildit.com')
+    // Always include @ubuildit.com domain (both directions)
+    parts.push('from:@ubuildit.com', 'to:@ubuildit.com')
 
-    // Add property address match if available
+    // Include Important label and Sent mail
+    parts.push('is:important', 'in:sent')
+
+    // Construction-related keyword matches
+    parts.push('subject:bid', 'subject:quote', 'subject:estimate', 'subject:contract',
+      'subject:proposal', 'subject:invoice')
+
+    // Add property address match — full address and individual terms
     const address = project?.address
     if (address) {
-      // Extract the street portion for matching (e.g. "708 Purple Salvia Cove")
       const streetMatch = address.match(/^[\d]+\s+[^,]+/)
       if (streetMatch) {
         parts.push(`"${streetMatch[0]}"`)
+        // Also match individual distinctive parts of the address
+        for (const word of streetMatch[0].split(/\s+/)) {
+          if (word.length >= 3) {
+            parts.push(word)
+          }
+        }
       }
     }
 

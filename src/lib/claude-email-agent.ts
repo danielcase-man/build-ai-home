@@ -271,6 +271,8 @@ Return valid JSON only, no markdown fences or explanation.`
 
     return parsed.map((draft, i) => ({
       ...draft,
+      // P0 fix: Sanitize HTML body to prevent XSS from AI-generated content
+      body: sanitizeHtml(draft.body || ''),
       id: `draft-${Date.now()}-${i}`,
       status: 'draft' as const
     }))
@@ -278,6 +280,17 @@ Return valid JSON only, no markdown fences or explanation.`
     console.error('Error generating draft emails:', error)
     return []
   }
+}
+
+/** Strip dangerous HTML constructs from AI-generated email bodies */
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/\son\w+\s*=\s*\S+/gi, '')
+    .replace(/javascript\s*:/gi, '')
+    .replace(/data\s*:\s*text\/html/gi, '')
 }
 
 function getEmptyInsights(): EmailInsights {

@@ -72,13 +72,14 @@ export class GmailService {
     return creds.expiry_date < Date.now() + 5 * 60 * 1000
   }
 
-  getAuthUrl() {
+  getAuthUrl(state?: string) {
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
         'https://www.googleapis.com/auth/gmail.readonly',
         'https://www.googleapis.com/auth/gmail.modify'
-      ]
+      ],
+      ...(state ? { state } : {}),
     })
   }
 
@@ -172,10 +173,14 @@ export class GmailService {
   async sendEmail(to: string, subject: string, htmlBody: string): Promise<string | null> {
     const gmail = google.gmail({ version: 'v1', auth: this.oauth2Client })
 
+    // P0 fix: Strip CRLF from header fields to prevent MIME header injection
+    const sanitizedTo = to.replace(/[\r\n]/g, '')
+    const sanitizedSubject = subject.replace(/[\r\n]/g, '')
+
     try {
       const messageParts = [
-        `To: ${to}`,
-        `Subject: ${subject}`,
+        `To: ${sanitizedTo}`,
+        `Subject: ${sanitizedSubject}`,
         'MIME-Version: 1.0',
         'Content-Type: text/html; charset=utf-8',
         '',

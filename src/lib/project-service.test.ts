@@ -1,11 +1,88 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Stub React cache() before importing — it's a server-only API
 vi.mock('react', () => ({
   cache: (fn: unknown) => fn,
 }))
 
-import { calculateCurrentStep } from './project-service'
+// ─── Supabase chainable mock ─────────────────────────────────────────────────
+// Use vi.hoisted so the mock variables are available inside vi.mock factories.
+const { mockChain, CHAIN_METHODS, mockResult } = vi.hoisted(() => {
+  const mockResult = { current: { data: null, error: null, count: null } as any }
+  const chain: Record<string, any> = {}
+  const methods = [
+    'from', 'select', 'insert', 'update', 'upsert', 'delete',
+    'eq', 'neq', 'in', 'gte', 'lte', 'order', 'limit', 'single', 'maybeSingle',
+  ] as const
+  return { mockChain: chain, CHAIN_METHODS: methods, mockResult }
+})
+
+vi.mock('./supabase', () => {
+  for (const m of CHAIN_METHODS) {
+    mockChain[m] = vi.fn().mockReturnValue(mockChain)
+  }
+  mockChain.single = vi.fn().mockImplementation(() => Promise.resolve(mockResult.current))
+  Object.defineProperty(mockChain, 'then', {
+    value: (resolve: (v: unknown) => void) => resolve(mockResult.current),
+    writable: true,
+    configurable: true,
+  })
+  return { supabase: { from: (...args: unknown[]) => mockChain.from(...args) } }
+})
+
+// Mock modules imported by project-service but not under test
+vi.mock('./database', () => ({
+  db: {
+    getLatestProjectStatus: vi.fn().mockResolvedValue(null),
+    getRecentEmails: vi.fn().mockResolvedValue([]),
+    upsertProjectStatus: vi.fn().mockResolvedValue(undefined),
+  },
+}))
+vi.mock('./ai-summarization', () => ({
+  generateProjectStatusSnapshot: vi.fn().mockResolvedValue({
+    hot_topics: [],
+    action_items: [],
+    recent_decisions: [],
+    ai_summary: 'mock summary',
+  }),
+}))
+
+import {
+  calculateCurrentStep,
+  getProject,
+  getProjectDashboard,
+  getProjectStatus,
+  getActiveHotTopics,
+  getRecentCommunications,
+  getBudgetSummary,
+} from './project-service'
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Reset all chain methods and the shared mockResult before every test. */
+function resetChain() {
+  for (const m of CHAIN_METHODS) {
+    mockChain[m] = vi.fn().mockReturnValue(mockChain)
+  }
+  mockChain.single = vi.fn().mockImplementation(() => Promise.resolve(mockResult.current))
+  Object.defineProperty(mockChain, 'then', {
+    value: (resolve: (v: unknown) => void) => resolve(mockResult.current),
+    writable: true,
+    configurable: true,
+  })
+  mockResult.current = { data: null, error: null, count: null }
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  resetChain()
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// calculateCurrentStep (existing tests)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 describe('calculateCurrentStep', () => {
   it('returns {currentStep: 1, totalSteps: 6} for null input', () => {
@@ -63,5 +140,377 @@ describe('calculateCurrentStep', () => {
       { step_number: 6, status: 'pending' },
     ]
     expect(calculateCurrentStep(steps)).toEqual({ currentStep: 1, totalSteps: 6 })
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getProject
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getProject', () => {
+  it('returns project data on success', async () => {
+    const project = { id: 'proj-1', name: 'My House', created_at: '2025-01-01T00:00:00Z' }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    const result = await getProject()
+    expect(result).toEqual(project)
+    expect(mockChain.from).toHaveBeenCalledWith('projects')
+  })
+
+  it('returns null on PGRST116 (no rows) without logging an error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockChain.single.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+
+    const result = await getProject()
+    expect(result).toBeNull()
+    expect(consoleSpy).not.toHaveBeenCalled()
+    consoleSpy.mockRestore()
+  })
+
+  it('returns null and logs on non-PGRST116 error', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const dbError = { code: 'INTERNAL', message: 'connection failed' }
+    mockChain.single.mockResolvedValueOnce({ data: null, error: dbError })
+
+    const result = await getProject()
+    expect(result).toBeNull()
+    expect(consoleSpy).toHaveBeenCalledWith('Error fetching project:', dbError)
+    consoleSpy.mockRestore()
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getProjectDashboard
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getProjectDashboard', () => {
+  it('returns default dashboard when no project exists', async () => {
+    // getProject will call .single() which resolves to null data
+    mockChain.single.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+
+    const result = await getProjectDashboard()
+    expect(result).toEqual({
+      phase: 'Planning',
+      currentStep: 1,
+      totalSteps: 6,
+      daysElapsed: 0,
+      totalDays: 117,
+      budgetUsed: 0,
+      budgetTotal: 450000,
+      unreadEmails: 0,
+      pendingTasks: 0,
+      upcomingMilestone: '',
+      milestoneDate: '',
+      planningSteps: [],
+    })
+  })
+
+  it('returns populated dashboard when project exists', async () => {
+    const project = {
+      id: 'proj-1',
+      phase: 'Construction',
+      created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days ago
+      estimated_duration_days: 200,
+      budget_total: '500000',
+    }
+
+    // First .single() call is for getProject
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    // After getProject succeeds, getProjectDashboard does Promise.all with 5 queries.
+    // All 5 are thenable (not .single()), so we need to set up the thenable to be
+    // called multiple times. We use a call counter to return different results.
+    let thenCallCount = 0
+    const thenResults = [
+      // planningSteps
+      { data: [{ step_number: 1, name: 'Consultation', status: 'completed' }, { step_number: 2, name: 'Lot Analysis', status: 'in_progress' }], error: null },
+      // budgetItems
+      { data: [{ estimated_cost: '100000', actual_cost: '95000' }, { estimated_cost: '50000', actual_cost: '48000' }], error: null },
+      // unreadEmails (count query)
+      { data: null, error: null, count: 3 },
+      // pendingTasks (count query)
+      { data: null, error: null, count: 7 },
+      // nextMilestone
+      { data: [{ name: 'Foundation', target_date: '2026-03-15' }], error: null },
+    ]
+
+    Object.defineProperty(mockChain, 'then', {
+      get() {
+        return (resolve: (v: unknown) => void) => {
+          const idx = thenCallCount++
+          resolve(thenResults[idx] ?? { data: null, error: null })
+        }
+      },
+      configurable: true,
+    })
+
+    const result = await getProjectDashboard()
+
+    expect(result.phase).toBe('Construction')
+    expect(result.currentStep).toBe(2)
+    expect(result.totalSteps).toBe(2)
+    expect(result.budgetUsed).toBe(143000) // 95000 + 48000
+    expect(result.budgetTotal).toBe(500000)
+    expect(result.unreadEmails).toBe(3)
+    expect(result.pendingTasks).toBe(7)
+    expect(result.upcomingMilestone).toBe('Foundation')
+    expect(result.milestoneDate).toBe('2026-03-15')
+    expect(result.totalDays).toBe(200)
+    expect(result.daysElapsed).toBeGreaterThanOrEqual(9) // ~10 days, give tolerance
+    expect(result.planningSteps).toEqual([
+      { step_number: 1, name: 'Consultation', status: 'completed' },
+      { step_number: 2, name: 'Lot Analysis', status: 'in_progress' },
+    ])
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getProjectStatus
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getProjectStatus', () => {
+  it('returns null when no project exists', async () => {
+    mockChain.single.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+
+    const result = await getProjectStatus()
+    expect(result).toBeNull()
+  })
+
+  it('returns status data when project exists', async () => {
+    const project = {
+      id: 'proj-1',
+      phase: 'Planning',
+      created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      estimated_duration_days: 117,
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    // Promise.all with 6 thenable queries
+    let thenCallCount = 0
+    const thenResults = [
+      // statusRecord
+      {
+        data: [{
+          hot_topics: [{ priority: 'high', text: 'Permit delay' }],
+          recent_decisions: [{ decision: 'Go with vendor A', impact: 'saves $5k' }],
+          ai_summary: 'All going well.',
+        }],
+        error: null,
+      },
+      // tasks
+      { data: [{ title: 'Review plans', status: 'in_progress' }, { title: 'Submit permit', status: 'pending' }], error: null },
+      // emails
+      { data: [{ sender_name: 'Bob', ai_summary: 'About the foundation' }], error: null },
+      // budgetItems
+      { data: [{ estimated_cost: '200000', actual_cost: '180000' }], error: null },
+      // planningSteps
+      { data: [{ step_number: 1, name: 'Consultation', status: 'completed' }, { step_number: 2, name: 'Lot Analysis', status: 'in_progress' }], error: null },
+      // nextMilestone
+      { data: [{ name: 'Plans Approved', target_date: '2026-04-01' }], error: null },
+    ]
+
+    Object.defineProperty(mockChain, 'then', {
+      get() {
+        return (resolve: (v: unknown) => void) => {
+          const idx = thenCallCount++
+          resolve(thenResults[idx] ?? { data: null, error: null })
+        }
+      },
+      configurable: true,
+    })
+
+    const result = await getProjectStatus()
+
+    expect(result).not.toBeNull()
+    expect(result!.phase).toBe('Planning')
+    expect(result!.currentStep).toBe('Lot Analysis')
+    expect(result!.stepNumber).toBe(2)
+    expect(result!.totalSteps).toBe(2)
+    expect(result!.progressPercentage).toBe(100) // 2/2 = 100
+    expect(result!.budgetUsed).toBe(180000)
+    expect(result!.budgetTotal).toBe(450000)
+    expect(result!.budgetStatus).toBe('On Track')
+    expect(result!.nextMilestone).toBe('Plans Approved')
+    expect(result!.milestoneDate).toBe('2026-04-01')
+    expect(result!.hotTopics).toEqual([{ priority: 'high', text: 'Permit delay' }])
+    expect(result!.actionItems).toEqual([
+      { status: 'in-progress', text: 'Review plans' },
+      { status: 'pending', text: 'Submit permit' },
+    ])
+    expect(result!.recentCommunications).toEqual([
+      { from: 'Bob', summary: 'About the foundation' },
+    ])
+    expect(result!.recentDecisions).toEqual([{ decision: 'Go with vendor A', impact: 'saves $5k' }])
+    expect(result!.aiSummary).toBe('All going well.')
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getActiveHotTopics
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getActiveHotTopics', () => {
+  it('returns empty array when no data', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getActiveHotTopics('proj-1')
+    expect(result).toEqual([])
+  })
+
+  it('returns empty array when data is empty array', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: [], error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getActiveHotTopics('proj-1')
+    expect(result).toEqual([])
+  })
+
+  it('returns topic texts from object-style topics', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({
+        data: [{ hot_topics: [{ text: 'Permit delay' }, { text: 'Budget overrun' }] }],
+        error: null,
+      }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getActiveHotTopics('proj-1')
+    expect(result).toEqual(['Permit delay', 'Budget overrun'])
+    expect(mockChain.from).toHaveBeenCalledWith('project_status')
+  })
+
+  it('handles string-type topics', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({
+        data: [{ hot_topics: ['Roof issue', 'Plumbing concern'] }],
+        error: null,
+      }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getActiveHotTopics('proj-1')
+    expect(result).toEqual(['Roof issue', 'Plumbing concern'])
+  })
+
+  it('filters out empty strings from topics', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({
+        data: [{ hot_topics: [{ text: '' }, { text: 'Valid topic' }, ''] }],
+        error: null,
+      }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getActiveHotTopics('proj-1')
+    expect(result).toEqual(['Valid topic'])
+  })
+
+  it('returns empty array when hot_topics is not an array', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({
+        data: [{ hot_topics: 'some legacy string' }],
+        error: null,
+      }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getActiveHotTopics('proj-1')
+    expect(result).toEqual([])
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getRecentCommunications
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getRecentCommunications', () => {
+  it('returns emails when data exists', async () => {
+    const emails = [
+      { sender_name: 'Bob', sender_email: 'bob@test.com', subject: 'Bid update', ai_summary: 'New bid', received_date: '2026-02-20' },
+      { sender_name: 'Alice', sender_email: 'alice@test.com', subject: 'Plans', ai_summary: 'Revised plans', received_date: '2026-02-19' },
+    ]
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: emails, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getRecentCommunications('proj-1')
+    expect(result).toEqual(emails)
+    expect(result).toHaveLength(2)
+    expect(mockChain.from).toHaveBeenCalledWith('emails')
+  })
+
+  it('returns empty array when no data', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getRecentCommunications('proj-1')
+    expect(result).toEqual([])
+  })
+
+  it('passes custom limit to the query', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: [], error: null }),
+      writable: true, configurable: true,
+    })
+
+    await getRecentCommunications('proj-1', 20)
+    expect(mockChain.limit).toHaveBeenCalledWith(20)
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getBudgetSummary
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getBudgetSummary', () => {
+  it('returns computed totals when budget items exist', async () => {
+    const items = [
+      { category: 'Foundation', estimated_cost: '100000', actual_cost: '95000', status: 'completed' },
+      { category: 'Framing', estimated_cost: '80000', actual_cost: '82000', status: 'in_progress' },
+      { category: 'Roofing', estimated_cost: '40000', actual_cost: '0', status: 'pending' },
+    ]
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: items, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getBudgetSummary('proj-1')
+    expect(result.total).toBe(220000) // 100k + 80k + 40k
+    expect(result.spent).toBe(177000) // 95k + 82k + 0
+    expect(result.categories).toEqual(items)
+    expect(mockChain.from).toHaveBeenCalledWith('budget_items')
+  })
+
+  it('returns zeros when no data', async () => {
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getBudgetSummary('proj-1')
+    expect(result).toEqual({ total: 0, spent: 0, categories: [] })
+  })
+
+  it('handles items with null actual_cost gracefully', async () => {
+    const items = [
+      { category: 'Electrical', estimated_cost: '60000', actual_cost: null, status: 'pending' },
+    ]
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: items, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getBudgetSummary('proj-1')
+    expect(result.total).toBe(60000)
+    expect(result.spent).toBe(0)
   })
 })

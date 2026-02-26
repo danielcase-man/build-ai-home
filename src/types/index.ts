@@ -405,3 +405,41 @@ export interface ApiErrorResponse {
   error: string
   details?: string
 }
+
+// --- Assistant Types ---
+
+export type AssistantRole = 'user' | 'assistant'
+
+export interface ChatMessage {
+  id: string
+  role: AssistantRole
+  content: string
+  timestamp: Date
+  pendingActions?: PendingAction[]
+}
+
+export type ActionType =
+  | 'update_bid'
+  | 'add_bid'
+  | 'update_budget_item'
+  | 'add_budget_item'
+  | 'update_selection'
+  | 'add_contact'
+  | 'update_planning_step'
+
+export interface PendingAction {
+  id: string
+  type: ActionType
+  label: string
+  description: string
+  data: Record<string, unknown>
+  status: 'pending' | 'applied' | 'dismissed'
+  toolCallId: string
+}
+
+export interface AssistantStreamEvent {
+  type: 'text_delta' | 'tool_call' | 'done' | 'error'
+  content?: string
+  action?: PendingAction
+  error?: string
+}

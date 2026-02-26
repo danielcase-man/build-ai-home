@@ -16,13 +16,14 @@ import { env } from '@/lib/env'
 
 export async function POST(request: NextRequest) {
   try {
-    // Auth check - require CRON_SECRET as bearer token
+    // Auth check - always require CRON_SECRET as bearer token
     const cronSecret = env.cronSecret
-    if (cronSecret) {
-      const authHeader = request.headers.get('authorization')
-      if (authHeader !== `Bearer ${cronSecret}`) {
-        return errorResponse(new Error('Unauthorized'), 'Invalid or missing authorization token')
-      }
+    if (!cronSecret) {
+      return errorResponse(new Error('CRON_SECRET not configured'), 'Endpoint not available')
+    }
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return errorResponse(new Error('Unauthorized'), 'Invalid or missing authorization token')
     }
 
     const body = await request.json().catch(() => ({}))
