@@ -33,12 +33,10 @@ import type { PendingAction } from '@/types'
 function makeAction(type: string, data: Record<string, unknown>): PendingAction {
   return {
     id: 'test-action',
+    tool_use_id: 'call-1',
     type: type as PendingAction['type'],
-    label: 'Test',
     description: 'Test action',
     data,
-    status: 'pending',
-    toolCallId: 'call-1',
   }
 }
 
@@ -55,45 +53,39 @@ describe('executeAction', () => {
   })
 
   describe('update_bid', () => {
-    it('updates a matching bid', async () => {
-      // First call: select query returns one match
-      mockResult.current = { data: [{ id: 'bid-1', vendor_name: 'Prestige Steel', category: 'Windows', total_amount: 68000 }], error: null }
+    it('updates a bid by ID', async () => {
+      mockResult.current = { data: null, error: null }
 
       const result = await executeAction(makeAction('update_bid', {
-        vendor_name: 'Prestige',
+        bid_id: 'bid-1',
         total_amount: 72000,
       }))
 
       expect(result.success).toBe(true)
-      expect(result.message).toContain('Prestige Steel')
+      expect(result.message).toContain('bid-1')
+      expect(mockChain.update).toHaveBeenCalled()
+      expect(mockChain.eq).toHaveBeenCalledWith('id', 'bid-1')
     })
 
-    it('returns error when no bid matches', async () => {
-      mockResult.current = { data: [], error: null }
-
+    it('returns error when bid_id is missing', async () => {
       const result = await executeAction(makeAction('update_bid', {
-        vendor_name: 'NonExistent',
+        total_amount: 72000,
       }))
 
       expect(result.success).toBe(false)
-      expect(result.message).toContain('No bid found')
+      expect(result.message).toContain('Missing bid_id')
     })
 
-    it('returns error when multiple bids match', async () => {
-      mockResult.current = {
-        data: [
-          { id: 'bid-1', vendor_name: 'Prestige Steel', category: 'Windows' },
-          { id: 'bid-2', vendor_name: 'Prestige Iron', category: 'Doors' },
-        ],
-        error: null,
-      }
+    it('returns error on database failure', async () => {
+      mockResult.current = { data: null, error: { message: 'not found' } }
 
       const result = await executeAction(makeAction('update_bid', {
-        vendor_name: 'Prestige',
+        bid_id: 'bid-1',
+        status: 'selected',
       }))
 
       expect(result.success).toBe(false)
-      expect(result.message).toContain('Multiple bids')
+      expect(result.message).toContain('Failed to update bid')
     })
   })
 
@@ -104,12 +96,14 @@ describe('executeAction', () => {
       const result = await executeAction(makeAction('add_bid', {
         vendor_name: 'NewVendor',
         category: 'Roofing',
+        description: 'Full roof',
         total_amount: 50000,
       }))
 
       expect(result.success).toBe(true)
       expect(result.message).toContain('NewVendor')
-      expect(result.message).toContain('$50,000')
+      expect(result.message).toContain('Roofing')
+      expect(mockChain.insert).toHaveBeenCalled()
     })
 
     it('returns error on insert failure', async () => {
@@ -118,11 +112,12 @@ describe('executeAction', () => {
       const result = await executeAction(makeAction('add_bid', {
         vendor_name: 'Dup',
         category: 'Test',
+        description: 'Test bid',
         total_amount: 100,
       }))
 
       expect(result.success).toBe(false)
-      expect(result.message).toContain('Database error')
+      expect(result.message).toContain('Failed to add bid')
     })
   })
 
@@ -141,19 +136,27 @@ describe('executeAction', () => {
     })
   })
 
-  describe('add_contact', () => {
-    it('inserts a new contact', async () => {
-      mockResult.current = { data: { id: 'contact-1' }, error: null }
+  describe('update_milestone', () => {
+    it('updates a milestone by ID', async () => {
+      mockResult.current = { data: null, error: null }
 
-      const result = await executeAction(makeAction('add_contact', {
-        name: 'John Doe',
-        role: 'Electrician',
-        email: 'john@test.com',
+      const result = await executeAction(makeAction('update_milestone', {
+        milestone_id: 'ms-1',
+        status: 'completed',
       }))
 
       expect(result.success).toBe(true)
-      expect(result.message).toContain('John Doe')
-      expect(result.message).toContain('Electrician')
+      expect(result.message).toContain('ms-1')
+      expect(mockChain.eq).toHaveBeenCalledWith('id', 'ms-1')
+    })
+
+    it('returns error when milestone_id is missing', async () => {
+      const result = await executeAction(makeAction('update_milestone', {
+        status: 'completed',
+      }))
+
+      expect(result.success).toBe(false)
+      expect(result.message).toContain('Missing milestone_id')
     })
   })
 })
