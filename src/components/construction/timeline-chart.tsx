@@ -73,7 +73,7 @@ const STATUS_BADGE_VARIANT: Record<string, 'default' | 'success' | 'warning' | '
 
 export function TimelineChart({
   tasks = [],
-  currentDate = new Date(),
+  currentDate,
   viewMode = 'week',
   showWeekends = false,
   fieldOptimized = false,
@@ -82,8 +82,18 @@ export function TimelineChart({
   onTaskClick,
   onDateRangeChange,
 }: TimelineChartProps) {
-  const [focusDate, setFocusDate] = React.useState(currentDate)
+  // Use a stable "today" that's set once on the client to avoid hydration mismatches
+  const [today, setToday] = React.useState<Date | null>(currentDate ?? null)
+  const [focusDate, setFocusDate] = React.useState(currentDate ?? new Date(2026, 2, 8))
   const [selectedTask, setSelectedTask] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    if (!today) {
+      const now = new Date()
+      setToday(now)
+      setFocusDate(now)
+    }
+  }, [today])
 
   const timelineId = React.useId()
 
@@ -153,7 +163,7 @@ export function TimelineChart({
       let newDate: Date
 
       if (direction === 'today') {
-        newDate = new Date()
+        newDate = today ?? new Date()
       } else if (direction === 'prev') {
         newDate = subWeeks(focusDate, weeks)
       } else {
@@ -169,7 +179,7 @@ export function TimelineChart({
         )
       )
     },
-    [focusDate, viewMode, onDateRangeChange]
+    [focusDate, viewMode, onDateRangeChange, today]
   )
 
   const handleTaskClick = React.useCallback(
@@ -282,7 +292,7 @@ export function TimelineChart({
                   'flex-shrink-0 p-2 border-r text-center text-xs font-medium',
                   fieldOptimized ? 'w-20 p-3 text-sm' : 'w-16',
                   mobile && 'w-12 p-1 text-xs',
-                  isSameDay(date, new Date()) && 'bg-primary/10',
+                  today && isSameDay(date, today) && 'bg-primary/10',
                   isWeekend(date) && 'bg-muted/30'
                 )}
                 role="columnheader"
@@ -291,7 +301,7 @@ export function TimelineChart({
                 <div
                   className={cn(
                     'font-bold',
-                    isSameDay(date, new Date()) && 'text-primary'
+                    today && isSameDay(date, today) && 'text-primary'
                   )}
                 >
                   {format(date, 'd')}

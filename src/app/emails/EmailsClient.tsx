@@ -12,8 +12,17 @@ import type { EmailRecord } from '@/types'
 
 interface EmailsClientProps {
   initialEmails: EmailRecord[]
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  initialStatus: any
+  // Matches db.getLatestProjectStatus() return — safely cast to EmailDashboard's UnifiedStatus at runtime
+  initialStatus: {
+    hot_topics: unknown[]
+    action_items: unknown[]
+    recent_decisions: unknown[]
+    next_steps: unknown[]
+    open_questions: unknown[]
+    key_data_points: unknown[]
+    ai_summary: string
+    date: string
+  } | null
   gmailConfigured: boolean
 }
 
@@ -44,7 +53,7 @@ function EmailsContent({ initialEmails, initialStatus, gmailConfigured }: Emails
           <strong>AI Construction Intelligence:</strong> Claude AI automatically extracts action items, questions needing answers, next steps, and key data points from your project emails. Urgent matters are flagged for immediate attention.
         </AlertDescription>
       </Alert>
-      <EmailDashboard initialEmails={initialEmails} initialStatus={initialStatus} />
+      <EmailDashboard initialEmails={initialEmails} initialStatus={initialStatus as Parameters<typeof EmailDashboard>[0]['initialStatus']} />
     </div>
   )
 }

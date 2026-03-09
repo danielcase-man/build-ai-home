@@ -10,7 +10,7 @@
 
 const { chromium } = require('playwright')
 
-const BASE = 'http://localhost:3000'
+const BASE = process.argv[2] || 'http://localhost:3000'
 const results = []
 const errors = []
 
