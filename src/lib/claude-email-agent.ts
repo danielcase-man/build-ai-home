@@ -2,7 +2,7 @@ import { getAnthropicClient, parseAIJsonResponse } from './ai-clients'
 import type { Email, EmailInsights, ProjectInsights, DraftEmail } from '@/types'
 
 /**
- * Efficient email summarization agent using Claude Haiku (fast and cost-effective)
+ * Email summarization agent using Claude Sonnet 4.6
  * Focuses on actionable intelligence for construction project management
  */
 export async function summarizeEmail(email: Email): Promise<EmailInsights> {
@@ -33,7 +33,7 @@ Return valid JSON only, no markdown or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-haiku-3-5-20241022',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       temperature: 0.2,
       messages: [{
@@ -100,7 +100,7 @@ Return valid JSON only, no markdown or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       temperature: 0.2,
       messages: [{
@@ -124,7 +124,7 @@ Return valid JSON only, no markdown or explanation.`
 
 /**
  * Quick email triage - determines if an email needs immediate attention
- * Uses Claude Haiku for speed
+ * Uses Claude Sonnet 4.6
  */
 export async function triageEmail(email: Email): Promise<{
   urgent: boolean
@@ -155,7 +155,7 @@ Return valid JSON only.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-haiku-3-5-20241022',
+      model: 'claude-sonnet-4-6',
       max_tokens: 256,
       temperature: 0,
       messages: [{
@@ -258,7 +258,7 @@ Return valid JSON only, no markdown fences or explanation.`
 
   try {
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 3000,
       temperature: 0.3,
       messages: [{ role: 'user', content: prompt }]

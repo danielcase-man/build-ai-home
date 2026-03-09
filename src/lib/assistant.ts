@@ -26,6 +26,7 @@ export const READ_TOOL_NAMES = new Set([
   'search_emails',
   'get_contacts',
   'get_planning_steps',
+  'get_status_history',
 ] as const)
 
 export const WRITE_TOOL_NAMES = new Set([
@@ -58,6 +59,7 @@ const TOOL_STATUS_LABELS: Record<string, string> = {
   search_emails: 'Searching emails…',
   get_contacts: 'Loading contacts…',
   get_planning_steps: 'Loading planning steps…',
+  get_status_history: 'Loading status history…',
 }
 
 export function getToolStatusLabel(name: string): string {
@@ -182,6 +184,21 @@ const READ_TOOLS: Anthropic.Tool[] = [
     input_schema: {
       type: 'object' as const,
       properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'get_status_history',
+    description:
+      'Get recent project status snapshots (up to 7). Each snapshot includes hot topics, action items, decisions, next steps, open questions, key data points, and AI summary. Use this to answer questions about what changed over time.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Number of recent snapshots to return (default 7, max 14)',
+        },
+      },
       required: [],
     },
   },
@@ -399,6 +416,8 @@ export async function executeReadTool(
       return getContactsForTool(projectId)
     case 'get_planning_steps':
       return getPlanningStepsForTool(projectId)
+    case 'get_status_history':
+      return getStatusHistoryForTool(input, projectId)
     default:
       return JSON.stringify({ error: `Unknown read tool: ${toolName}` })
   }
@@ -444,6 +463,9 @@ async function getProjectOverview(projectId: string): Promise<string> {
           hot_topics: latestStatus.hot_topics,
           action_items: latestStatus.action_items,
           recent_decisions: latestStatus.recent_decisions,
+          next_steps: latestStatus.next_steps,
+          open_questions: latestStatus.open_questions,
+          key_data_points: latestStatus.key_data_points,
         }
       : null,
   })
@@ -645,6 +667,28 @@ async function getPlanningStepsForTool(projectId: string): Promise<string> {
       status: s.status,
       notes: s.notes,
       updated_at: s.updated_at,
+    })),
+  })
+}
+
+async function getStatusHistoryForTool(
+  input: Record<string, unknown>,
+  projectId: string
+): Promise<string> {
+  const limit = Math.min((input.limit as number) || 7, 14)
+  const history = await db.getProjectStatusHistory(projectId, limit)
+
+  return JSON.stringify({
+    count: history.length,
+    snapshots: history.map(s => ({
+      date: s.date,
+      ai_summary: s.ai_summary,
+      hot_topics: s.hot_topics,
+      action_items: s.action_items,
+      recent_decisions: s.recent_decisions,
+      next_steps: s.next_steps,
+      open_questions: s.open_questions,
+      key_data_points: s.key_data_points,
     })),
   })
 }

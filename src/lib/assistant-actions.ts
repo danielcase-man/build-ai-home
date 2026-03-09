@@ -8,6 +8,7 @@
 import type { PendingAction } from '@/types'
 import { supabase } from './supabase'
 import { getProject } from './project-service'
+import { logChange } from './audit-service'
 
 export interface ActionResult {
   success: boolean
@@ -55,6 +56,15 @@ async function updateBid(data: Record<string, unknown>): Promise<ActionResult> {
     .eq('id', bid_id as string)
 
   if (error) return { success: false, message: `Failed to update bid: ${error.message}` }
+
+  // Audit log
+  const project = await getProject()
+  if (project) {
+    for (const [field, value] of Object.entries(updates)) {
+      await logChange({ projectId: project.id, entityType: 'bid', entityId: bid_id as string, action: 'update', fieldName: field, newValue: value, actor: 'assistant' })
+    }
+  }
+
   return { success: true, message: `Bid ${bid_id} updated` }
 }
 
@@ -87,6 +97,11 @@ async function addBid(data: Record<string, unknown>, projectId: string): Promise
     .single()
 
   if (error) return { success: false, message: `Failed to add bid: ${error.message}` }
+
+  if (inserted?.id) {
+    await logChange({ projectId, entityType: 'bid', entityId: inserted.id, action: 'create', actor: 'assistant' })
+  }
+
   return { success: true, message: `Bid added: ${data.vendor_name} — ${data.category} (id: ${inserted?.id})` }
 }
 
@@ -104,6 +119,14 @@ async function updateSelection(data: Record<string, unknown>): Promise<ActionRes
     .eq('id', selection_id as string)
 
   if (error) return { success: false, message: `Failed to update selection: ${error.message}` }
+
+  const project = await getProject()
+  if (project) {
+    for (const [field, value] of Object.entries(updates)) {
+      await logChange({ projectId: project.id, entityType: 'selection', entityId: selection_id as string, action: 'update', fieldName: field, newValue: value, actor: 'assistant' })
+    }
+  }
+
   return { success: true, message: `Selection ${selection_id} updated` }
 }
 
@@ -148,6 +171,14 @@ async function updateBudgetItem(data: Record<string, unknown>): Promise<ActionRe
     .eq('id', budget_item_id as string)
 
   if (error) return { success: false, message: `Failed to update budget item: ${error.message}` }
+
+  const project = await getProject()
+  if (project) {
+    for (const [field, value] of Object.entries(updates)) {
+      await logChange({ projectId: project.id, entityType: 'budget_item', entityId: budget_item_id as string, action: 'update', fieldName: field, newValue: value, actor: 'assistant' })
+    }
+  }
+
   return { success: true, message: `Budget item ${budget_item_id} updated` }
 }
 

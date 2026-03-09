@@ -34,7 +34,7 @@ interface CrewMember {
   role: string
   status: 'on_site' | 'off_site' | 'break'
   currentTask?: string
-  checkInTime?: Date
+  checkInTime?: string
 }
 
 interface Issue {
@@ -45,7 +45,7 @@ interface Issue {
   location: string
   reportedBy: string
   status: 'open' | 'resolved' | 'in_progress'
-  timestamp: Date
+  timestamp: string
 }
 
 // Demo data for 708 Purple Salvia Cove
@@ -96,7 +96,7 @@ const DEMO_CREW: CrewMember[] = [
     role: 'Master Electrician',
     status: 'on_site',
     currentTask: 'Electrical Rough-In Inspection',
-    checkInTime: new Date(new Date().setHours(7, 30)),
+    checkInTime: '7:30 AM',
   },
   {
     id: '2',
@@ -104,7 +104,7 @@ const DEMO_CREW: CrewMember[] = [
     role: 'Plumber',
     status: 'on_site',
     currentTask: 'Plumbing Pressure Test',
-    checkInTime: new Date(new Date().setHours(8, 0)),
+    checkInTime: '8:00 AM',
   },
   {
     id: '3',
@@ -118,7 +118,7 @@ const DEMO_CREW: CrewMember[] = [
     role: 'General Laborer',
     status: 'break',
     currentTask: 'Site cleanup',
-    checkInTime: new Date(new Date().setHours(6, 45)),
+    checkInTime: '6:45 AM',
   },
 ]
 
@@ -131,7 +131,7 @@ const DEMO_ISSUES: Issue[] = [
     location: 'Master Bathroom',
     reportedBy: 'Mike Rodriguez',
     status: 'open',
-    timestamp: new Date(new Date().setHours(9, 15)),
+    timestamp: '9:15 AM',
   },
   {
     id: '2',
@@ -141,7 +141,7 @@ const DEMO_ISSUES: Issue[] = [
     location: 'Garage (staging)',
     reportedBy: 'Joe Williams',
     status: 'in_progress',
-    timestamp: new Date(new Date().setHours(8, 45)),
+    timestamp: '8:45 AM',
   },
 ]
 
@@ -317,7 +317,7 @@ const JobSiteDashboard: React.FC = () => {
 
       {member.checkInTime && (
         <div className="text-sm text-gray-600 mb-3">
-          <span className="font-semibold">Checked in:</span> {member.checkInTime.toLocaleTimeString()}
+          <span className="font-semibold">Checked in:</span> {member.checkInTime}
         </div>
       )}
 
@@ -373,7 +373,7 @@ const JobSiteDashboard: React.FC = () => {
       </div>
 
       <div className="text-sm text-gray-600 mb-3">
-        <span className="font-semibold">Reported:</span> {issue.timestamp.toLocaleString()}
+        <span className="font-semibold">Reported:</span> {issue.timestamp}
       </div>
 
       <div className="flex space-x-3">

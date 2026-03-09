@@ -223,7 +223,7 @@ describe('DatabaseService', () => {
 
   describe('getLatestProjectStatus', () => {
     it('returns latest status', async () => {
-      const status = { hot_topics: [], action_items: [], recent_decisions: [], ai_summary: 'ok', date: '2026-01-15' }
+      const status = { hot_topics: [], action_items: [], recent_decisions: [], next_steps: [], open_questions: [], key_data_points: [], ai_summary: 'ok', date: '2026-01-15' }
       mockChain.single.mockResolvedValueOnce({ data: status, error: null })
       const result = await db.getLatestProjectStatus('proj-1')
       expect(result).toEqual(status)

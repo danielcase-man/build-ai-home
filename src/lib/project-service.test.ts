@@ -36,6 +36,7 @@ vi.mock('./database', () => ({
     getLatestProjectStatus: vi.fn().mockResolvedValue(null),
     getRecentEmails: vi.fn().mockResolvedValue([]),
     upsertProjectStatus: vi.fn().mockResolvedValue(undefined),
+    syncAIInsightsToTasks: vi.fn().mockResolvedValue(undefined),
   },
 }))
 vi.mock('./ai-summarization', () => ({
@@ -43,19 +44,38 @@ vi.mock('./ai-summarization', () => ({
     hot_topics: [],
     action_items: [],
     recent_decisions: [],
+    next_steps: [],
+    open_questions: [],
+    key_data_points: [],
     ai_summary: 'mock summary',
   }),
+}))
+vi.mock('./budget-service', () => ({
+  getBudgetItems: vi.fn().mockResolvedValue([]),
+}))
+vi.mock('./bids-service', () => ({
+  getBids: vi.fn().mockResolvedValue([]),
+}))
+vi.mock('./selections-service', () => ({
+  getSelections: vi.fn().mockResolvedValue([]),
 }))
 
 import {
   calculateCurrentStep,
   getProject,
+  getFullProjectContext,
   getProjectDashboard,
   getProjectStatus,
+  updateProjectStatus,
   getActiveHotTopics,
   getRecentCommunications,
   getBudgetSummary,
 } from './project-service'
+import { db } from './database'
+import { generateProjectStatusSnapshot } from './ai-summarization'
+import { getBudgetItems } from './budget-service'
+import { getBids } from './bids-service'
+import { getSelections } from './selections-service'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -167,14 +187,15 @@ describe('getProject', () => {
     consoleSpy.mockRestore()
   })
 
-  it('returns null and logs on non-PGRST116 error', async () => {
+  it('returns null silently on non-PGRST116 error (no console.error)', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     const dbError = { code: 'INTERNAL', message: 'connection failed' }
     mockChain.single.mockResolvedValueOnce({ data: null, error: dbError })
 
     const result = await getProject()
     expect(result).toBeNull()
-    expect(consoleSpy).toHaveBeenCalledWith('Error fetching project:', dbError)
+    // Should NOT log — callers handle null gracefully
+    expect(consoleSpy).not.toHaveBeenCalled()
     consoleSpy.mockRestore()
   })
 })
@@ -512,5 +533,295 @@ describe('getBudgetSummary', () => {
     const result = await getBudgetSummary('proj-1')
     expect(result.total).toBe(60000)
     expect(result.spent).toBe(0)
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getFullProjectContext
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getFullProjectContext', () => {
+  it('returns null when project not found', async () => {
+    mockChain.single.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+
+    const result = await getFullProjectContext('bad-id')
+    expect(result).toBeNull()
+  })
+
+  it('returns full context with all tables queried in parallel', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      address: '123 Main St',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      target_completion_date: '2026-12-01',
+      square_footage: '5000',
+      style: 'Modern',
+      budget_total: '800000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    // Mock the service functions
+    const mockBudgetItems = [
+      { id: 'b1', category: 'Foundation', estimated_cost: 100000, actual_cost: 95000 },
+    ]
+    const mockBids = [
+      { id: 'bid1', vendor_name: 'Acme', category: 'Foundation', total_amount: 90000 },
+    ]
+    const mockSelections = [
+      { id: 'sel1', product_name: 'Granite Counter', category: 'countertops' },
+    ]
+    vi.mocked(getBudgetItems).mockResolvedValueOnce(mockBudgetItems as any)
+    vi.mocked(getBids).mockResolvedValueOnce(mockBids as any)
+    vi.mocked(getSelections).mockResolvedValueOnce(mockSelections as any)
+
+    // The Promise.all has 7 supabase queries (planning, milestones, tasks, permits, contacts, vendors, communications)
+    let thenCallCount = 0
+    const thenResults = [
+      // planningSteps
+      { data: [{ step_number: 1, name: 'Consultation', status: 'completed', notes: 'Done' }], error: null },
+      // milestones
+      { data: [{ name: 'Foundation', description: 'Pour slab', target_date: '2026-03-01', completed_date: null, status: 'pending', notes: null }], error: null },
+      // tasks
+      { data: [{ title: 'Review plans', description: 'Check specs', due_date: '2026-03-15', priority: 'high', status: 'pending', notes: null }], error: null },
+      // permits
+      { data: [{ type: 'Building', permit_number: 'P001', status: 'approved', application_date: '2025-12-15', approval_date: '2026-01-15', notes: null }], error: null },
+      // contacts
+      { data: [{ name: 'John Smith', company: 'Acme Inc', role: 'PM', type: 'contractor' }], error: null },
+      // vendors
+      { data: [{ company_name: 'Acme Inc', category: 'Foundation', status: 'active' }], error: null },
+      // communications
+      { data: [{ date: '2026-02-28', type: 'email', subject: 'Update', summary: 'Progress report' }], error: null },
+    ]
+
+    Object.defineProperty(mockChain, 'then', {
+      get() {
+        return (resolve: (v: unknown) => void) => {
+          const idx = thenCallCount++
+          resolve(thenResults[idx] ?? { data: null, error: null })
+        }
+      },
+      configurable: true,
+    })
+
+    const result = await getFullProjectContext('proj-1')
+
+    expect(result).not.toBeNull()
+    expect(result!.project.name).toBe('Test House')
+    expect(result!.project.address).toBe('123 Main St')
+    expect(result!.project.phase).toBe('Planning')
+    expect(result!.project.squareFootage).toBe(5000)
+    expect(result!.project.style).toBe('Modern')
+    expect(result!.project.currentStep).toBe(1) // min(highest_completed+1, totalSteps) = min(2,1) = 1
+    expect(result!.project.totalSteps).toBe(1)
+
+    expect(result!.budget.total).toBe(800000)
+    expect(result!.budget.spent).toBe(95000)
+    expect(result!.budget.remaining).toBe(705000)
+    expect(result!.budget.items).toEqual(mockBudgetItems)
+
+    expect(result!.bids).toEqual(mockBids)
+    expect(result!.selections).toEqual(mockSelections)
+
+    expect(result!.planningSteps).toHaveLength(1)
+    expect(result!.milestones).toHaveLength(1)
+    expect(result!.tasks).toHaveLength(1)
+    expect(result!.permits).toHaveLength(1)
+    expect(result!.contacts).toHaveLength(1)
+    expect(result!.vendors).toHaveLength(1)
+    expect(result!.communications).toHaveLength(1)
+
+    // Verify service functions were called with project ID
+    expect(getBudgetItems).toHaveBeenCalledWith('proj-1')
+    expect(getBids).toHaveBeenCalledWith('proj-1')
+    expect(getSelections).toHaveBeenCalledWith('proj-1')
+  })
+
+  it('handles null/empty query results gracefully', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Empty Project',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    // All 7 supabase queries return null data
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getFullProjectContext('proj-1')
+
+    expect(result).not.toBeNull()
+    expect(result!.planningSteps).toEqual([])
+    expect(result!.milestones).toEqual([])
+    expect(result!.tasks).toEqual([])
+    expect(result!.permits).toEqual([])
+    expect(result!.contacts).toEqual([])
+    expect(result!.vendors).toEqual([])
+    expect(result!.communications).toEqual([])
+    expect(result!.budget.spent).toBe(0)
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// updateProjectStatus
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('updateProjectStatus', () => {
+  it('returns early when project not found', async () => {
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+    mockChain.single.mockResolvedValueOnce({ data: null, error: { code: 'PGRST116' } })
+
+    await updateProjectStatus('bad-id')
+
+    expect(consoleSpy).toHaveBeenCalledWith('updateProjectStatus: project not found', 'bad-id')
+    expect(db.upsertProjectStatus).not.toHaveBeenCalled()
+    consoleSpy.mockRestore()
+  })
+
+  it('generates AI snapshot and writes to database', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    // For getFullProjectContext Promise.all
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    // Mock recent emails to trigger AI snapshot
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
+      { message_id: 'm1', subject: 'Bid update', sender_email: 'vendor@test.com', body_text: 'New bid', received_date: '2026-02-28' } as any,
+    ])
+
+    const mockSnapshot = {
+      hot_topics: [{ priority: 'high', text: 'New bid received' }],
+      action_items: [{ status: 'pending', text: 'Review bid' }],
+      recent_decisions: [],
+      next_steps: ['Schedule review'],
+      open_questions: [],
+      key_data_points: [],
+      ai_summary: 'New bid from vendor.',
+    }
+    vi.mocked(generateProjectStatusSnapshot).mockResolvedValueOnce(mockSnapshot)
+
+    await updateProjectStatus('proj-1')
+
+    // Verify AI was called
+    expect(generateProjectStatusSnapshot).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ subject: 'Bid update' })]),
+      expect.objectContaining({ project: expect.objectContaining({ name: 'Test House' }) }),
+      null,
+    )
+
+    // Verify database write
+    expect(db.upsertProjectStatus).toHaveBeenCalledWith('proj-1', expect.objectContaining({
+      phase: 'Planning',
+      hot_topics: mockSnapshot.hot_topics,
+      action_items: mockSnapshot.action_items,
+      ai_summary: 'New bid from vendor.',
+    }))
+
+    // Verify task sync was triggered
+    expect(db.syncAIInsightsToTasks).toHaveBeenCalledWith('proj-1', mockSnapshot.action_items)
+  })
+
+  it('produces fallback snapshot when no emails and no previous status', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([])
+    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(null)
+
+    await updateProjectStatus('proj-1')
+
+    // AI should NOT be called — fallback used
+    expect(generateProjectStatusSnapshot).not.toHaveBeenCalled()
+
+    // Database should still be written with fallback
+    expect(db.upsertProjectStatus).toHaveBeenCalledWith('proj-1', expect.objectContaining({
+      ai_summary: 'No recent emails to analyze.',
+      hot_topics: [],
+      action_items: [],
+    }))
+
+    // Task sync called with empty items
+    expect(db.syncAIInsightsToTasks).toHaveBeenCalledWith('proj-1', [])
+  })
+
+  it('uses previous status for iterative context', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const previousStatus = {
+      hot_topics: [{ priority: 'high', text: 'Old topic' }],
+      action_items: [{ status: 'pending', text: 'Old action' }],
+      recent_decisions: [],
+      next_steps: [],
+      open_questions: [],
+      key_data_points: [],
+      ai_summary: 'Previous summary',
+      date: '2026-02-27',
+    }
+    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(previousStatus)
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([])
+
+    await updateProjectStatus('proj-1')
+
+    // AI should be called (previousStatus is truthy even without emails)
+    expect(generateProjectStatusSnapshot).toHaveBeenCalledWith(
+      [], // no emails
+      expect.any(Object),
+      previousStatus,
+    )
   })
 })

@@ -36,12 +36,12 @@ describe('summarizeEmail', () => {
     expect(result.summary).toBe('Bid received from vendor.')
   })
 
-  it('uses Haiku model', async () => {
+  it('uses Sonnet model', async () => {
     mockCreate.mockResolvedValueOnce({
       content: [{ type: 'text', text: JSON.stringify({ actionItems: [], nextSteps: [], questions: [], keyDataPoints: [], summary: 'ok' }) }],
     })
     await summarizeEmail(makeEmail())
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'claude-haiku-3-5-20241022' }))
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'claude-sonnet-4-6' }))
   })
 
   it('returns empty insights on error', async () => {
@@ -74,7 +74,7 @@ describe('analyzeProjectEmails', () => {
 
     const result = await analyzeProjectEmails([makeEmail(), makeEmail({ subject: 'Follow-up' })])
     expect(result.overallStatus).toBe('Project on track')
-    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'claude-sonnet-4-5-20250929' }))
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ model: 'claude-sonnet-4-6' }))
   })
 
   it('truncates emails to 20', async () => {

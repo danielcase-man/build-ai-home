@@ -1,7 +1,7 @@
 import { getAnthropicClient } from './ai-clients'
 import type { ProjectData } from '@/types'
 
-const MODEL = 'claude-sonnet-4-5-20250929'
+const MODEL = 'claude-sonnet-4-6'
 
 export async function analyzeProjectDocument(content: string, filename: string): Promise<ProjectData> {
   try {

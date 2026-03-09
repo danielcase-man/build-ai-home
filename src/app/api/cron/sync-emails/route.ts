@@ -7,6 +7,7 @@ import { updateProjectStatus, getProject } from '@/lib/project-service'
 import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { AuthenticationError } from '@/lib/errors'
 import { env } from '@/lib/env'
+import { createEmailSyncNotification } from '@/lib/notification-service'
 import type { EmailRecord } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -65,12 +66,48 @@ export async function POST(request: NextRequest) {
     }
     const projectId = project.id
 
-    // Build search query dynamically from project contacts
-    console.log('Building email search query from contacts...')
-    const searchQuery = await db.buildEmailSearchQuery(projectId, 2)
+    // Try incremental sync first using Gmail history API
+    const storedHistoryId = await db.getGmailHistoryId(emailAccount.email_address)
+    let gmailEmails: Array<{ id: string; threadId: string; subject: string; from: string; date: string; body: string; snippet: string }> = []
+    let usedIncremental = false
 
-    console.log('Fetching emails from Gmail...')
-    const gmailEmails = await gmailService.getEmails(searchQuery)
+    if (storedHistoryId) {
+      console.log(`Attempting incremental sync from historyId ${storedHistoryId}...`)
+      const changes = await gmailService.getHistoryChanges(storedHistoryId)
+
+      if (changes && changes.messageIds.length > 0) {
+        console.log(`Incremental sync found ${changes.messageIds.length} new messages`)
+        const fetched = await Promise.all(
+          changes.messageIds.map(id => gmailService.getEmailById(id))
+        )
+        gmailEmails = fetched.filter((e): e is NonNullable<typeof e> => e !== null)
+        usedIncremental = true
+
+        // Update stored history ID
+        await db.updateGmailHistoryId(emailAccount.email_address, changes.newHistoryId)
+      } else if (changes && changes.messageIds.length === 0) {
+        // No new messages — update history ID and return
+        await db.updateGmailHistoryId(emailAccount.email_address, changes.newHistoryId)
+        await db.updateLastSync(emailAccount.email_address)
+        return successResponse({ message: 'No new emails (incremental)', synced: 0 })
+      }
+      // If changes is null, historyId expired — fall through to full fetch
+    }
+
+    if (!usedIncremental) {
+      // Full fetch fallback
+      console.log('Building email search query from contacts...')
+      const searchQuery = await db.buildEmailSearchQuery(projectId, 2)
+
+      console.log('Fetching emails from Gmail (full)...')
+      gmailEmails = await gmailService.getEmails(searchQuery)
+
+      // Store current historyId for future incremental syncs
+      const profile = await gmailService.getProfile()
+      if (profile?.historyId) {
+        await db.updateGmailHistoryId(emailAccount.email_address, profile.historyId)
+      }
+    }
 
     if (gmailEmails.length === 0) {
       await db.updateLastSync(emailAccount.email_address)
@@ -124,6 +161,9 @@ export async function POST(request: NextRequest) {
     if (emailsToStore.length > 0) {
       console.log(`Storing ${emailsToStore.length} new emails...`)
       await db.storeEmails(emailsToStore)
+
+      // Notify about new emails
+      await createEmailSyncNotification(projectId, emailsToStore.length)
     }
 
     // Update last sync time

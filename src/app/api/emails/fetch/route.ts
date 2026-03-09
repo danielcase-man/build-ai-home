@@ -1,10 +1,13 @@
 import { NextRequest } from 'next/server'
-import { summarizeEmail, analyzeProjectEmails, triageEmail } from '@/lib/claude-email-agent'
+import { summarizeEmail, triageEmail } from '@/lib/claude-email-agent'
 import { db } from '@/lib/database'
-import { getProject } from '@/lib/project-service'
+import { getProject, updateProjectStatus } from '@/lib/project-service'
 import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { successResponse, errorResponse } from '@/lib/api-utils'
 import { AuthenticationError } from '@/lib/errors'
+import { extractEmailAddress, extractSenderName } from '@/lib/ui-helpers'
+import { createEmailSyncNotification } from '@/lib/notification-service'
+import type { EmailRecord } from '@/types'
 
 // Process emails in batches to avoid overwhelming the AI API
 const AI_BATCH_SIZE = 3
@@ -33,22 +36,13 @@ export async function GET(request: NextRequest) {
         aiSummary: email.ai_summary
       }))
 
-      // Only run AI analysis if explicitly requested via ?analyze=true
-      const analyze = searchParams.get('analyze') === 'true'
-      let projectInsights = null
-      if (analyze && emailsWithSummaries.length > 0) {
-        const formattedEmails = emailsWithSummaries.map(email => ({
-          subject: email.subject,
-          from: email.from,
-          body: email.body.substring(0, 1000),
-          date: email.date
-        }))
-        projectInsights = await analyzeProjectEmails(formattedEmails)
-      }
+      // Return latest unified project status
+      const project = await getProject()
+      const status = project ? await db.getLatestProjectStatus(project.id) : null
 
       return successResponse({
         emails: emailsWithSummaries,
-        projectInsights,
+        status,
         count: emailsWithSummaries.length,
         lastFetched: new Date().toISOString(),
         source: 'database' as const
@@ -74,6 +68,7 @@ export async function GET(request: NextRequest) {
     const emailsWithInsights: Array<{
       id: string; threadId: string; subject: string; from: string;
       date: string; body: string; snippet: string;
+      attachments?: Array<{ filename: string; mimeType: string; attachmentId: string; size: number }>;
       insights: Awaited<ReturnType<typeof summarizeEmail>>;
       triage: Awaited<ReturnType<typeof triageEmail>>;
       aiSummary: string;
@@ -106,23 +101,61 @@ export async function GET(request: NextRequest) {
       emailsWithInsights.push(...batchResults)
     }
 
-    // Format emails for project-wide analysis
-    const formattedEmails = emailsWithInsights.map(email => ({
-      subject: email.subject,
-      from: email.from,
-      body: email.body.substring(0, 2000),
-      date: email.date
-    }))
+    // Persist fetched emails to the database so the assistant and cron can access them
+    if (project && emailsWithInsights.length > 0) {
+      const emailAccount = await db.getEmailAccount(process.env.GMAIL_USER_EMAIL || '')
+      const emailsToStore: EmailRecord[] = []
 
-    // Get project-wide insights if there are emails
-    let projectInsights = null
-    if (formattedEmails.length > 0) {
-      projectInsights = await analyzeProjectEmails(formattedEmails)
+      for (const email of emailsWithInsights) {
+        const exists = await db.emailExists(email.id)
+        if (exists) continue
+
+        emailsToStore.push({
+          project_id: project.id,
+          email_account_id: emailAccount?.id,
+          message_id: email.id,
+          thread_id: email.threadId,
+          sender_email: extractEmailAddress(email.from),
+          sender_name: extractSenderName(email.from),
+          subject: email.subject,
+          body_text: email.body,
+          received_date: email.date,
+          ai_summary: email.aiSummary || undefined,
+          has_attachments: (email.attachments?.length ?? 0) > 0,
+          urgency_level: email.triage?.priority === 'critical' ? 'high' : email.triage?.priority || 'medium',
+          category: undefined,
+        })
+      }
+
+      if (emailsToStore.length > 0) {
+        console.log(`Storing ${emailsToStore.length} emails to database...`)
+        const storedRecords = await db.storeEmails(emailsToStore)
+
+        // Store attachment metadata for emails that have them
+        for (const email of emailsWithInsights) {
+          if (email.attachments && email.attachments.length > 0) {
+            const stored = storedRecords.find(r => r.message_id === email.id)
+            if (stored?.id) {
+              await db.storeEmailAttachments(stored.id, email.attachments)
+            }
+          }
+        }
+
+        // Notify about new emails
+        await createEmailSyncNotification(project.id, emailsToStore.length)
+
+        // Trigger unified status update after new emails are stored
+        console.log('Triggering project status update...')
+        await updateProjectStatus(project.id)
+      }
     }
+
+    // Return latest unified project status
+    const status = project ? await db.getLatestProjectStatus(project.id) : null
 
     return successResponse({
       emails: emailsWithInsights,
-      projectInsights,
+      status,
       count: emailsWithInsights.length,
       lastFetched: new Date().toISOString(),
       source: 'gmail-api' as const

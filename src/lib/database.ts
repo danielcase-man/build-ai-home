@@ -13,14 +13,10 @@ export class DatabaseService {
         .eq('email_address', emailAddress)
         .single()
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
-        console.error('Error fetching email account:', error)
-        return null
-      }
+      if (error) return null
 
       return data
-    } catch (error) {
-      console.error('Database error:', error)
+    } catch {
       return null
     }
   }
@@ -83,14 +79,10 @@ export class DatabaseService {
 
       const { data, error } = await query
 
-      if (error) {
-        console.error('Error fetching stored emails:', error)
-        return []
-      }
+      if (error) return []
 
       return data || []
-    } catch (error) {
-      console.error('Database error:', error)
+    } catch {
       return []
     }
   }
@@ -170,15 +162,38 @@ export class DatabaseService {
         .gte('received_date', cutoffDate.toISOString())
         .order('received_date', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching recent emails:', error)
-        return []
-      }
+      if (error) return []
 
       return data || []
-    } catch (error) {
-      console.error('Database error:', error)
+    } catch {
       return []
+    }
+  }
+
+  async storeEmailAttachments(
+    emailId: string,
+    attachments: Array<{ filename: string; mimeType: string; attachmentId: string; size: number }>
+  ): Promise<void> {
+    if (attachments.length === 0) return
+    try {
+      const { error } = await supabase
+        .from('email_attachments')
+        .upsert(
+          attachments.map(att => ({
+            email_id: emailId,
+            filename: att.filename,
+            file_type: att.mimeType,
+            file_size: att.size,
+            is_document: /\.(pdf|doc|docx|xls|xlsx|csv|txt)$/i.test(att.filename),
+            is_image: /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(att.filename),
+          })),
+          { onConflict: 'email_id,filename', ignoreDuplicates: true }
+        )
+      if (error) {
+        console.error('Error storing email attachments:', error)
+      }
+    } catch (error) {
+      console.error('Database error storing attachments:', error)
     }
   }
 
@@ -227,26 +242,32 @@ export class DatabaseService {
     hot_topics: unknown[]
     action_items: unknown[]
     recent_decisions: unknown[]
+    next_steps: unknown[]
+    open_questions: unknown[]
+    key_data_points: unknown[]
     ai_summary: string
     date: string
   } | null> {
     try {
       const { data, error } = await supabase
         .from('project_status')
-        .select('hot_topics, action_items, recent_decisions, ai_summary, date')
+        .select('hot_topics, action_items, recent_decisions, next_steps, open_questions, key_data_points, ai_summary, date')
         .eq('project_id', projectId)
         .order('date', { ascending: false })
         .limit(1)
         .single()
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Error fetching latest project status:', error)
-        return null
-      }
+      if (error) return null
 
-      return data
-    } catch (error) {
-      console.error('Database error:', error)
+      if (!data) return null
+
+      return {
+        ...data,
+        next_steps: data.next_steps || [],
+        open_questions: data.open_questions || [],
+        key_data_points: data.key_data_points || [],
+      }
+    } catch {
       return null
     }
   }
@@ -258,6 +279,9 @@ export class DatabaseService {
     hot_topics: unknown[]
     action_items: unknown[]
     recent_decisions: unknown[]
+    next_steps?: unknown[]
+    open_questions?: unknown[]
+    key_data_points?: unknown[]
     budget_status?: string
     budget_used?: number
     ai_summary: string
@@ -284,6 +308,137 @@ export class DatabaseService {
     }
   }
 
+  async getProjectStatusHistory(projectId: string, limit: number = 7): Promise<Array<{
+    hot_topics: unknown[]
+    action_items: unknown[]
+    recent_decisions: unknown[]
+    next_steps: unknown[]
+    open_questions: unknown[]
+    key_data_points: unknown[]
+    ai_summary: string
+    date: string
+  }>> {
+    try {
+      const { data, error } = await supabase
+        .from('project_status')
+        .select('hot_topics, action_items, recent_decisions, next_steps, open_questions, key_data_points, ai_summary, date')
+        .eq('project_id', projectId)
+        .order('date', { ascending: false })
+        .limit(limit)
+
+      if (error) return []
+
+      return (data || []).map(row => ({
+        ...row,
+        next_steps: row.next_steps || [],
+        open_questions: row.open_questions || [],
+        key_data_points: row.key_data_points || [],
+      }))
+    } catch {
+      return []
+    }
+  }
+
+  // AI-to-Tasks sync: create/update tasks from AI-derived action items
+  async syncAIInsightsToTasks(projectId: string, actionItems: Array<{
+    status: string
+    text: string
+    action_type?: 'draft_email' | null
+    action_context?: { to?: string; to_name?: string; subject_hint?: string; context?: string }
+  }>): Promise<void> {
+    if (actionItems.length === 0) return
+
+    try {
+      // Get existing AI-generated tasks to avoid duplicates
+      const { data: existingTasks } = await supabase
+        .from('tasks')
+        .select('id, title, status, notes')
+        .eq('project_id', projectId)
+        .like('notes', '%[ai-generated]%')
+
+      const existingTitles = new Set(
+        (existingTasks || []).map(t => t.title.toLowerCase())
+      )
+
+      for (const item of actionItems) {
+        const titleLower = item.text.toLowerCase()
+
+        // Check if a matching task already exists
+        const existing = (existingTasks || []).find(
+          t => t.title.toLowerCase() === titleLower
+        )
+
+        if (existing) {
+          // Update status if the AI changed it
+          const dbStatus = item.status === 'in-progress' ? 'in_progress' : item.status
+          if (existing.status !== dbStatus && existing.status !== 'completed') {
+            await supabase
+              .from('tasks')
+              .update({
+                status: dbStatus,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existing.id)
+          }
+        } else if (!existingTitles.has(titleLower) && item.status !== 'completed') {
+          // Create new task for pending/in-progress items only
+          const priority = item.action_type === 'draft_email' ? 'high' : 'medium'
+          const notes = item.action_context
+            ? `[ai-generated] Email to: ${item.action_context.to_name || item.action_context.to || 'unknown'} — ${item.action_context.context || ''}`
+            : '[ai-generated]'
+
+          await supabase
+            .from('tasks')
+            .insert({
+              project_id: projectId,
+              title: item.text,
+              priority,
+              status: item.status === 'in-progress' ? 'in_progress' : 'pending',
+              notes,
+            })
+
+          existingTitles.add(titleLower)
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing AI insights to tasks:', error)
+    }
+  }
+
+  // Gmail History ID Management
+  async getGmailHistoryId(emailAddress: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('email_accounts')
+        .select('gmail_history_id')
+        .eq('email_address', emailAddress)
+        .single()
+
+      if (error || !data) return null
+      return data.gmail_history_id || null
+    } catch {
+      return null
+    }
+  }
+
+  async updateGmailHistoryId(emailAddress: string, historyId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('email_accounts')
+        .update({
+          gmail_history_id: historyId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('email_address', emailAddress)
+
+      if (error) {
+        console.error('Error updating Gmail history ID:', error)
+      }
+    } catch (error) {
+      console.error('Database error:', error)
+    }
+  }
+
   // Contact-based email query builder
   async getProjectContactEmails(projectId: string): Promise<string[]> {
     try {
@@ -293,16 +448,12 @@ export class DatabaseService {
         .eq('project_id', projectId)
         .eq('track_emails', true)
 
-      if (error) {
-        console.error('Error fetching contact emails:', error)
-        return []
-      }
+      if (error) return []
 
       return (data || [])
         .map(c => c.email)
         .filter((email): email is string => !!email)
-    } catch (error) {
-      console.error('Database error:', error)
+    } catch {
       return []
     }
   }
@@ -320,6 +471,7 @@ export class DatabaseService {
     const parts: string[] = []
 
     // Add contact email filters — match both received AND sent emails
+    // This is the primary, most reliable filter
     if (contactEmails.length > 0) {
       const fromFilters = contactEmails.map(e => `from:${e}`)
       const toFilters = contactEmails.map(e => `to:${e}`)
@@ -329,25 +481,12 @@ export class DatabaseService {
     // Always include @ubuildit.com domain (both directions)
     parts.push('from:@ubuildit.com', 'to:@ubuildit.com')
 
-    // Include Important label and Sent mail
-    parts.push('is:important', 'in:sent')
-
-    // Construction-related keyword matches
-    parts.push('subject:bid', 'subject:quote', 'subject:estimate', 'subject:contract',
-      'subject:proposal', 'subject:invoice')
-
-    // Add property address match — full address and individual terms
+    // Match full street address as a quoted phrase (precise, avoids noise)
     const address = project?.address
     if (address) {
       const streetMatch = address.match(/^[\d]+\s+[^,]+/)
       if (streetMatch) {
         parts.push(`"${streetMatch[0]}"`)
-        // Also match individual distinctive parts of the address
-        for (const word of streetMatch[0].split(/\s+/)) {
-          if (word.length >= 3) {
-            parts.push(word)
-          }
-        }
       }
     }
 
@@ -356,6 +495,51 @@ export class DatabaseService {
       : 'label:inbox'
 
     return `${queryBody} newer_than:${daysBack}d`
+  }
+
+  // ── Lightweight queries for home page ─────────────────────────────────────
+
+  /** Return the most recent email previews (no body text). */
+  async getRecentEmailPreviews(limit: number = 5): Promise<Array<{
+    sender_name: string | null
+    sender_email: string
+    subject: string
+    received_date: string
+    ai_summary: string | null
+  }>> {
+    try {
+      const { data, error } = await supabase
+        .from('emails')
+        .select('sender_name, sender_email, subject, received_date, ai_summary')
+        .order('received_date', { ascending: false })
+        .limit(limit)
+
+      if (error) return []
+
+      return data || []
+    } catch {
+      return []
+    }
+  }
+
+  /** Check whether a Gmail account with OAuth tokens exists. */
+  async hasEmailAccountConfigured(): Promise<boolean> {
+    try {
+      const gmailEmail = env.gmailUserEmail
+      if (!gmailEmail) return false
+
+      const { data, error } = await supabase
+        .from('email_accounts')
+        .select('id')
+        .eq('email_address', gmailEmail)
+        .not('oauth_tokens', 'is', null)
+        .limit(1)
+
+      if (error) return false
+      return (data?.length ?? 0) > 0
+    } catch {
+      return false
+    }
   }
 }
 

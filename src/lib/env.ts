@@ -47,6 +47,12 @@ export const env = {
   // Supabase Service Role (for seed scripts)
   get supabaseServiceRoleKey() { return optionalEnv('SUPABASE_SERVICE_ROLE_KEY') },
 
+  // JobTread
+  get jobtreadApiKey() { return optionalEnv('JOBTREAD_API_KEY') },
+  get jobtreadApiUrl() { return optionalEnv('JOBTREAD_API_URL', 'https://api.jobtread.com/pave') },
+  get jobtreadOrgId() { return optionalEnv('JOBTREAD_ORG_ID', '22P8e7iPShMR') },
+  get jobtreadJobId() { return optionalEnv('JOBTREAD_JOB_ID', '22PEVyJVCikd') },
+
   // App
   get vercelUrl() { return optionalEnv('VERCEL_URL') },
   get nodeEnv() { return optionalEnv('NODE_ENV', 'development') },

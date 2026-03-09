@@ -7,22 +7,30 @@ const {
   mockStoreEmails,
   mockUpdateLastSync,
   mockBuildEmailSearchQuery,
+  mockGetGmailHistoryId,
+  mockUpdateGmailHistoryId,
   mockGetAuthenticatedGmailService,
   mockSummarizeIndividualEmail,
   mockGetProject,
   mockUpdateProjectStatus,
   mockGetEmails,
+  mockGetProfile,
+  mockCreateEmailSyncNotification,
 } = vi.hoisted(() => ({
   mockGetEmailAccount: vi.fn(),
   mockEmailExists: vi.fn().mockResolvedValue(false),
   mockStoreEmails: vi.fn().mockResolvedValue([]),
   mockUpdateLastSync: vi.fn().mockResolvedValue(undefined),
   mockBuildEmailSearchQuery: vi.fn().mockResolvedValue('from:@ubuildit.com newer_than:2d'),
+  mockGetGmailHistoryId: vi.fn().mockResolvedValue(null),
+  mockUpdateGmailHistoryId: vi.fn().mockResolvedValue(undefined),
   mockGetAuthenticatedGmailService: vi.fn(),
   mockSummarizeIndividualEmail: vi.fn().mockResolvedValue('Summary text'),
   mockGetProject: vi.fn().mockResolvedValue({ id: 'proj-1' }),
   mockUpdateProjectStatus: vi.fn().mockResolvedValue(undefined),
   mockGetEmails: vi.fn(),
+  mockGetProfile: vi.fn().mockResolvedValue({ historyId: '12345' }),
+  mockCreateEmailSyncNotification: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('@/lib/database', () => ({
@@ -32,7 +40,13 @@ vi.mock('@/lib/database', () => ({
     storeEmails: mockStoreEmails,
     updateLastSync: mockUpdateLastSync,
     buildEmailSearchQuery: mockBuildEmailSearchQuery,
+    getGmailHistoryId: mockGetGmailHistoryId,
+    updateGmailHistoryId: mockUpdateGmailHistoryId,
   },
+}))
+
+vi.mock('@/lib/notification-service', () => ({
+  createEmailSyncNotification: mockCreateEmailSyncNotification,
 }))
 
 vi.mock('@/lib/gmail-auth', () => ({
@@ -79,6 +93,9 @@ describe('POST /api/cron/sync-emails', () => {
     })
     mockGetAuthenticatedGmailService.mockResolvedValue({
       getEmails: mockGetEmails,
+      getProfile: mockGetProfile,
+      getHistoryChanges: vi.fn().mockResolvedValue(null),
+      getEmailById: vi.fn().mockResolvedValue(null),
     })
     mockGetEmails.mockResolvedValue([])
   })

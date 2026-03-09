@@ -156,6 +156,9 @@ export interface ProjectStatusData {
   }>
   recentCommunications: Array<{ from: string; summary: string }>
   recentDecisions: Array<{ decision: string; impact: string }>
+  nextSteps: string[]
+  openQuestions: Question[]
+  keyDataPoints: KeyDataPoint[]
   aiSummary: string
 }
 
@@ -375,8 +378,68 @@ export interface Selection {
   expected_delivery?: string
   product_url?: string
   notes?: string
+  bid_id?: string | null
+  linked_bid?: { vendor_name: string; total_amount: number } | null
   created_at?: string
   updated_at?: string
+}
+
+// --- Vendor Types ---
+
+export interface Vendor {
+  id: string
+  project_id: string
+  company_name: string
+  category: string | null
+  status: string | null
+  primary_contact: string | null
+  notes: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+// --- Construction Loan Types ---
+
+export interface ConstructionLoan {
+  id?: string
+  project_id: string
+  lender_name: string
+  loan_type: 'construction' | 'construction_permanent' | '1x_close' | '2x_close' | 'bridge' | 'other'
+  loan_amount: number
+  cost_of_construction?: number
+  lot_value?: number
+  interest_rate?: number
+  loan_term_months?: number
+  ltv_ratio?: number
+  application_status: 'not_started' | 'in_progress' | 'submitted' | 'under_review' | 'conditionally_approved' | 'approved' | 'funded' | 'rejected' | 'withdrawn'
+  application_url?: string
+  application_date?: string
+  approval_date?: string
+  funding_date?: string
+  closing_date?: string
+  loan_officer_name?: string
+  loan_officer_email?: string
+  loan_officer_phone?: string
+  loan_contact_name?: string
+  loan_contact_email?: string
+  loan_contact_phone?: string
+  loan_contact_nmls?: string
+  notes?: string
+  loan_details?: Record<string, unknown>
+  created_at?: string
+  updated_at?: string
+}
+
+// --- Budget Forecast Types ---
+
+export interface BudgetForecast {
+  spent: number
+  burnRate: number
+  projectedTotal: number
+  variance: number
+  healthStatus: 'healthy' | 'caution' | 'over_budget'
+  monthsElapsed: number
+  estimatedMonthsRemaining: number
 }
 
 // --- Draft Email Types ---
@@ -403,6 +466,7 @@ export type ReadToolName =
   | 'search_emails'
   | 'get_contacts'
   | 'get_planning_steps'
+  | 'get_status_history'
 
 export type WriteToolName =
   | 'update_bid'
@@ -433,6 +497,23 @@ export interface AssistantMessage {
   role: 'user' | 'assistant'
   content: string
   actions?: PendingAction[]
+}
+
+// --- JobTread Sync Types ---
+
+export interface JobTreadSyncResult {
+  entity: string
+  created: number
+  updated: number
+  skipped: number
+  errors: string[]
+}
+
+export interface JobTreadFullSyncResult {
+  results: JobTreadSyncResult[]
+  totalCreated: number
+  totalUpdated: number
+  duration: number
 }
 
 // --- API Response Types ---

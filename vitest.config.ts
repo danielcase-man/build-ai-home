@@ -4,7 +4,7 @@ import path from 'path'
 export default defineConfig({
   test: {
     environment: 'node',
-    exclude: ['e2e/**', 'node_modules/**'],
+    exclude: ['e2e/**', 'node_modules/**', 'mcp-servers/**'],
     env: {
       // Dummy values so Supabase client can initialize without real credentials
       NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',

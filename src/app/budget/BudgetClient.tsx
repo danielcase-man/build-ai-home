@@ -14,8 +14,12 @@ import {
   Building2,
   ChevronDown,
   ChevronRight,
+  Download,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import type { BudgetItemRecord } from '@/lib/budget-service'
+import { calculateForecast } from '@/lib/budget-forecast'
+import BudgetForecastCard from '@/components/BudgetForecastCard'
 
 function formatCurrency(amount: number | null | undefined): string {
   if (amount == null) return '--'
@@ -45,9 +49,10 @@ interface CategoryGroup {
 interface BudgetClientProps {
   initialItems: BudgetItemRecord[]
   budgetTotal: number
+  projectStartDate?: string
 }
 
-export default function BudgetClient({ initialItems, budgetTotal }: BudgetClientProps) {
+export default function BudgetClient({ initialItems, budgetTotal, projectStartDate }: BudgetClientProps) {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
   const [activeTab, setActiveTab] = useState('transactions')
 
@@ -143,11 +148,23 @@ export default function BudgetClient({ initialItems, budgetTotal }: BudgetClient
   return (
     <div className="container max-w-6xl py-8 space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Budget & Expenses</h1>
-        <p className="text-muted-foreground text-sm">
-          Verified construction cash outflows from bank and credit card transactions
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Budget & Expenses</h1>
+          <p className="text-muted-foreground text-sm">
+            Verified construction cash outflows from bank and credit card transactions
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => window.open('/api/export/budget-summary?format=csv', '_blank')} className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.open('/api/export/budget-summary?format=pdf', '_blank')} className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -221,6 +238,14 @@ export default function BudgetClient({ initialItems, budgetTotal }: BudgetClient
           </div>
         </CardContent>
       </Card>
+
+      {/* Budget Forecast */}
+      {projectStartDate && (
+        <BudgetForecastCard
+          forecast={calculateForecast(initialItems, budgetTotal, projectStartDate)}
+          budgetTotal={budgetTotal}
+        />
+      )}
 
       {/* Tabs: Transactions vs Budget Estimates */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>

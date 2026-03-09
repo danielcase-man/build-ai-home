@@ -2,7 +2,13 @@ import { cache } from 'react'
 import { supabase } from './supabase'
 import { db } from './database'
 import { generateProjectStatusSnapshot } from './ai-summarization'
-import type { ProjectStatusData, DashboardData, Email } from '@/types'
+import type { FullProjectContext } from './ai-summarization'
+import { getBudgetItems } from './budget-service'
+import { getBids } from './bids-service'
+import { getSelections } from './selections-service'
+import { getConstructionLoan } from './loan-service'
+import { createActionItemNotification } from './notification-service'
+import type { ProjectStatusData, DashboardData, Email, Question, KeyDataPoint } from '@/types'
 
 /** Derive the current step number from planning_phase_steps rows. */
 export function calculateCurrentStep(
@@ -28,12 +34,153 @@ export const getProject = cache(async () => {
     .limit(1)
     .single()
 
-  if (error && error.code !== 'PGRST116') {
-    console.error('Error fetching project:', error)
+  // Silently return null for any error (RLS/auth failures, not-found, etc.)
+  // since the caller already handles null gracefully
+  if (error) {
+    return null
   }
 
   return data
 })
+
+export async function getFullProjectContext(projectId: string): Promise<FullProjectContext | null> {
+  const { data: project } = await supabase
+    .from('projects')
+    .select('*')
+    .eq('id', projectId)
+    .single()
+
+  if (!project) return null
+
+  const [
+    budgetItems,
+    bids,
+    selections,
+    loan,
+    { data: planningSteps },
+    { data: milestones },
+    { data: tasks },
+    { data: permits },
+    { data: contacts },
+    { data: vendors },
+    { data: communications },
+  ] = await Promise.all([
+    getBudgetItems(projectId),
+    getBids(projectId),
+    getSelections(projectId),
+    getConstructionLoan(projectId),
+    supabase
+      .from('planning_phase_steps')
+      .select('step_number, name, status, notes')
+      .eq('project_id', projectId)
+      .order('step_number', { ascending: true }),
+    supabase
+      .from('milestones')
+      .select('name, description, target_date, completed_date, status, notes')
+      .eq('project_id', projectId)
+      .order('target_date', { ascending: true }),
+    supabase
+      .from('tasks')
+      .select('title, description, due_date, priority, status, notes')
+      .eq('project_id', projectId)
+      .in('status', ['pending', 'in_progress'])
+      .order('due_date', { ascending: true })
+      .limit(30),
+    supabase
+      .from('permits')
+      .select('type, permit_number, status, application_date, approval_date, notes')
+      .eq('project_id', projectId),
+    supabase
+      .from('contacts')
+      .select('name, company, role, type')
+      .eq('project_id', projectId),
+    supabase
+      .from('vendors')
+      .select('company_name, category, status')
+      .eq('project_id', projectId),
+    supabase
+      .from('communications')
+      .select('date, type, subject, summary')
+      .eq('project_id', projectId)
+      .order('date', { ascending: false })
+      .limit(20),
+  ])
+
+  const spent = budgetItems.reduce((sum, item) => sum + (item.actual_cost ?? 0), 0)
+  const total = parseFloat(project.budget_total) || 450000
+
+  const { currentStep, totalSteps } = calculateCurrentStep(planningSteps)
+
+  return {
+    project: {
+      name: project.name || 'Unnamed Project',
+      address: project.address || '',
+      phase: project.phase || 'Planning',
+      currentStep,
+      totalSteps,
+      startDate: project.created_at || '',
+      targetCompletion: project.target_completion_date || '',
+      squareFootage: project.square_footage ? parseFloat(project.square_footage) : null,
+      style: project.style || '',
+    },
+    budget: {
+      total,
+      spent,
+      remaining: total - spent,
+      items: budgetItems,
+    },
+    planningSteps: (planningSteps || []).map(s => ({
+      step_number: s.step_number,
+      name: s.name || '',
+      status: s.status || 'pending',
+      notes: s.notes || null,
+    })),
+    milestones: (milestones || []).map(m => ({
+      name: m.name,
+      description: m.description || null,
+      target_date: m.target_date || null,
+      completed_date: m.completed_date || null,
+      status: m.status || 'pending',
+      notes: m.notes || null,
+    })),
+    tasks: (tasks || []).map(t => ({
+      title: t.title,
+      description: t.description || null,
+      due_date: t.due_date || null,
+      priority: t.priority || 'medium',
+      status: t.status || 'pending',
+      notes: t.notes || null,
+    })),
+    permits: (permits || []).map(p => ({
+      type: p.type,
+      permit_number: p.permit_number || null,
+      status: p.status || 'pending',
+      application_date: p.application_date || null,
+      approval_date: p.approval_date || null,
+      notes: p.notes || null,
+    })),
+    contacts: (contacts || []).map(c => ({
+      name: c.name,
+      company: c.company || null,
+      role: c.role || null,
+      type: c.type || null,
+    })),
+    vendors: (vendors || []).map(v => ({
+      company_name: v.company_name,
+      category: v.category || null,
+      status: v.status || null,
+    })),
+    bids,
+    selections,
+    communications: (communications || []).map(c => ({
+      date: c.date,
+      type: c.type || null,
+      subject: c.subject || null,
+      summary: c.summary || null,
+    })),
+    loan,
+  }
+}
 
 export async function getProjectDashboard(): Promise<DashboardData> {
   const project = await getProject()
@@ -162,10 +309,19 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
   const hotTopics = (latestStatus?.hot_topics || []) as Array<{ priority: string; text: string }>
   const recentDecisions = (latestStatus?.recent_decisions || []) as Array<{ decision: string; impact: string }>
 
-  const actionItems = (tasks || []).map(t => ({
-    status: t.status === 'completed' ? 'completed' : t.status === 'in_progress' ? 'in-progress' : 'pending',
-    text: t.title
-  }))
+  // Prefer AI-derived action items (richer: have action_type, action_context)
+  // Fall back to tasks table if no AI status exists yet
+  const rawAIActions = latestStatus?.action_items as Array<{
+    status: string; text: string;
+    action_type?: 'draft_email' | null;
+    action_context?: { to?: string; to_name?: string; subject_hint?: string; context?: string }
+  }> | undefined
+  const actionItems = (rawAIActions && rawAIActions.length > 0)
+    ? rawAIActions
+    : (tasks || []).map(t => ({
+        status: t.status === 'completed' ? 'completed' : t.status === 'in_progress' ? 'in-progress' : 'pending',
+        text: t.title
+      }))
 
   const recentCommunications = (emails || []).map(e => ({
     from: e.sender_name || 'Unknown',
@@ -199,6 +355,9 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
     actionItems,
     recentCommunications,
     recentDecisions,
+    nextSteps: (latestStatus?.next_steps || []) as string[],
+    openQuestions: (latestStatus?.open_questions || []) as Question[],
+    keyDataPoints: (latestStatus?.key_data_points || []) as KeyDataPoint[],
     aiSummary: latestStatus?.ai_summary || 'No AI summary available yet. Connect Gmail and sync emails to generate project insights.'
   }
 }
@@ -233,35 +392,13 @@ function getDefaultDashboard(): DashboardData {
 }
 
 export async function updateProjectStatus(projectId: string): Promise<void> {
-  // Fetch project data
-  const { data: project } = await supabase
-    .from('projects')
-    .select('*')
-    .eq('id', projectId)
-    .single()
+  // Fetch full project context for AI grounding
+  const fullContext = await getFullProjectContext(projectId)
 
-  if (!project) {
+  if (!fullContext) {
     console.error('updateProjectStatus: project not found', projectId)
     return
   }
-
-  // Fetch planning steps for progress calculation
-  const { data: planningSteps } = await supabase
-    .from('planning_phase_steps')
-    .select('step_number, status')
-    .eq('project_id', projectId)
-    .order('step_number', { ascending: true })
-
-  const { currentStep, totalSteps } = calculateCurrentStep(planningSteps)
-
-  const budgetItems = await supabase
-    .from('budget_items')
-    .select('actual_cost')
-    .eq('project_id', projectId)
-
-  const budgetUsed = budgetItems.data?.reduce((sum, item) =>
-    sum + (parseFloat(item.actual_cost) || 0), 0) || 0
-  const budgetTotal = parseFloat(project.budget_total) || 450000
 
   // Fetch previous status report for iterative context
   const previousStatus = await db.getLatestProjectStatus(projectId)
@@ -282,15 +419,6 @@ export async function updateProjectStatus(projectId: string): Promise<void> {
   // Fetch recent emails — no project_id filter (single-user app, all emails are relevant)
   const recentEmails = await db.getRecentEmails(14)
 
-  // Build project context for AI
-  const projectContext = {
-    phase: project.phase || 'planning',
-    currentStep,
-    totalSteps,
-    budgetUsed,
-    budgetTotal
-  }
-
   // Generate AI snapshot if there are emails OR a previous status to iterate on
   let snapshot
   if (recentEmails.length > 0 || previousStatus) {
@@ -300,7 +428,7 @@ export async function updateProjectStatus(projectId: string): Promise<void> {
       body: e.body_text || '',
       date: e.received_date
     }))
-    snapshot = await generateProjectStatusSnapshot(emailsForAI, projectContext, previousStatus)
+    snapshot = await generateProjectStatusSnapshot(emailsForAI, fullContext, previousStatus)
   } else {
     snapshot = {
       hot_topics: [],
@@ -310,18 +438,35 @@ export async function updateProjectStatus(projectId: string): Promise<void> {
     }
   }
 
+  const { currentStep, totalSteps } = { currentStep: fullContext.project.currentStep, totalSteps: fullContext.project.totalSteps }
+  const budgetUsed = fullContext.budget.spent
+  const budgetTotal = fullContext.budget.total
+
   // Write to database
   await db.upsertProjectStatus(projectId, {
-    phase: project.phase || 'planning',
+    phase: fullContext.project.phase,
     current_step: currentStep,
     progress_percentage: Math.round((currentStep / totalSteps) * 100),
     hot_topics: snapshot.hot_topics,
     action_items: snapshot.action_items,
     recent_decisions: snapshot.recent_decisions,
+    next_steps: snapshot.next_steps,
+    open_questions: snapshot.open_questions,
+    key_data_points: snapshot.key_data_points,
     budget_status: budgetUsed <= budgetTotal ? 'On Track' : 'Over Budget',
     budget_used: budgetUsed,
     ai_summary: snapshot.ai_summary
   })
+
+  // Cascade AI action items into the tasks table
+  await db.syncAIInsightsToTasks(projectId, snapshot.action_items)
+
+  // Notify for new high-priority action items
+  for (const item of snapshot.action_items) {
+    if (item.action_type === 'draft_email' && item.status !== 'completed') {
+      await createActionItemNotification(projectId, item.text)
+    }
+  }
 
   console.log(`Project status updated for project ${projectId}`)
 }

@@ -14,7 +14,7 @@ async function BudgetData() {
 
   const items = await getBudgetItems(project.id)
 
-  return <BudgetClient initialItems={items} budgetTotal={parseFloat(project.budget_total) || 1200000} />
+  return <BudgetClient initialItems={items} budgetTotal={parseFloat(project.budget_total) || 1200000} projectStartDate={project.created_at} />
 }
 
 export default function BudgetPage() {

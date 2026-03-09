@@ -146,7 +146,22 @@ vi.mock('./database', () => ({
       hot_topics: [{ priority: 'high', text: 'Window vendor selection pending' }],
       action_items: [{ status: 'pending', text: 'Compare window bids' }],
       recent_decisions: [{ decision: 'Selected AGA range', impact: 'Budget +$2K over Viking estimate' }],
+      next_steps: ['Finalize window vendor selection'],
+      open_questions: [{ question: 'Lead time for Pella?', askedBy: 'Owner' }],
+      key_data_points: [{ category: 'Budget', data: 'Window budget is $90K', importance: 'important' }],
     }),
+    getProjectStatusHistory: vi.fn().mockResolvedValue([
+      {
+        date: '2025-06-14',
+        ai_summary: 'Project on track.',
+        hot_topics: [{ priority: 'high', text: 'Window vendor selection pending' }],
+        action_items: [{ status: 'pending', text: 'Compare window bids' }],
+        recent_decisions: [],
+        next_steps: ['Finalize window vendor selection'],
+        open_questions: [],
+        key_data_points: [],
+      },
+    ]),
   },
 }))
 
@@ -193,8 +208,8 @@ describe('assistant', () => {
   // -------------------------------------------------------------------
 
   describe('ASSISTANT_TOOLS', () => {
-    it('has 14 tools total (7 read + 7 write)', () => {
-      expect(ASSISTANT_TOOLS).toHaveLength(14)
+    it('has 15 tools total (8 read + 7 write)', () => {
+      expect(ASSISTANT_TOOLS).toHaveLength(15)
     })
 
     it('contains all expected read tools', () => {
@@ -206,6 +221,7 @@ describe('assistant', () => {
       expect(names).toContain('search_emails')
       expect(names).toContain('get_contacts')
       expect(names).toContain('get_planning_steps')
+      expect(names).toContain('get_status_history')
     })
 
     it('contains all expected write tools', () => {

@@ -8,6 +8,7 @@ import StatusActionItems from './StatusActionItems'
 import StatusCommunications from './StatusCommunications'
 import StatusBudget from './StatusBudget'
 import StatusGenerateButton from './StatusGenerateButton'
+import ExportButton from './ExportButton'
 import SectionSkeleton from './SectionSkeleton'
 
 // --- Async data-fetching server components ---
@@ -76,12 +77,20 @@ async function StatusContent() {
 
   const aiSummary = latestStatus?.ai_summary || 'No AI summary available yet. Click "Generate AI Report" to analyze your emails.'
 
+  // Normalize next_steps, open_questions, key_data_points
+  const nextSteps = (latestStatus?.next_steps || []) as string[]
+  const openQuestions = (latestStatus?.open_questions || []) as Array<{ question: string; askedBy: string; needsResponseFrom?: string }>
+  const keyDataPoints = (latestStatus?.key_data_points || []) as Array<{ category: string; data: string; importance: string }>
+
   return (
     <>
       <StatusContentCards
         hotTopics={hotTopics}
         recentDecisions={recentDecisions}
         aiSummary={aiSummary}
+        nextSteps={nextSteps}
+        openQuestions={openQuestions}
+        keyDataPoints={keyDataPoints}
       />
       <StatusActionItems items={actionItems} />
     </>
@@ -134,7 +143,10 @@ export default function ProjectStatusPage() {
           <h1 className="text-2xl font-bold tracking-tight">Daily Status Report</h1>
           <p className="text-sm text-muted-foreground">{format(new Date(), 'EEEE, MMMM d, yyyy')}</p>
         </div>
-        <StatusGenerateButton />
+        <div className="flex items-center gap-2">
+          <ExportButton href="/api/export/status-report" label="Export PDF" />
+          <StatusGenerateButton />
+        </div>
       </div>
 
       {/* Stream 1: Quick stats */}

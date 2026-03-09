@@ -6,7 +6,6 @@ import {
   ClipboardList, ChevronDown, RefreshCw, FileText
 } from 'lucide-react'
 import { getPriorityColor, getImportanceBadge, formatEmailDate } from '@/lib/ui-helpers'
-import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorCard from '@/components/ui/ErrorCard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -15,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import DraftEmailsPanel from '@/components/DraftEmailsPanel'
-import type { DraftEmail, EmailInsights, EmailTriage, ProjectInsights } from '@/types'
+import type { DraftEmail, EmailInsights, EmailTriage, EmailRecord, Question, KeyDataPoint } from '@/types'
 
 interface DisplayEmail {
   id: string
@@ -29,21 +28,53 @@ interface DisplayEmail {
   aiSummary?: string
 }
 
-export default function EmailDashboard() {
-  const [emails, setEmails] = useState<DisplayEmail[]>([])
-  const [projectInsights, setProjectInsights] = useState<ProjectInsights | null>(null)
-  const [loading, setLoading] = useState(false)
+interface UnifiedStatus {
+  hot_topics: Array<{ priority: string; text: string }>
+  action_items: Array<{ status: string; text: string; action_type?: 'draft_email' | null; action_context?: { to?: string; to_name?: string; subject_hint?: string; context?: string } }>
+  recent_decisions: Array<{ decision: string; impact: string }>
+  next_steps: string[]
+  open_questions: Question[]
+  key_data_points: KeyDataPoint[]
+  ai_summary: string
+  date: string
+}
+
+/** Convert DB EmailRecord to display format */
+function toDisplayEmail(email: EmailRecord): DisplayEmail {
+  return {
+    id: email.message_id,
+    subject: email.subject,
+    from: email.sender_name ? `${email.sender_name} <${email.sender_email}>` : email.sender_email,
+    date: email.received_date,
+    body: email.body_text || '',
+    snippet: email.body_text?.substring(0, 200) || '',
+    aiSummary: email.ai_summary || undefined,
+  }
+}
+
+interface EmailDashboardProps {
+  initialEmails?: EmailRecord[]
+  initialStatus?: UnifiedStatus | null
+}
+
+export default function EmailDashboard({ initialEmails, initialStatus }: EmailDashboardProps) {
+  const [emails, setEmails] = useState<DisplayEmail[]>(
+    () => initialEmails?.map(toDisplayEmail) || []
+  )
+  const [status, setStatus] = useState<UnifiedStatus | null>(initialStatus ?? null)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expandedEmails, setExpandedEmails] = useState<Set<string>>(new Set())
   const [drafts, setDrafts] = useState<DraftEmail[]>([])
   const [draftsLoading, setDraftsLoading] = useState(false)
 
-  const fetchEmails = async () => {
-    setLoading(true)
+  /** Refresh from Gmail API — only used for manual refresh button */
+  const refreshEmails = async () => {
+    setRefreshing(true)
     setError(null)
 
     try {
-      const response = await fetch('/api/emails/fetch?analyze=true')
+      const response = await fetch('/api/emails/fetch?refresh=true')
       const data = await response.json()
 
       if (response.status === 401) {
@@ -57,15 +88,13 @@ export default function EmailDashboard() {
 
       const payload = data.data || data
       setEmails(payload.emails || [])
-      setProjectInsights(payload.projectInsights)
+      setStatus(payload.status || null)
 
-      // Trigger async draft generation after emails load
       fetchDrafts()
-    } catch (err) {
-      setError('Failed to fetch emails')
-      console.error('Error fetching emails:', err)
+    } catch {
+      setError('Failed to refresh emails')
     } finally {
-      setLoading(false)
+      setRefreshing(false)
     }
   }
 
@@ -77,16 +106,16 @@ export default function EmailDashboard() {
       if (response.ok && data.data?.drafts) {
         setDrafts(data.data.drafts)
       }
-    } catch (err) {
-      console.error('Error fetching draft emails:', err)
+    } catch {
+      // Silently ignore — drafts section will remain empty
     } finally {
       setDraftsLoading(false)
     }
   }
 
+  // Fetch drafts on mount (lightweight, doesn't block display)
   useEffect(() => {
-    fetchEmails()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchDrafts()
   }, [])
 
   const toggleEmailExpanded = (emailId: string) => {
@@ -99,18 +128,22 @@ export default function EmailDashboard() {
     setExpandedEmails(newExpanded)
   }
 
-  if (loading) {
-    return <LoadingSpinner message="Analyzing emails with AI..." />
-  }
-
-  if (error) {
-    return <ErrorCard message={error} onRetry={fetchEmails} />
+  if (error && emails.length === 0) {
+    return <ErrorCard message={error} onRetry={refreshEmails} />
   }
 
   return (
     <div className="space-y-6">
-      {/* Project-Wide Insights */}
-      {projectInsights && (
+      {/* Refresh error (non-blocking when we have cached data) */}
+      {error && emails.length > 0 && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{error} — showing cached data.</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Project-Wide Status */}
+      {status && (
         <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-blue-50">
           <CardHeader>
             <CardTitle className="text-xl flex items-center gap-2">
@@ -119,15 +152,15 @@ export default function EmailDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Urgent Matters */}
-            {projectInsights.urgentMatters.length > 0 && (
+            {/* Urgent Matters (high-priority hot topics) */}
+            {status.hot_topics.filter(t => t.priority === 'high').length > 0 && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
                   <p className="font-bold mb-1">URGENT - Needs Immediate Attention</p>
                   <ul className="space-y-1">
-                    {projectInsights.urgentMatters.map((matter, idx) => (
-                      <li key={idx} className="text-sm font-medium">• {matter}</li>
+                    {status.hot_topics.filter(t => t.priority === 'high').map((topic, idx) => (
+                      <li key={idx} className="text-sm font-medium">• {topic.text}</li>
                     ))}
                   </ul>
                 </AlertDescription>
@@ -136,21 +169,20 @@ export default function EmailDashboard() {
 
             <div className="grid md:grid-cols-2 gap-4">
               {/* Action Items */}
-              {projectInsights.actionItems.length > 0 && (
+              {status.action_items.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-construction-green" />
-                      Action Items ({projectInsights.actionItems.length})
+                      Action Items ({status.action_items.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
-                    {projectInsights.actionItems.map((item, idx) => (
-                      <div key={idx} className={`text-xs p-2 rounded border ${getPriorityColor(item.priority)}`}>
-                        <div className="font-semibold">{item.item}</div>
+                    {status.action_items.map((item, idx) => (
+                      <div key={idx} className={`text-xs p-2 rounded border ${item.status === 'completed' ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                        <div className="font-semibold">{item.text}</div>
                         <div className="flex gap-2 mt-1 text-xs opacity-75">
-                          {item.owner && <span>Owner: {item.owner}</span>}
-                          {item.source && <span>Source: {item.source}</span>}
+                          <span>Status: {item.status}</span>
                         </div>
                       </div>
                     ))}
@@ -159,16 +191,16 @@ export default function EmailDashboard() {
               )}
 
               {/* Open Questions */}
-              {projectInsights.openQuestions.length > 0 && (
+              {status.open_questions.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold flex items-center gap-2">
                       <HelpCircle className="h-4 w-4 text-purple-500" />
-                      Open Questions ({projectInsights.openQuestions.length})
+                      Open Questions ({status.open_questions.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 max-h-64 overflow-y-auto scrollbar-thin">
-                    {projectInsights.openQuestions.map((q, idx) => (
+                    {status.open_questions.map((q, idx) => (
                       <div key={idx} className="text-xs p-2 bg-purple-50 rounded border border-purple-200">
                         <div className="font-semibold text-purple-900">{q.question}</div>
                         <div className="text-purple-700 mt-1">
@@ -182,17 +214,17 @@ export default function EmailDashboard() {
               )}
 
               {/* Next Steps */}
-              {projectInsights.nextSteps.length > 0 && (
+              {status.next_steps.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold flex items-center gap-2">
                       <ArrowRight className="h-4 w-4 text-primary" />
-                      Next Steps ({projectInsights.nextSteps.length})
+                      Next Steps ({status.next_steps.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-1 max-h-64 overflow-y-auto scrollbar-thin">
-                      {projectInsights.nextSteps.map((step, idx) => (
+                      {status.next_steps.map((step, idx) => (
                         <li key={idx} className="text-sm text-muted-foreground">• {step}</li>
                       ))}
                     </ul>
@@ -201,16 +233,16 @@ export default function EmailDashboard() {
               )}
 
               {/* Key Data Points */}
-              {projectInsights.keyDataPoints.length > 0 && (
+              {status.key_data_points.length > 0 && (
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-bold flex items-center gap-2">
                       <BarChart3 className="h-4 w-4 text-construction-blue" />
-                      Key Data Points ({projectInsights.keyDataPoints.length})
+                      Key Data Points ({status.key_data_points.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-1 max-h-64 overflow-y-auto scrollbar-thin">
-                    {projectInsights.keyDataPoints.map((dp, idx) => (
+                    {status.key_data_points.map((dp, idx) => (
                       <div key={idx} className="text-xs p-2 bg-muted rounded border">
                         <div className="flex items-start">
                           <span className="mr-2">{getImportanceBadge(dp.importance)}</span>
@@ -227,7 +259,7 @@ export default function EmailDashboard() {
             </div>
 
             {/* Overall Status */}
-            {projectInsights.overallStatus && (
+            {status.ai_summary && (
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-bold flex items-center gap-2">
@@ -236,7 +268,7 @@ export default function EmailDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">{projectInsights.overallStatus}</p>
+                  <p className="text-sm text-muted-foreground">{status.ai_summary}</p>
                 </CardContent>
               </Card>
             )}
@@ -257,9 +289,9 @@ export default function EmailDashboard() {
               <FileText className="h-5 w-5" />
               Project Communications
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={fetchEmails}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
+            <Button variant="outline" size="sm" onClick={refreshEmails} disabled={refreshing}>
+              <RefreshCw className={cn("h-4 w-4 mr-2", refreshing && "animate-spin")} />
+              {refreshing ? 'Syncing...' : 'Refresh'}
             </Button>
           </div>
         </CardHeader>

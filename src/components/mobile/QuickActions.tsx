@@ -430,7 +430,7 @@ const QuickActions: React.FC = () => {
                   </motion.button>
                   <div>
                     <div className="text-sm font-semibold">{formatTime(note.duration)}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500" suppressHydrationWarning>
                       {note.timestamp.toLocaleTimeString()}
                     </div>
                   </div>

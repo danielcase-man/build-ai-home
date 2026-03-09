@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import Navigation from '@/components/Navigation'
+import BackgroundSync from '@/components/BackgroundSync'
 import { Toaster } from '@/components/ui/sonner'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,6 +25,7 @@ export default function RootLayout({
           <Navigation />
           <main className="flex-1">{children}</main>
         </div>
+        <BackgroundSync />
         <Toaster />
       </body>
     </html>

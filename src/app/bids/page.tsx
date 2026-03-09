@@ -1,18 +1,15 @@
 import { Suspense } from 'react'
-import { getProject } from '@/lib/project-service'
-import { getBids } from '@/lib/bids-service'
+import { getBidsForDefaultProject } from '@/lib/bids-service'
 import BidsClient from './BidsClient'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorCard from '@/components/ui/ErrorCard'
 
 async function BidsData() {
-  const project = await getProject()
+  const { projectExists, bids } = await getBidsForDefaultProject()
 
-  if (!project) {
+  if (!projectExists) {
     return <ErrorCard message="No project found. Create a project first." />
   }
-
-  const bids = await getBids(project.id)
 
   return <BidsClient bids={bids} />
 }

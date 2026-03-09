@@ -46,7 +46,7 @@ Rules for the email body:
 Return valid JSON only, no markdown fences or explanation.`
 
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-5-20250929',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1500,
       temperature: 0.3,
       messages: [{ role: 'user', content: prompt }]

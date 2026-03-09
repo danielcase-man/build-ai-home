@@ -39,8 +39,9 @@ export default function GmailConnect() {
       const response = await fetch('/api/gmail/auth')
       const data = await response.json()
 
-      if (data.authUrl) {
-        window.location.href = data.authUrl
+      const authUrl = data.data?.authUrl ?? data.authUrl
+      if (authUrl) {
+        window.location.href = authUrl
       } else {
         setError('Failed to generate authentication URL')
       }

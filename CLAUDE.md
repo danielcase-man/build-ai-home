@@ -57,9 +57,9 @@ The application models the **UBuildIt construction process** with two main phase
 - **Parsing**: Recursive MIME traversal extracts plain text from multipart messages, base64-decodes payloads
 
 #### Anthropic Claude Integration (`src/lib/ai-clients.ts`, `src/lib/ai-summarization.ts`, `src/lib/claude-email-agent.ts`)
-- **Dual-Model Strategy**: Claude Haiku 3.5 for fast tasks (individual email summaries, triage), Claude Sonnet 4.5 for complex analysis (status reports, bid extraction, cross-email insights)
-- **Email Summarization**: Generates actionable insights from construction emails
-- **Context Aware**: Passed project context for relevant summaries
+- **Model**: Claude Sonnet 4.6 (`claude-sonnet-4-6`) for all AI tasks (email summaries, triage, status reports, bid extraction, cross-email insights)
+- **Unified Status System**: `project_status` table is single source of truth — all pages read from it, `generateProjectStatusSnapshot()` is the sole AI status generator
+- **Cascading Updates**: AI-derived action items auto-sync to `tasks` table; status updates triggered by email fetch, cron sync, and manual generation
 - **Stored Results**: AI summaries cached in `emails.ai_summary` and `project_status.ai_summary`
 
 #### Supabase Client Pattern (`src/lib/supabase.ts`)
@@ -206,7 +206,7 @@ ON CONFLICT (message_id) DO UPDATE SET ...
 
 ### 3. AI Cost Management
 Anthropic Claude API cost optimization strategies:
-- **Dual-model approach**: Claude Haiku 3.5 for fast, cheap tasks (individual email summaries, triage classification); Claude Sonnet 4.5 for complex analysis (status reports, bid extraction, cross-email insights, draft generation)
+- **Single model**: Claude Sonnet 4.6 (`claude-sonnet-4-6`) for all AI tasks — email summaries, triage, status reports, bid extraction, draft generation
 - Only summarize unread or recent emails
 - Cache summaries in database (`emails.ai_summary`, `project_status.ai_summary`)
 
@@ -307,3 +307,55 @@ The Gmail MCP does **NOT** support attachments. When files need to be attached:
 
 ### Note on OAuth Credentials
 This MCP server uses a separate Google Cloud OAuth client (`52695817098`) from the app's built-in Gmail integration (`217172068796` in `.env.local`). Both access the same Gmail account (`danielcase.info@gmail.com`). Setup details are in `GMAIL_MCP_SETUP_FOR_CLAUDE_CODE.md`.
+
+## 🔧 JobTread MCP Server (Construction Project Data)
+
+Claude Code has access to a JobTread MCP server that provides direct read/write access to the Case Home project in JobTread (the WCG building consultant's project management platform). Configured in `.claude/settings.local.json`.
+
+### Available MCP Tools
+
+| Tool | What It Does |
+|------|-------------|
+| `jobtread_getJob` | Get Case Home project details (status, description, custom fields) |
+| `jobtread_getCostItems` | Get budget/cost items with cost codes and pricing |
+| `jobtread_getTasks` | Get tasks/schedule from the project |
+| `jobtread_getDailyLogs` | Get daily log entries |
+| `jobtread_getComments` | Get comments on the project |
+| `jobtread_getFiles` | Get files (photos, documents) |
+| `jobtread_createComment` | Add a comment to the project |
+| `jobtread_createDailyLog` | Add a daily log entry (date + notes) |
+| `jobtread_createTask` | Create a task (name, description, dates) |
+
+### JobTread API Details
+- **API**: Proprietary "Pave" query language at `POST https://api.jobtread.com/pave`
+- **Auth**: Grant key in query body (scoped to the Case Home project)
+- **Org**: Texas Home Consulting LLC (`22P8e7iPShMR`)
+- **Job**: Case Home #23 (`22PEVyJVCikd`)
+- **Max page size**: 100 items per query
+- **Cost values**: Stored in cents (divide by 100 for dollars)
+
+### JobTread Integration Architecture
+
+#### Source Files
+- `src/lib/jobtread-client.ts` — Low-level Pave API HTTP client (rate limiting, pagination, error handling)
+- `src/lib/jobtread.ts` — High-level typed service with domain methods (getJob, getCostItems, getTasks, etc.)
+- `src/lib/jobtread-sync.ts` — Sync service: maps JobTread data to Supabase tables
+- `src/app/api/jobtread/sync/route.ts` — Manual sync endpoint (POST)
+- `src/app/api/cron/sync-jobtread/route.ts` — Cron sync (runs daily at 7:55 AM, before email sync)
+- `mcp-servers/jobtread/` — MCP server (9 tools wrapping Pave queries)
+
+#### Data Sync Mapping
+| JobTread Entity | Supabase Table | Key Fields |
+|---|---|---|
+| `costItems` | `budget_items` | `costCode.name` → `category`, `cost/100` → `estimated_cost`, `source='jobtread'` |
+| `tasks` | `tasks` | `name` → `title`, `endDate` → `due_date`, `completed` → `status` |
+| `dailyLogs` | `communications` | `notes` → `summary`, `type='daily_log'` |
+| `comments` | `communications` | `message` → `summary`, `type='jobtread_comment'` |
+| `files` | `documents` | `name` → `name`, `url` → `file_url`, `folder` → `category` |
+
+All upserts use `ON CONFLICT (jobtread_id) DO UPDATE` for idempotent re-sync. Records with `source='jobtread'` are distinguished from manual entries. The AI summarization pipeline automatically picks up synced data via `getFullProjectContext()`.
+
+#### Database Columns Added
+- `jobtread_id VARCHAR(50) UNIQUE` on: `budget_items`, `tasks`, `documents`, `vendors`, `contacts`, `communications`
+- `source VARCHAR(20) DEFAULT 'manual'` on: `budget_items`
+- `jobtread_sync_state` table for tracking per-entity sync timestamps

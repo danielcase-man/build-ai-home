@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
-import { getProjectDashboard, getProject, getActiveHotTopics } from '@/lib/project-service'
+import { getProjectDashboard, getProject } from '@/lib/project-service'
+import { db } from '@/lib/database'
 import HomeClient from './HomeClient'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -36,12 +37,24 @@ function DashboardSkeleton() {
 async function DashboardData() {
   const project = await getProject()
 
-  const [dashboardData, hotTopics] = await Promise.all([
+  // Fetch dashboard stats, latest AI status, email previews, and auth state
+  // all in parallel — avoids the previous waterfall where HomeClient would
+  // fire a separate /api/emails/fetch request on mount (~2-5s round trip).
+  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth] = await Promise.all([
     getProjectDashboard(),
-    project?.id ? getActiveHotTopics(project.id) : Promise.resolve([]),
+    project?.id ? db.getLatestProjectStatus(project.id) : Promise.resolve(null),
+    db.getRecentEmailPreviews(3),
+    db.hasEmailAccountConfigured(),
   ])
 
-  return <HomeClient initialData={dashboardData} initialHotTopics={hotTopics} />
+  return (
+    <HomeClient
+      initialData={dashboardData}
+      initialStatus={latestStatus}
+      initialEmails={emailPreviews}
+      gmailConnected={hasGmailAuth}
+    />
+  )
 }
 
 export default function HomePage() {

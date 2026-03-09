@@ -31,7 +31,7 @@ import { getProject } from '@/lib/project-service'
 import type { AssistantStreamEvent } from '@/types'
 
 const MAX_TOOL_ROUNDS = 10
-const MODEL = 'claude-sonnet-4-6-20250514'
+const MODEL = 'claude-sonnet-4-6'
 
 interface ChatRequest {
   messages: Array<{ role: 'user' | 'assistant'; content: string }>

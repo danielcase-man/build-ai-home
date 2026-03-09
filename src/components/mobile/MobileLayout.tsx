@@ -35,10 +35,11 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
   const [isOnline, setIsOnline] = useState(true)
   const [batteryLevel, setBatteryLevel] = useState(85)
   const [signalStrength, setSignalStrength] = useState(3)
-  const [currentTime, setCurrentTime] = useState(new Date())
+  const [currentTime, setCurrentTime] = useState<Date | null>(null)
   const [showOfflineMessage, setShowOfflineMessage] = useState(false)
 
   useEffect(() => {
+    setCurrentTime(new Date())
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
 
     const handleOnline = () => {
@@ -77,7 +78,9 @@ const MobileLayout: React.FC<MobileLayoutProps> = ({
       {/* Status Bar */}
       <div className="bg-black text-white px-4 py-2 flex justify-between items-center text-sm shrink-0">
         <div className="flex items-center space-x-2">
-          <span className="font-mono text-xs">{currentTime.toLocaleTimeString()}</span>
+          <span className="font-mono text-xs" suppressHydrationWarning>
+            {currentTime ? currentTime.toLocaleTimeString() : '\u00A0'}
+          </span>
           <span className="text-xs bg-gray-800 px-2 py-0.5 rounded">
             {title}
           </span>

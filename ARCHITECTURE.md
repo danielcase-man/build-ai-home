@@ -169,9 +169,10 @@ All methods are error-safe (return null/empty on failure, never throw).
 | Function | Purpose |
 |----------|---------|
 | `getProject()` | Fetch first project (ordered by created_at ascending) |
+| `getFullProjectContext(projectId)` | Parallel fetch of all 10 tables → FullProjectContext for AI grounding |
 | `getProjectDashboard()` | Parallel fetch of 5 queries → DashboardData |
 | `getProjectStatus()` | Parallel fetch of 6 queries → ProjectStatusData |
-| `updateProjectStatus(projectId)` | Fetch previous status + emails → AI generation → upsert |
+| `updateProjectStatus(projectId)` | getFullProjectContext + previous status + emails → AI generation → upsert |
 | `getActiveHotTopics(projectId)` | Extract hot_topics text from latest status |
 | `getRecentCommunications(projectId)` | Recent email sender + AI summary pairs |
 | `getBudgetSummary(projectId)` | Total/spent/categories budget breakdown |
@@ -201,12 +202,20 @@ AI calls use a **dual-model strategy** via the Anthropic SDK: **Claude Haiku 3.5
 #### `ai-summarization.ts` - Summarization & Status
 | Function | Model | Temp | Max Tokens | Purpose |
 |----------|-------|------|------------|---------|
-| `summarizeIndividualEmail(email)` | Haiku | 0.3 | 200 | 2-3 sentence email summary |
-| `summarizeEmails(emails[])` | Sonnet | 0.2 | 2048 | Batch analysis → ProjectSummary |
+| `summarizeIndividualEmail(email)` | Sonnet | 0.3 | 200 | 2-3 sentence email summary |
 | `generateDailyProjectSummary(data, emails, activity)` | Sonnet | 0.7 | 600 | Friendly narrative summary |
-| `generateProjectStatusSnapshot(emails, context, previousStatus?)` | Sonnet | 0.2 | 3000 | **Iterative** status with hot_topics, action_items, decisions, summary |
+| `generateProjectStatusSnapshot(emails, fullContext, previousStatus?)` | Sonnet | 0.2 | 4096 | **Iterative** status with hot_topics, action_items, decisions, summary |
 
-The status snapshot function is **iterative** - it receives the previous report and instructs the AI to:
+**Key type: `FullProjectContext`** — models all data passed to the AI for grounded reports:
+- `project`: name, address, phase, currentStep, totalSteps, startDate, targetCompletion, squareFootage, style
+- `budget`: total, spent, remaining, items (BudgetItemRecord[])
+- `planningSteps`, `milestones`, `tasks`, `permits`, `contacts`, `vendors`, `bids`, `selections`, `communications`
+
+**Helper: `buildProjectDataSection(ctx)`** — serializes FullProjectContext into labeled text sections for the AI prompt.
+
+The status snapshot function is **iterative** and **grounded** - it receives the previous report plus full project data, with mandatory GROUNDING RULES:
+- MUST ONLY reference facts, names, numbers from the provided PROJECT DATA
+- Do NOT invent or assume any information not explicitly provided
 - KEEP relevant hot topics, REMOVE resolved ones, ADD new ones
 - UPDATE action item statuses from email evidence, KEEP unresolved
 - KEEP all previous decisions, ADD new ones
@@ -496,8 +505,8 @@ All database access (even from server components) uses the **public anon key**. 
 ### Database-Only Encrypted OAuth Tokens
 Gmail tokens are stored exclusively in `email_accounts.oauth_tokens`, encrypted with AES-256-GCM. The centralized `getAuthenticatedGmailService()` in `gmail-auth.ts` handles decrypt → refresh → re-encrypt → persist. No cookies are used for token passing.
 
-### Dual-Model AI Strategy (Haiku + Sonnet)
-Cost-sensitive tasks (individual email summaries, triage classification) use **Claude Haiku 3.5**. Complex analysis (status reports, bid extraction, cross-email insights, draft generation, document analysis) uses **Claude Sonnet 4.5**.
+### Single-Model AI Strategy (Sonnet 4.6)
+All AI tasks use **Claude Sonnet 4.6** (`claude-sonnet-4-6`) — email summaries, triage, status reports, bid extraction, cross-email insights, draft generation, and document analysis. Status reports are grounded with full project context via `FullProjectContext` to prevent hallucination.
 
 ### JSONB for Flexible Schema
 Hot topics, action items, decisions, bid line items, site data, and building specs all use JSONB columns. This provides flexibility but means no referential integrity or type enforcement at the database level. Legacy format normalization (string vs. array) is handled in application code.

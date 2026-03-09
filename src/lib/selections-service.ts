@@ -10,10 +10,7 @@ export async function getSelections(projectId: string): Promise<Selection[]> {
     .order('category', { ascending: true })
     .order('subcategory', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching selections:', error)
-    return []
-  }
+  if (error) return []
 
   return data || []
 }
@@ -30,17 +27,14 @@ export async function getSelectionsByCategory(
     .order('room', { ascending: true })
     .order('subcategory', { ascending: true })
 
-  if (error) {
-    console.error('Error fetching selections by category:', error)
-    return []
-  }
+  if (error) return []
 
   return data || []
 }
 
 export async function updateSelection(
   id: string,
-  updates: Partial<Pick<Selection, 'status' | 'notes' | 'model_number' | 'unit_price' | 'total_price' | 'lead_time' | 'order_date' | 'expected_delivery' | 'product_url'>>
+  updates: Partial<Pick<Selection, 'status' | 'notes' | 'model_number' | 'unit_price' | 'total_price' | 'lead_time' | 'order_date' | 'expected_delivery' | 'product_url' | 'bid_id'>>
 ): Promise<Selection | null> {
   const { data, error } = await supabase
     .from('selections')
@@ -55,6 +49,22 @@ export async function updateSelection(
   }
 
   return data
+}
+
+export async function linkSelectionToBid(
+  selectionId: string,
+  bidId: string | null
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('selections')
+    .update({ bid_id: bidId, updated_at: new Date().toISOString() })
+    .eq('id', selectionId)
+
+  if (error) {
+    console.error('Error linking selection to bid:', error)
+    return false
+  }
+  return true
 }
 
 export async function createSelection(

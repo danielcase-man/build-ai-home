@@ -13,6 +13,8 @@ export interface BudgetItemRecord {
   approval_date: string | null
   payment_date: string | null
   notes: string | null
+  source: string | null
+  jobtread_id: string | null
   created_at: string
   updated_at: string
 }
@@ -25,7 +27,7 @@ export async function getBudgetItems(projectId: string): Promise<BudgetItemRecor
     .order('payment_date', { ascending: false, nullsFirst: false })
 
   if (error) {
-    console.error('Error fetching budget items:', error)
+    // Silently return empty — RLS or auth errors are expected without a session
     return []
   }
 

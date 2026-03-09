@@ -146,6 +146,7 @@ CREATE TABLE email_accounts (
     sync_enabled BOOLEAN DEFAULT TRUE,
     last_sync TIMESTAMP WITH TIME ZONE,
     sync_frequency INTEGER DEFAULT 30, -- minutes
+    gmail_history_id VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
 );
@@ -195,7 +196,7 @@ CREATE TABLE communications (
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
     date TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
-    type VARCHAR(50) CHECK (type IN ('email', 'phone', 'meeting', 'text', 'other')),
+    type VARCHAR(50) CHECK (type IN ('email', 'phone', 'meeting', 'text', 'other', 'daily_log', 'jobtread_comment')),
     subject TEXT,
     summary TEXT,
     action_items JSONB,
@@ -219,6 +220,9 @@ CREATE TABLE project_status (
     budget_status VARCHAR(50),
     budget_used DECIMAL(12, 2),
     ai_summary TEXT,
+    next_steps JSONB DEFAULT '[]'::jsonb,
+    open_questions JSONB DEFAULT '[]'::jsonb,
+    key_data_points JSONB DEFAULT '[]'::jsonb,
     last_updated TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
     UNIQUE(project_id, date)
@@ -358,3 +362,114 @@ CREATE POLICY "Users can view vendors" ON vendors
     FOR ALL USING (auth.uid() IS NOT NULL);
 CREATE POLICY "Users can view notifications" ON notification_queue
     FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- Migration: Add bid_id FK to selections for cross-referencing
+ALTER TABLE selections ADD COLUMN IF NOT EXISTS bid_id UUID REFERENCES bids(id) ON DELETE SET NULL;
+
+-- Migration: Add audit_log table for change tracking
+CREATE TABLE IF NOT EXISTS audit_log (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID NOT NULL,
+    action VARCHAR(20) NOT NULL,
+    field_name VARCHAR(100),
+    old_value TEXT,
+    new_value TEXT,
+    actor VARCHAR(100) DEFAULT 'system',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+CREATE INDEX IF NOT EXISTS idx_audit_log_entity ON audit_log(entity_type, entity_id);
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: JobTread Integration
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Add jobtread_id columns to existing tables for deduplication during sync
+ALTER TABLE budget_items ADD COLUMN IF NOT EXISTS jobtread_id VARCHAR(50) UNIQUE;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS jobtread_id VARCHAR(50) UNIQUE;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS jobtread_id VARCHAR(50) UNIQUE;
+ALTER TABLE vendors ADD COLUMN IF NOT EXISTS jobtread_id VARCHAR(50) UNIQUE;
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS jobtread_id VARCHAR(50) UNIQUE;
+ALTER TABLE communications ADD COLUMN IF NOT EXISTS jobtread_id VARCHAR(50) UNIQUE;
+
+-- Track data source on budget items (manual, jobtread, email_extract)
+ALTER TABLE budget_items ADD COLUMN IF NOT EXISTS source VARCHAR(20) DEFAULT 'manual';
+
+-- Partial indexes for fast dedup lookups during sync
+CREATE INDEX IF NOT EXISTS idx_budget_items_jobtread_id ON budget_items(jobtread_id) WHERE jobtread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_tasks_jobtread_id ON tasks(jobtread_id) WHERE jobtread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_documents_jobtread_id ON documents(jobtread_id) WHERE jobtread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_vendors_jobtread_id ON vendors(jobtread_id) WHERE jobtread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_contacts_jobtread_id ON contacts(jobtread_id) WHERE jobtread_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_communications_jobtread_id ON communications(jobtread_id) WHERE jobtread_id IS NOT NULL;
+
+-- Sync state tracking per entity type
+CREATE TABLE IF NOT EXISTS jobtread_sync_state (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    entity_type VARCHAR(50) NOT NULL,
+    last_sync TIMESTAMP WITH TIME ZONE,
+    last_sync_count INTEGER DEFAULT 0,
+    sync_metadata JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    UNIQUE(project_id, entity_type)
+);
+
+ALTER TABLE jobtread_sync_state ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage jobtread sync state" ON jobtread_sync_state
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_jobtread_sync_state_updated_at BEFORE UPDATE ON jobtread_sync_state
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Construction Loan Tracking
+-- ═══════════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS construction_loans (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    lender_name VARCHAR(255) NOT NULL,
+    loan_type VARCHAR(50) CHECK (loan_type IN ('construction', 'construction_permanent', '1x_close', '2x_close', 'bridge', 'other')),
+    loan_amount DECIMAL(12, 2),
+    cost_of_construction DECIMAL(12, 2),
+    lot_value DECIMAL(12, 2),
+    interest_rate DECIMAL(5, 3),
+    loan_term_months INTEGER,
+    ltv_ratio DECIMAL(5, 2),
+    application_status VARCHAR(50) CHECK (application_status IN ('not_started', 'in_progress', 'submitted', 'under_review', 'conditionally_approved', 'approved', 'funded', 'rejected', 'withdrawn')) DEFAULT 'not_started',
+    application_url TEXT,
+    application_date DATE,
+    approval_date DATE,
+    funding_date DATE,
+    closing_date DATE,
+    loan_officer_name VARCHAR(255),
+    loan_officer_email VARCHAR(255),
+    loan_officer_phone VARCHAR(50),
+    loan_contact_name VARCHAR(255),
+    loan_contact_email VARCHAR(255),
+    loan_contact_phone VARCHAR(50),
+    loan_contact_nmls VARCHAR(50),
+    notes TEXT,
+    loan_details JSONB DEFAULT '{}'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    UNIQUE(project_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_construction_loans_project_id ON construction_loans(project_id);
+CREATE INDEX IF NOT EXISTS idx_construction_loans_status ON construction_loans(application_status);
+
+ALTER TABLE construction_loans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage construction loans" ON construction_loans
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_construction_loans_updated_at BEFORE UPDATE ON construction_loans
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Expand contacts type to include 'lender'
+ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_type_check;
+ALTER TABLE contacts ADD CONSTRAINT contacts_type_check
+    CHECK (type IN ('consultant', 'vendor', 'contractor', 'architect', 'engineer', 'supplier', 'lender', 'other'));

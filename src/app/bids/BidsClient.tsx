@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { Progress } from '@/components/ui/progress'
 import { CONSTRUCTION_PHASES, type ConstructionPhase, type Trade } from '@/lib/construction-phases'
 import type { Bid } from '@/types'
+import { Button } from '@/components/ui/button'
 import {
   FileText,
   CircleDollarSign,
@@ -20,6 +21,7 @@ import {
   Phone,
   User,
   ChevronDown,
+  Download,
 } from 'lucide-react'
 
 interface BidsClientProps {
@@ -293,11 +295,17 @@ export default function BidsClient({ bids }: BidsClientProps) {
   return (
     <div className="container max-w-6xl py-8 space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Bids & Procurement</h1>
-        <p className="text-muted-foreground">
-          Track vendor bids across all construction trades
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Bids & Procurement</h1>
+          <p className="text-muted-foreground">
+            Track vendor bids across all construction trades
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => window.open('/api/export/bid-comparison', '_blank')} className="flex items-center gap-1.5">
+          <Download className="h-3.5 w-3.5" />
+          Export Comparison
+        </Button>
       </div>
 
       {/* Summary Cards */}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Calendar, CheckCircle2, DollarSign, Mail, FileText, Users, RefreshCw, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import FileUpload from '@/components/FileUpload'
@@ -20,34 +20,40 @@ import {
 import type { DashboardData } from '@/types'
 
 interface EmailPreview {
-  from: string
+  sender_name: string | null
+  sender_email: string
   subject: string
-  date: string
-  aiSummary?: string
+  received_date: string
+  ai_summary: string | null
 }
 
-interface EmailFetchResult {
-  emails: EmailPreview[]
-  count: number
+interface StatusSnapshot {
+  hot_topics?: unknown[]
+  action_items?: unknown[]
+  next_steps?: unknown[]
+  ai_summary?: string
+  date?: string
 }
 
 interface HomeClientProps {
   initialData: DashboardData
-  initialHotTopics: string[]
+  initialStatus: StatusSnapshot | null
+  initialEmails: EmailPreview[]
+  gmailConnected: boolean
 }
 
-export default function HomeClient({ initialData, initialHotTopics }: HomeClientProps) {
+export default function HomeClient({ initialData, initialStatus, initialEmails, gmailConnected }: HomeClientProps) {
   const [projectData, setProjectData] = useState<DashboardData>(initialData)
-  const [hotTopics, setHotTopics] = useState<string[]>(initialHotTopics)
+  const [hotTopics, setHotTopics] = useState<string[]>(() => {
+    if (!initialStatus?.hot_topics) return []
+    return (initialStatus.hot_topics as Array<{ text?: string } | string>).map(t => typeof t === 'string' ? t : t.text || '').filter(Boolean)
+  })
+  const [nextSteps, setNextSteps] = useState<string[]>((initialStatus?.next_steps || []) as string[])
+  const [aiSummary, setAiSummary] = useState<string>(initialStatus?.ai_summary || '')
   const [uploadOpen, setUploadOpen] = useState(false)
 
-  const [emailData, setEmailData] = useState<EmailFetchResult | null>(null)
+  const [emails, setEmails] = useState<EmailPreview[]>(initialEmails)
   const [loading, setLoading] = useState(false)
-  const [needsAuth, setNeedsAuth] = useState(false)
-
-  useEffect(() => {
-    fetchEmails()
-  }, [])
 
   const refreshDashboardData = async () => {
     try {
@@ -77,32 +83,44 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
             typeof t === 'string' ? t : t.text || ''
           ).filter(Boolean))
         }
+        if (status.nextSteps) setNextSteps(status.nextSteps)
+        if (status.aiSummary) setAiSummary(status.aiSummary)
       }
-    } catch (error) {
-      console.error('Error refreshing dashboard data:', error)
+    } catch {
+      // Silently ignore — dashboard will show stale data
     }
   }
 
-  const fetchEmails = async () => {
+  /** Refresh emails on demand (user clicks button). Not called on mount. */
+  const refreshEmails = async () => {
     setLoading(true)
     try {
       const response = await fetch('/api/emails/fetch')
       const data = await response.json()
 
-      if (response.status === 401) {
-        setNeedsAuth(true)
-      } else {
+      if (response.ok) {
         const payload = data.data || data
-        if (payload.emails) {
-          setEmailData(payload)
+        if (payload.emails && Array.isArray(payload.emails)) {
+          // Map API response to preview format
+          const previews: EmailPreview[] = payload.emails.slice(0, 3).map((e: {
+            from?: string; subject?: string; date?: string; aiSummary?: string;
+            sender_name?: string; sender_email?: string; received_date?: string; ai_summary?: string;
+          }) => ({
+            sender_name: e.sender_name ?? (e.from?.split('<')[0].trim() || null),
+            sender_email: e.sender_email ?? e.from ?? '',
+            subject: e.subject ?? '',
+            received_date: e.received_date ?? e.date ?? '',
+            ai_summary: e.ai_summary ?? e.aiSummary ?? null,
+          }))
+          setEmails(previews)
           setProjectData(prev => ({
             ...prev,
             unreadEmails: payload.count || 0
           }))
         }
       }
-    } catch (error) {
-      console.error('Error fetching emails:', error)
+    } catch {
+      // Silently ignore — emails section will show stale data
     } finally {
       setLoading(false)
     }
@@ -116,8 +134,8 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
       if (payload.authUrl) {
         window.location.href = payload.authUrl
       }
-    } catch (error) {
-      console.error('Error connecting to Gmail:', error)
+    } catch {
+      // Silently ignore — user can retry
     }
   }
 
@@ -212,7 +230,22 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
         </Card>
       </div>
 
-      {/* Hot Topics & Communications */}
+      {/* AI Summary */}
+      {aiSummary && (
+        <Card className="border-l-4 border-l-primary">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Project Summary
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground leading-relaxed">{aiSummary}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Hot Topics & Recent Communications */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
@@ -254,7 +287,7 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {needsAuth ? (
+            {!gmailConnected && emails.length === 0 ? (
               <div className="text-center py-4">
                 <p className="text-sm text-muted-foreground mb-3">
                   Connect your Gmail to see real project emails
@@ -263,15 +296,19 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
                   Connect Gmail Account
                 </Button>
               </div>
-            ) : emailData && emailData.emails && emailData.emails.length > 0 ? (
+            ) : emails.length > 0 ? (
               <div className="space-y-3">
-                {emailData.emails.slice(0, 3).map((email, index) => (
+                {emails.map((email, index) => (
                   <div key={index} className="border-l-4 border-primary pl-3 py-1">
-                    <p className="text-sm font-medium">{email.from.split('<')[0].trim()}</p>
+                    <p className="text-sm font-medium">
+                      {email.sender_name || email.sender_email.split('@')[0]}
+                    </p>
                     <p className="text-xs text-muted-foreground">{email.subject}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(email.date).toLocaleDateString()}</p>
-                    {email.aiSummary && (
-                      <p className="text-xs text-muted-foreground mt-1 italic">{email.aiSummary}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(email.received_date).toLocaleDateString()}
+                    </p>
+                    {email.ai_summary && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">{email.ai_summary}</p>
                     )}
                   </div>
                 ))}
@@ -285,14 +322,37 @@ export default function HomeClient({ initialData, initialHotTopics }: HomeClient
             ) : (
               <div className="space-y-3">
                 <p className="text-sm text-muted-foreground">No recent project emails</p>
-                <Button variant="ghost" size="sm" onClick={fetchEmails}>
-                  Refresh emails
+                <Button variant="ghost" size="sm" onClick={refreshEmails}>
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  Sync from Gmail
                 </Button>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Next Steps */}
+      {nextSteps.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Next Steps
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {nextSteps.map((step, index) => (
+                <li key={index} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <span className="text-primary mt-0.5">&#8226;</span>
+                  {step}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Actions */}
       <Card>

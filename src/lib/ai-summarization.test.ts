@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { makeEmail } from '@/test/helpers'
+import type { FullProjectContext } from './ai-summarization'
 
 const mockCreate = vi.fn()
 
@@ -17,10 +18,36 @@ vi.mock('./ai-clients', () => ({
 
 import {
   summarizeIndividualEmail,
-  summarizeEmails,
   generateDailyProjectSummary,
   generateProjectStatusSnapshot,
 } from './ai-summarization'
+
+function makeFullContext(overrides?: Partial<FullProjectContext>): FullProjectContext {
+  return {
+    project: {
+      name: 'Test Project',
+      address: '123 Main St',
+      phase: 'planning',
+      currentStep: 3,
+      totalSteps: 6,
+      startDate: '2026-01-01',
+      targetCompletion: '2026-12-31',
+      squareFootage: 3000,
+      style: 'Modern',
+    },
+    budget: { total: 450000, spent: 5000, remaining: 445000, items: [] },
+    planningSteps: [],
+    milestones: [],
+    tasks: [],
+    permits: [],
+    contacts: [],
+    vendors: [],
+    bids: [],
+    selections: [],
+    communications: [],
+    ...overrides,
+  }
+}
 
 describe('summarizeIndividualEmail', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -33,7 +60,7 @@ describe('summarizeIndividualEmail', () => {
     const result = await summarizeIndividualEmail(makeEmail())
     expect(result).toBe('Foundation bid received for $85K.')
     expect(mockCreate).toHaveBeenCalledWith(
-      expect.objectContaining({ model: 'claude-haiku-3-5-20241022' })
+      expect.objectContaining({ model: 'claude-sonnet-4-6' })
     )
   })
 
@@ -49,45 +76,6 @@ describe('summarizeIndividualEmail', () => {
     })
     const result = await summarizeIndividualEmail(makeEmail())
     expect(result).toBe('Unable to generate summary')
-  })
-})
-
-describe('summarizeEmails', () => {
-  beforeEach(() => vi.clearAllMocks())
-
-  it('parses JSON response into ProjectSummary', async () => {
-    const summary = {
-      hotTopics: ['Foundation delayed'],
-      actionItems: ['Get new bid'],
-      decisions: [],
-      concerns: [],
-      nextSteps: [],
-      overallStatus: 'On track',
-    }
-    mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'text', text: JSON.stringify(summary) }],
-    })
-
-    const result = await summarizeEmails([makeEmail()])
-    expect(result.hotTopics).toEqual(['Foundation delayed'])
-    expect(result.overallStatus).toBe('On track')
-  })
-
-  it('handles markdown-fenced JSON', async () => {
-    const json = '```json\n{"hotTopics":[],"actionItems":[],"decisions":[],"concerns":[],"nextSteps":[],"overallStatus":"ok"}\n```'
-    mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'text', text: json }],
-    })
-
-    const result = await summarizeEmails([makeEmail()])
-    expect(result.overallStatus).toBe('ok')
-  })
-
-  it('returns empty summary on error', async () => {
-    mockCreate.mockRejectedValueOnce(new Error('fail'))
-    const result = await summarizeEmails([makeEmail()])
-    expect(result.hotTopics).toEqual([])
-    expect(result.overallStatus).toBe('Unable to generate summary')
   })
 })
 
@@ -126,6 +114,9 @@ describe('generateProjectStatusSnapshot', () => {
       hot_topics: [{ priority: 'high', text: 'Permit pending' }],
       action_items: [{ status: 'pending', text: 'Call inspector' }],
       recent_decisions: [],
+      next_steps: ['Schedule inspection'],
+      open_questions: [{ question: 'When is the permit ready?', askedBy: 'Owner' }],
+      key_data_points: [{ category: 'Timeline', data: 'Inspection in 2 weeks', importance: 'important' }],
       ai_summary: 'Project on track.',
     }
     mockCreate.mockResolvedValueOnce({
@@ -134,21 +125,24 @@ describe('generateProjectStatusSnapshot', () => {
 
     const result = await generateProjectStatusSnapshot(
       [makeEmail()],
-      { phase: 'planning', currentStep: 3, totalSteps: 6, budgetUsed: 5000, budgetTotal: 450000 }
+      makeFullContext()
     )
     expect(result.hot_topics).toHaveLength(1)
+    expect(result.next_steps).toEqual(['Schedule inspection'])
+    expect(result.open_questions).toHaveLength(1)
+    expect(result.key_data_points).toHaveLength(1)
     expect(result.ai_summary).toBe('Project on track.')
   })
 
   it('truncates emails to 20 and body to 500 chars', async () => {
     const emails = Array.from({ length: 25 }, (_, i) => makeEmail({ body: 'x'.repeat(1000) }))
     mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'text', text: JSON.stringify({ hot_topics: [], action_items: [], recent_decisions: [], ai_summary: 'ok' }) }],
+      content: [{ type: 'text', text: JSON.stringify({ hot_topics: [], action_items: [], recent_decisions: [], next_steps: [], open_questions: [], key_data_points: [], ai_summary: 'ok' }) }],
     })
 
     await generateProjectStatusSnapshot(
       emails,
-      { phase: 'planning', currentStep: 1, totalSteps: 6, budgetUsed: 0, budgetTotal: 450000 }
+      makeFullContext({ project: { name: 'Test', address: '', phase: 'planning', currentStep: 1, totalSteps: 6, startDate: '', targetCompletion: '', squareFootage: null, style: '' }, budget: { total: 450000, spent: 0, remaining: 450000, items: [] } })
     )
 
     const callArgs = mockCreate.mock.calls[0][0]
@@ -162,20 +156,23 @@ describe('generateProjectStatusSnapshot', () => {
     mockCreate.mockRejectedValueOnce(new Error('fail'))
     const result = await generateProjectStatusSnapshot(
       [],
-      { phase: 'planning', currentStep: 1, totalSteps: 6, budgetUsed: 0, budgetTotal: 450000 }
+      makeFullContext({ project: { name: 'Test', address: '', phase: 'planning', currentStep: 1, totalSteps: 6, startDate: '', targetCompletion: '', squareFootage: null, style: '' }, budget: { total: 450000, spent: 0, remaining: 450000, items: [] } })
     )
     expect(result.hot_topics).toEqual([])
+    expect(result.next_steps).toEqual([])
+    expect(result.open_questions).toEqual([])
+    expect(result.key_data_points).toEqual([])
     expect(result.ai_summary).toContain('Unable to generate')
   })
 
   it('includes previous status context in prompt', async () => {
     mockCreate.mockResolvedValueOnce({
-      content: [{ type: 'text', text: JSON.stringify({ hot_topics: [], action_items: [], recent_decisions: [], ai_summary: 'updated' }) }],
+      content: [{ type: 'text', text: JSON.stringify({ hot_topics: [], action_items: [], recent_decisions: [], next_steps: [], open_questions: [], key_data_points: [], ai_summary: 'updated' }) }],
     })
 
     await generateProjectStatusSnapshot(
       [makeEmail()],
-      { phase: 'planning', currentStep: 3, totalSteps: 6, budgetUsed: 5000, budgetTotal: 450000 },
+      makeFullContext(),
       { hot_topics: [{ priority: 'high', text: 'Old topic' }], action_items: [], recent_decisions: [], ai_summary: 'Previous', date: '2026-01-14' }
     )
 

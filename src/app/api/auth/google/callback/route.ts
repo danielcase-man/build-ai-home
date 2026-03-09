@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const code = searchParams.get('code')
 
     if (!code) {
-      return NextResponse.redirect(new URL('/?error=no_code', request.url))
+      return NextResponse.redirect(new URL('/emails?error=no_code', request.url))
     }
 
     const gmailService = new GmailService()
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const userEmail = env.gmailUserEmail || 'user@example.com'
 
     // Store encrypted tokens in database (single source of truth)
-    await db.upsertEmailAccount({
+    const account = await db.upsertEmailAccount({
       email_address: userEmail,
       provider: 'gmail',
       oauth_tokens: encryptTokens(tokens as Record<string, unknown>),
@@ -27,9 +27,14 @@ export async function GET(request: NextRequest) {
       sync_frequency: 30
     })
 
-    return NextResponse.redirect(new URL('/?success=connected', request.url))
+    if (!account) {
+      console.error('Failed to store email account tokens in database')
+      return NextResponse.redirect(new URL('/emails?error=auth_failed', request.url))
+    }
+
+    return NextResponse.redirect(new URL('/emails?success=connected', request.url))
   } catch (error) {
     console.error('Error in Google OAuth callback:', error)
-    return NextResponse.redirect(new URL('/?error=auth_failed', request.url))
+    return NextResponse.redirect(new URL('/emails?error=auth_failed', request.url))
   }
 }
