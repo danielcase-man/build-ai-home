@@ -1,5 +1,4 @@
 playwright-profile
-/coverage
 mcp-servers
 .claude
 *.test.ts

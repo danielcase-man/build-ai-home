@@ -16,6 +16,9 @@ npm-debug.log*
 # vercel
 .vercel
 
+# test coverage reports
+/coverage
+
 # misc
 .DS_Store
 *.tsbuildinfo
