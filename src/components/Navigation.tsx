@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { HardHat, Menu, Home, Mail, BarChart3, ClipboardList, DollarSign, Gavel, MessageSquare, Grid3X3, Calendar } from 'lucide-react'
+import { HardHat, Menu, Home, Mail, BarChart3, ClipboardList, DollarSign, Gavel, MessageSquare, Grid3X3, Calendar, Landmark } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -25,6 +25,7 @@ const navLinks = [
   { href: '/selections', label: 'Selections', icon: ClipboardList },
   { href: '/coverage', label: 'Coverage', icon: Grid3X3 },
   { href: '/timeline', label: 'Timeline', icon: Calendar },
+  { href: '/financing', label: 'Financing', icon: Landmark },
   { href: '/project-status', label: 'Project Status', icon: BarChart3 },
   { href: '/assistant', label: 'Assistant', icon: MessageSquare },
 ]

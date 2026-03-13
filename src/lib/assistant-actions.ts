@@ -37,6 +37,8 @@ export async function executeAction(action: PendingAction): Promise<ActionResult
       return addBudgetItem(action.data, projectId)
     case 'update_milestone':
       return updateMilestone(action.data)
+    case 'update_task':
+      return updateTask(action.data, projectId)
     default:
       return { success: false, message: `Unknown action type: ${action.type}` }
   }
@@ -205,6 +207,47 @@ async function addBudgetItem(data: Record<string, unknown>, projectId: string): 
 // ---------------------------------------------------------------------------
 // Milestone mutations
 // ---------------------------------------------------------------------------
+
+async function updateTask(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  const { task_id, status, resolution_note, ...updates } = data
+  if (!task_id) return { success: false, message: 'Missing task_id' }
+
+  const payload: Record<string, unknown> = {
+    ...updates,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (status) payload.status = status
+
+  // Append resolution note to existing notes
+  if (resolution_note) {
+    const { data: existing } = await supabase
+      .from('tasks')
+      .select('notes')
+      .eq('id', task_id as string)
+      .single()
+
+    const timestamp = new Date().toISOString().split('T')[0]
+    const suffix = `[${timestamp}] ${resolution_note}`
+    payload.notes = existing?.notes ? `${existing.notes}\n${suffix}` : suffix
+  }
+
+  if (status === 'completed') {
+    payload.completed_at = new Date().toISOString()
+  }
+
+  const { error } = await supabase
+    .from('tasks')
+    .update(payload)
+    .eq('id', task_id as string)
+    .eq('project_id', projectId)
+
+  if (error) return { success: false, message: `Failed to update task: ${error.message}` }
+
+  await logChange({ projectId, entityType: 'task', entityId: task_id as string, action: 'update', fieldName: 'status', newValue: status, actor: 'assistant' })
+
+  return { success: true, message: `Task ${task_id} updated to ${status}` }
+}
 
 async function updateMilestone(data: Record<string, unknown>): Promise<ActionResult> {
   const { milestone_id, ...updates } = data

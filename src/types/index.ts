@@ -476,6 +476,7 @@ export type WriteToolName =
   | 'update_budget_item'
   | 'add_budget_item'
   | 'update_milestone'
+  | 'update_task'
 
 export interface PendingAction {
   id: string
@@ -514,6 +515,26 @@ export interface JobTreadFullSyncResult {
   totalCreated: number
   totalUpdated: number
   duration: number
+}
+
+// --- JobTread Push Types ---
+
+export type JobTreadPushItemType = 'create_task' | 'update_task' | 'create_daily_log' | 'create_comment' | 'create_cost_item' | 'update_cost_item'
+
+export interface JobTreadPushItem {
+  type: JobTreadPushItemType
+  localId?: string
+  jobtreadId?: string
+  label: string
+  data: Record<string, unknown>
+}
+
+export interface JobTreadPushResult {
+  success: boolean
+  type: JobTreadPushItemType
+  label: string
+  jobtreadId?: string
+  error?: string
 }
 
 // --- API Response Types ---
