@@ -101,7 +101,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
           id="file-upload"
           className="hidden"
           onChange={handleChange}
-          accept=".pdf,.txt,.doc,.docx,.eml,.msg"
+          accept=".pdf,.dxf,.txt,.doc,.docx,.eml,.msg"
         />
 
         <label

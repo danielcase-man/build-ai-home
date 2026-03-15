@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1C1917"/>
+      <stop offset="100%" stop-color="#0C0A09"/>
+    </linearGradient>
+    <linearGradient id="warm" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FB923C"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+    <linearGradient id="bright" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FDBA74"/>
+      <stop offset="60%" stop-color="#F97316"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background: dark warm charcoal, iOS-style superellipse corners -->
+  <rect width="1024" height="1024" rx="224" ry="224" fill="url(#bg)"/>
+
+  <!-- Gable wall frame: rafters + top plate + sill plate + 5 studs -->
+  <g transform="translate(512, 522)" fill="url(#warm)">
+
+    <!-- Left rafter -->
+    <rect x="-24" y="-330" width="48" height="310"
+      rx="24" ry="24"
+      transform="rotate(-33, 0, -330)"
+      fill="url(#bright)"/>
+
+    <!-- Right rafter -->
+    <rect x="-24" y="-330" width="48" height="310"
+      rx="24" ry="24"
+      transform="rotate(33, 0, -330)"
+      fill="url(#bright)"/>
+
+    <!-- Top plate -->
+    <rect x="-320" y="-100" width="640" height="48" rx="24" ry="24"/>
+
+    <!-- Bottom sill plate -->
+    <rect x="-320" y="310" width="640" height="48" rx="24" ry="24"/>
+
+    <!-- Left corner stud -->
+    <rect x="-320" y="-100" width="48" height="460" rx="24" ry="24"/>
+
+    <!-- Right corner stud -->
+    <rect x="272" y="-100" width="48" height="460" rx="24" ry="24"/>
+
+    <!-- Center king stud -->
+    <rect x="-24" y="-100" width="48" height="460" rx="24" ry="24"/>
+
+    <!-- Left interior stud -->
+    <rect x="-172" y="-100" width="40" height="460" rx="20" ry="20"
+      opacity="0.75"/>
+
+    <!-- Right interior stud -->
+    <rect x="132" y="-100" width="40" height="460" rx="20" ry="20"
+      opacity="0.75"/>
+
+  </g>
+</svg>

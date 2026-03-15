@@ -473,3 +473,487 @@ CREATE TRIGGER update_construction_loans_updated_at BEFORE UPDATE ON constructio
 ALTER TABLE contacts DROP CONSTRAINT IF EXISTS contacts_type_check;
 ALTER TABLE contacts ADD CONSTRAINT contacts_type_check
     CHECK (type IN ('consultant', 'vendor', 'contractor', 'architect', 'engineer', 'supplier', 'lender', 'other'));
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Construction Knowledge Graph
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Knowledge graph nodes — every step, material, inspection, and decision in building a home
+CREATE TABLE IF NOT EXISTS construction_knowledge (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    phase_number INTEGER NOT NULL,
+    trade VARCHAR(100) NOT NULL,
+    item_name VARCHAR(255) NOT NULL,
+    item_type VARCHAR(30) CHECK (item_type IN ('task', 'material', 'inspection', 'decision_point')) NOT NULL,
+    parent_id UUID REFERENCES construction_knowledge(id) ON DELETE CASCADE,
+    sort_order INTEGER DEFAULT 0,
+    dependencies JSONB DEFAULT '[]'::jsonb,
+    triggers JSONB DEFAULT '[]'::jsonb,
+    materials JSONB DEFAULT '[]'::jsonb,
+    inspection_required BOOLEAN DEFAULT FALSE,
+    code_references JSONB DEFAULT '[]'::jsonb,
+    typical_duration_days INTEGER,
+    typical_cost_range JSONB,
+    decision_required BOOLEAN DEFAULT FALSE,
+    decision_options JSONB,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_construction_knowledge_phase ON construction_knowledge(phase_number);
+CREATE INDEX IF NOT EXISTS idx_construction_knowledge_trade ON construction_knowledge(trade);
+CREATE INDEX IF NOT EXISTS idx_construction_knowledge_type ON construction_knowledge(item_type);
+CREATE INDEX IF NOT EXISTS idx_construction_knowledge_parent ON construction_knowledge(parent_id);
+
+ALTER TABLE construction_knowledge ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view construction knowledge" ON construction_knowledge
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_construction_knowledge_updated_at BEFORE UPDATE ON construction_knowledge
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Per-project state tracking for knowledge items
+CREATE TABLE IF NOT EXISTS project_knowledge_state (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    knowledge_id UUID REFERENCES construction_knowledge(id) ON DELETE CASCADE,
+    status VARCHAR(20) CHECK (status IN ('not_applicable', 'pending', 'ready', 'in_progress', 'completed', 'blocked')) DEFAULT 'pending',
+    blocking_reason TEXT,
+    actual_cost DECIMAL(12, 2),
+    completed_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    UNIQUE(project_id, knowledge_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_knowledge_state_project ON project_knowledge_state(project_id);
+CREATE INDEX IF NOT EXISTS idx_project_knowledge_state_status ON project_knowledge_state(status);
+CREATE INDEX IF NOT EXISTS idx_project_knowledge_state_knowledge ON project_knowledge_state(knowledge_id);
+
+ALTER TABLE project_knowledge_state ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage project knowledge state" ON project_knowledge_state
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_project_knowledge_state_updated_at BEFORE UPDATE ON project_knowledge_state
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Per-project workflow phase tracking
+CREATE TABLE IF NOT EXISTS workflow_phases (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    phase_number INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('not_started', 'active', 'completed', 'on_hold')) DEFAULT 'not_started',
+    started_date DATE,
+    completed_date DATE,
+    estimated_completion DATE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    UNIQUE(project_id, phase_number)
+);
+
+ALTER TABLE workflow_phases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage workflow phases" ON workflow_phases
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_workflow_phases_updated_at BEFORE UPDATE ON workflow_phases
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: AI Research Cache
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Cached AI research results with 7-day TTL
+CREATE TABLE IF NOT EXISTS research_cache (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    knowledge_id UUID REFERENCES construction_knowledge(id) ON DELETE SET NULL,
+    query TEXT NOT NULL,
+    search_type VARCHAR(30) CHECK (search_type IN ('vendor', 'material', 'pricing', 'code', 'general')) NOT NULL,
+    results JSONB DEFAULT '{}'::jsonb,
+    sources JSONB DEFAULT '[]'::jsonb,
+    ai_analysis TEXT,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_research_cache_project ON research_cache(project_id);
+CREATE INDEX IF NOT EXISTS idx_research_cache_knowledge ON research_cache(knowledge_id);
+CREATE INDEX IF NOT EXISTS idx_research_cache_expires ON research_cache(expires_at);
+CREATE INDEX IF NOT EXISTS idx_research_cache_lookup ON research_cache(project_id, query, search_type);
+
+ALTER TABLE research_cache ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage research cache" ON research_cache
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_research_cache_updated_at BEFORE UPDATE ON research_cache
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Document Extractions & Plan Rooms
+-- ═══════════════════════════════════════════════════════════════════
+
+-- AI extraction results from uploaded documents
+CREATE TABLE IF NOT EXISTS document_extractions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    extraction_type VARCHAR(50) CHECK (extraction_type IN (
+        'room_schedule', 'fixture_count', 'window_schedule', 'door_schedule',
+        'material_takeoff', 'electrical_schedule', 'plumbing_schedule', 'general'
+    )) NOT NULL,
+    extracted_data JSONB DEFAULT '{}'::jsonb,
+    confidence DECIMAL(3, 2),
+    ai_notes TEXT,
+    reviewed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_extractions_document ON document_extractions(document_id);
+CREATE INDEX IF NOT EXISTS idx_document_extractions_project ON document_extractions(project_id);
+CREATE INDEX IF NOT EXISTS idx_document_extractions_type ON document_extractions(extraction_type);
+
+ALTER TABLE document_extractions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage document extractions" ON document_extractions
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_document_extractions_updated_at BEFORE UPDATE ON document_extractions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Rooms extracted from architectural plans
+CREATE TABLE IF NOT EXISTS plan_rooms (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    floor VARCHAR(50),
+    square_footage DECIMAL(8, 2),
+    ceiling_height DECIMAL(4, 1),
+    fixtures JSONB DEFAULT '[]'::jsonb,
+    finishes JSONB DEFAULT '[]'::jsonb,
+    source_document_id UUID REFERENCES documents(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_plan_rooms_project ON plan_rooms(project_id);
+
+ALTER TABLE plan_rooms ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage plan rooms" ON plan_rooms
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_plan_rooms_updated_at BEFORE UPDATE ON plan_rooms
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Add file_url to documents if not populated (ensure column exists)
+-- documents.file_url already exists in schema but may not be populated
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Vendor Threads & Email Templates
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Vendor conversation tracking
+CREATE TABLE IF NOT EXISTS vendor_threads (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
+    contact_id UUID REFERENCES contacts(id) ON DELETE SET NULL,
+    vendor_name VARCHAR(255) NOT NULL,
+    vendor_email VARCHAR(255),
+    category VARCHAR(100),
+    status VARCHAR(30) CHECK (status IN ('active', 'waiting_response', 'follow_up_needed', 'closed')) DEFAULT 'active',
+    last_activity TIMESTAMP WITH TIME ZONE,
+    follow_up_date DATE,
+    bid_requested_date DATE,
+    bid_received_date DATE,
+    contract_id UUID,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendor_threads_project ON vendor_threads(project_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_threads_status ON vendor_threads(status);
+CREATE INDEX IF NOT EXISTS idx_vendor_threads_vendor ON vendor_threads(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_threads_email ON vendor_threads(vendor_email);
+
+ALTER TABLE vendor_threads ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage vendor threads" ON vendor_threads
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_vendor_threads_updated_at BEFORE UPDATE ON vendor_threads
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Reusable email templates
+CREATE TABLE IF NOT EXISTS email_templates (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    subject_template TEXT NOT NULL,
+    body_template TEXT NOT NULL,
+    variables JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    UNIQUE(project_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_templates_project ON email_templates(project_id);
+
+ALTER TABLE email_templates ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage email templates" ON email_templates
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_email_templates_updated_at BEFORE UPDATE ON email_templates
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Change Orders, Draw Schedule, Warranties, Compliance
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Change orders — scope/cost/schedule changes
+CREATE TABLE IF NOT EXISTS change_orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    change_order_number INTEGER NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(100),
+    requested_by VARCHAR(255),
+    reason VARCHAR(30) CHECK (reason IN ('owner_request', 'field_condition', 'code_requirement', 'design_change', 'value_engineering')) NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('draft', 'submitted', 'approved', 'rejected', 'completed')) DEFAULT 'draft',
+    cost_impact DECIMAL(12, 2) DEFAULT 0,
+    schedule_impact_days INTEGER,
+    affected_milestone_id UUID REFERENCES milestones(id) ON DELETE SET NULL,
+    affected_budget_items JSONB DEFAULT '[]'::jsonb,
+    contract_id UUID,
+    approved_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_change_orders_project ON change_orders(project_id);
+CREATE INDEX IF NOT EXISTS idx_change_orders_status ON change_orders(status);
+
+ALTER TABLE change_orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage change orders" ON change_orders
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_change_orders_updated_at BEFORE UPDATE ON change_orders
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Draw schedule — construction loan disbursements
+CREATE TABLE IF NOT EXISTS draw_schedule (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    loan_id UUID,
+    draw_number INTEGER NOT NULL,
+    milestone_id UUID REFERENCES milestones(id) ON DELETE SET NULL,
+    milestone_name VARCHAR(255),
+    amount DECIMAL(12, 2) NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('pending', 'requested', 'inspected', 'approved', 'funded')) DEFAULT 'pending',
+    request_date DATE,
+    inspection_date DATE,
+    approval_date DATE,
+    funded_date DATE,
+    retention_amount DECIMAL(12, 2),
+    inspector_name VARCHAR(255),
+    inspector_notes TEXT,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_draw_schedule_project ON draw_schedule(project_id);
+CREATE INDEX IF NOT EXISTS idx_draw_schedule_status ON draw_schedule(status);
+
+ALTER TABLE draw_schedule ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage draw schedule" ON draw_schedule
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_draw_schedule_updated_at BEFORE UPDATE ON draw_schedule
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Warranties — product/workmanship warranty tracking
+CREATE TABLE IF NOT EXISTS warranties (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
+    vendor_name VARCHAR(255),
+    category VARCHAR(100) NOT NULL,
+    item_description TEXT NOT NULL,
+    warranty_type VARCHAR(30) CHECK (warranty_type IN ('workmanship', 'materials', 'manufacturer', 'structural')) NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    duration_months INTEGER,
+    coverage_details TEXT,
+    status VARCHAR(20) CHECK (status IN ('active', 'expiring_soon', 'expired', 'claimed')) DEFAULT 'active',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_warranties_project ON warranties(project_id);
+CREATE INDEX IF NOT EXISTS idx_warranties_end_date ON warranties(end_date);
+
+ALTER TABLE warranties ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage warranties" ON warranties
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_warranties_updated_at BEFORE UPDATE ON warranties
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Subcontractor compliance — insurance/license tracking
+CREATE TABLE IF NOT EXISTS subcontractor_compliance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
+    vendor_name VARCHAR(255),
+    insurance_type VARCHAR(30) CHECK (insurance_type IN ('GL', 'WC', 'auto', 'umbrella', 'professional')) NOT NULL,
+    policy_number VARCHAR(100),
+    carrier VARCHAR(255),
+    coverage_amount DECIMAL(12, 2),
+    effective_date DATE NOT NULL,
+    expiration_date DATE NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_subcontractor_compliance_project ON subcontractor_compliance(project_id);
+CREATE INDEX IF NOT EXISTS idx_subcontractor_compliance_expiration ON subcontractor_compliance(expiration_date);
+
+ALTER TABLE subcontractor_compliance ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage subcontractor compliance" ON subcontractor_compliance
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_subcontractor_compliance_updated_at BEFORE UPDATE ON subcontractor_compliance
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Site Photos & Voice Notes (Phase 7)
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Photo documentation
+CREATE TABLE IF NOT EXISTS site_photos (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    knowledge_id UUID REFERENCES construction_knowledge(id) ON DELETE SET NULL,
+    phase_number INTEGER,
+    room VARCHAR(100),
+    photo_url TEXT NOT NULL,
+    thumbnail_url TEXT,
+    caption TEXT,
+    photo_type VARCHAR(30) CHECK (photo_type IN ('progress', 'issue', 'inspection', 'documentation', 'before_after')) DEFAULT 'progress',
+    taken_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    gps_latitude DECIMAL(10, 7),
+    gps_longitude DECIMAL(10, 7),
+    ai_description TEXT,
+    tags JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_site_photos_project ON site_photos(project_id);
+CREATE INDEX IF NOT EXISTS idx_site_photos_phase ON site_photos(phase_number);
+CREATE INDEX IF NOT EXISTS idx_site_photos_type ON site_photos(photo_type);
+CREATE INDEX IF NOT EXISTS idx_site_photos_taken ON site_photos(taken_at);
+
+ALTER TABLE site_photos ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage site photos" ON site_photos
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_site_photos_updated_at BEFORE UPDATE ON site_photos
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Voice notes
+CREATE TABLE IF NOT EXISTS voice_notes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    audio_url TEXT NOT NULL,
+    duration_seconds INTEGER,
+    transcription TEXT,
+    ai_summary TEXT,
+    related_task_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
+    related_knowledge_id UUID REFERENCES construction_knowledge(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_voice_notes_project ON voice_notes(project_id);
+
+ALTER TABLE voice_notes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage voice notes" ON voice_notes
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_voice_notes_updated_at BEFORE UPDATE ON voice_notes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ═══════════════════════════════════════════════════════════════════
+-- Migration: Punch Lists & Inspections (Phase 8)
+-- ═══════════════════════════════════════════════════════════════════
+
+-- Punch list items
+CREATE TABLE IF NOT EXISTS punch_list_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    room VARCHAR(100),
+    location_detail TEXT,
+    category VARCHAR(100),
+    description TEXT NOT NULL,
+    severity VARCHAR(20) CHECK (severity IN ('cosmetic', 'functional', 'safety', 'structural')) DEFAULT 'functional',
+    status VARCHAR(20) CHECK (status IN ('identified', 'assigned', 'in_progress', 'completed', 'verified')) DEFAULT 'identified',
+    assigned_vendor_id UUID REFERENCES vendors(id) ON DELETE SET NULL,
+    assigned_vendor_name VARCHAR(255),
+    before_photo_id UUID REFERENCES site_photos(id) ON DELETE SET NULL,
+    after_photo_id UUID REFERENCES site_photos(id) ON DELETE SET NULL,
+    source VARCHAR(30) CHECK (source IN ('walkthrough', 'inspection', 'owner', 'consultant')) DEFAULT 'owner',
+    due_date DATE,
+    completed_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_punch_list_project ON punch_list_items(project_id);
+CREATE INDEX IF NOT EXISTS idx_punch_list_status ON punch_list_items(status);
+CREATE INDEX IF NOT EXISTS idx_punch_list_severity ON punch_list_items(severity);
+CREATE INDEX IF NOT EXISTS idx_punch_list_room ON punch_list_items(room);
+
+ALTER TABLE punch_list_items ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage punch list" ON punch_list_items
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_punch_list_items_updated_at BEFORE UPDATE ON punch_list_items
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Inspections
+CREATE TABLE IF NOT EXISTS inspections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    inspection_type VARCHAR(100) NOT NULL,
+    knowledge_id UUID REFERENCES construction_knowledge(id) ON DELETE SET NULL,
+    permit_id UUID REFERENCES permits(id) ON DELETE SET NULL,
+    status VARCHAR(20) CHECK (status IN ('not_scheduled', 'scheduled', 'passed', 'failed', 'conditional')) DEFAULT 'not_scheduled',
+    scheduled_date DATE,
+    completed_date DATE,
+    inspector_name VARCHAR(255),
+    deficiencies JSONB DEFAULT '[]'::jsonb,
+    photos JSONB DEFAULT '[]'::jsonb,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_inspections_project ON inspections(project_id);
+CREATE INDEX IF NOT EXISTS idx_inspections_status ON inspections(status);
+CREATE INDEX IF NOT EXISTS idx_inspections_date ON inspections(scheduled_date);
+
+ALTER TABLE inspections ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage inspections" ON inspections
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_inspections_updated_at BEFORE UPDATE ON inspections
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -456,6 +456,67 @@ export interface DraftEmail {
   status: 'draft' | 'editing' | 'sent' | 'dismissed'
 }
 
+// --- Construction Knowledge Graph Types ---
+
+export type KnowledgeItemType = 'task' | 'material' | 'inspection' | 'decision_point'
+
+export type KnowledgeStateStatus = 'not_applicable' | 'pending' | 'ready' | 'in_progress' | 'completed' | 'blocked'
+
+export interface KnowledgeItem {
+  id: string
+  phase_number: number
+  trade: string
+  item_name: string
+  item_type: KnowledgeItemType
+  parent_id: string | null
+  sort_order: number
+  dependencies: string[]
+  triggers: string[]
+  materials: Array<{ name: string; quantity_formula?: string; unit?: string; specs?: string }>
+  inspection_required: boolean
+  code_references: Array<{ code: string; section?: string; description?: string }>
+  typical_duration_days: number | null
+  typical_cost_range: { min: number; max: number } | null
+  decision_required: boolean
+  decision_options: Array<{ option: string; pros?: string; cons?: string; cost_impact?: string }> | null
+  description: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface KnowledgeTreeNode extends KnowledgeItem {
+  children: KnowledgeTreeNode[]
+  state?: ProjectKnowledgeState | null
+}
+
+export interface ProjectKnowledgeState {
+  id: string
+  project_id: string
+  knowledge_id: string
+  status: KnowledgeStateStatus
+  blocking_reason: string | null
+  actual_cost: number | null
+  completed_date: string | null
+  notes: string | null
+}
+
+export interface KnowledgeSeedItem {
+  phase_number: number
+  trade: string
+  item_name: string
+  item_type: KnowledgeItemType
+  sort_order: number
+  description?: string
+  inspection_required?: boolean
+  decision_required?: boolean
+  typical_duration_days?: number
+  typical_cost_range?: { min: number; max: number }
+  materials?: Array<{ name: string; quantity_formula?: string; unit?: string; specs?: string }>
+  code_references?: Array<{ code: string; section?: string; description?: string }>
+  decision_options?: Array<{ option: string; pros?: string; cons?: string; cost_impact?: string }>
+  children?: Omit<KnowledgeSeedItem, 'phase_number' | 'trade'>[]
+}
+
 // --- Assistant Types ---
 
 export type ReadToolName =
@@ -467,6 +528,20 @@ export type ReadToolName =
   | 'get_contacts'
   | 'get_planning_steps'
   | 'get_status_history'
+  | 'get_knowledge_tree'
+  | 'get_blockers'
+  | 'get_cascade_requirements'
+  | 'get_workflow_status'
+  | 'get_workflow_alerts'
+  | 'research_topic'
+  | 'get_plan_extractions'
+  | 'get_vendor_threads'
+  | 'get_follow_ups'
+  | 'get_change_orders'
+  | 'get_draw_schedule'
+  | 'get_warranties'
+  | 'get_punch_list'
+  | 'get_inspections'
 
 export type WriteToolName =
   | 'update_bid'
@@ -477,6 +552,10 @@ export type WriteToolName =
   | 'add_budget_item'
   | 'update_milestone'
   | 'update_task'
+  | 'complete_workflow_item'
+  | 'create_change_order'
+  | 'add_punch_item'
+  | 'schedule_inspection'
 
 export interface PendingAction {
   id: string
@@ -535,6 +614,168 @@ export interface JobTreadPushResult {
   label: string
   jobtreadId?: string
   error?: string
+}
+
+// --- Plaid / Financial Tracking Types ---
+
+export interface PlaidConnection {
+  id: string
+  project_id: string
+  institution_name: string
+  institution_id?: string
+  item_id: string
+  access_token: string  // Encrypted in DB
+  consent_expiration?: string
+  cursor?: string
+  accounts: PlaidAccount[]
+  status: 'active' | 'needs_reauth' | 'disconnected' | 'error'
+  error_code?: string
+  last_sync?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface PlaidAccount {
+  account_id: string
+  name: string
+  mask: string
+  type: string
+  subtype: string
+}
+
+export interface Transaction {
+  id: string
+  project_id: string
+  plaid_connection_id?: string
+  plaid_transaction_id?: string
+  account_id?: string
+  account_name?: string
+  date: string
+  authorized_date?: string
+  amount: number
+  merchant_name?: string
+  name?: string
+  payment_channel?: string
+  transaction_type?: string
+  plaid_category?: string[]
+  pending: boolean
+  vendor_id?: string
+  budget_item_id?: string
+  invoice_id?: string
+  match_status: 'unmatched' | 'auto_matched' | 'confirmed' | 'excluded' | 'manual'
+  match_confidence?: number
+  category_override?: string
+  is_construction_related: boolean
+  notes?: string
+  created_at?: string
+  updated_at?: string
+  // Joined fields
+  vendor_name?: string
+  budget_category?: string
+}
+
+export interface Contract {
+  id: string
+  project_id: string
+  vendor_id?: string
+  bid_id?: string
+  budget_item_id?: string
+  title: string
+  description?: string
+  total_amount: number
+  payment_terms?: string
+  start_date?: string
+  end_date?: string
+  status: 'draft' | 'active' | 'completed' | 'cancelled' | 'disputed'
+  document_url?: string
+  notes?: string
+  created_at?: string
+  updated_at?: string
+  // Computed
+  total_invoiced?: number
+  total_paid?: number
+  remaining?: number
+  vendor_name?: string
+}
+
+export interface Invoice {
+  id: string
+  project_id: string
+  contract_id?: string
+  vendor_id?: string
+  invoice_number?: string
+  description?: string
+  amount: number
+  tax_amount: number
+  total_amount: number
+  date_issued: string
+  date_due?: string
+  date_paid?: string
+  status: 'received' | 'approved' | 'partial' | 'paid' | 'overdue' | 'disputed' | 'voided'
+  payment_method?: string
+  document_url?: string
+  notes?: string
+  created_at?: string
+  updated_at?: string
+  vendor_name?: string
+}
+
+export interface Payment {
+  id: string
+  project_id: string
+  transaction_id?: string
+  invoice_id?: string
+  contract_id?: string
+  vendor_id?: string
+  amount: number
+  date: string
+  payment_method?: string
+  reference_number?: string
+  source: 'plaid' | 'manual' | 'construction_loan_draw'
+  notes?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface VendorMatchRule {
+  id: string
+  project_id: string
+  vendor_id: string
+  match_pattern: string
+  budget_category?: string
+  match_type: 'exact' | 'contains' | 'regex'
+  priority: number
+  is_active: boolean
+}
+
+export interface FinancialOverview {
+  totalContracted: number
+  totalInvoiced: number
+  totalPaid: number
+  outstandingBalance: number
+  overdueInvoices: number
+  unmatchedTransactions: number
+  recentTransactions: Transaction[]
+  vendorBalances: VendorBalance[]
+}
+
+export interface VendorBalance {
+  vendor_id: string
+  vendor_name: string
+  category: string | null
+  contract_total: number
+  invoiced: number
+  paid: number
+  remaining: number
+  overdue_amount: number
+}
+
+export interface PlaidSyncResult {
+  added: number
+  modified: number
+  removed: number
+  autoMatched: number
+  errors: string[]
 }
 
 // --- API Response Types ---

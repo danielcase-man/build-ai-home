@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 100" width="480" height="100">
+  <defs>
+    <linearGradient id="h-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1C1917"/>
+      <stop offset="100%" stop-color="#0C0A09"/>
+    </linearGradient>
+    <linearGradient id="h-warm" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FB923C"/>
+      <stop offset="100%" stop-color="#EA580C"/>
+    </linearGradient>
+    <linearGradient id="h-bright" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FDBA74"/>
+      <stop offset="60%" stop-color="#F97316"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: dark rounded-square background, 84x84 -->
+  <rect x="8" y="8" width="84" height="84" rx="18" ry="18" fill="url(#h-bg)"/>
+
+  <!--
+    Gable wall frame — exact geometry from framework-icon.svg.
+    Original: centered at origin in 1024-unit coordinate space.
+    Scaled by 0.078 to fit within the 84px icon square.
+    Translated to icon center (50, 51) with slight downward bias
+    to optically center the peaked roof shape.
+  -->
+  <g transform="translate(50, 52) scale(0.078)" fill="url(#h-warm)">
+    <!-- Left rafter -->
+    <rect x="-24" y="-330" width="48" height="310"
+      rx="24" ry="24"
+      transform="rotate(-33, 0, -330)"
+      fill="url(#h-bright)"/>
+    <!-- Right rafter -->
+    <rect x="-24" y="-330" width="48" height="310"
+      rx="24" ry="24"
+      transform="rotate(33, 0, -330)"
+      fill="url(#h-bright)"/>
+    <!-- Top plate -->
+    <rect x="-320" y="-100" width="640" height="48" rx="24" ry="24"/>
+    <!-- Bottom sill plate -->
+    <rect x="-320" y="310" width="640" height="48" rx="24" ry="24"/>
+    <!-- Left corner stud -->
+    <rect x="-320" y="-100" width="48" height="460" rx="24" ry="24"/>
+    <!-- Right corner stud -->
+    <rect x="272" y="-100" width="48" height="460" rx="24" ry="24"/>
+    <!-- Center king stud -->
+    <rect x="-24" y="-100" width="48" height="460" rx="24" ry="24"/>
+    <!-- Left interior stud -->
+    <rect x="-172" y="-100" width="40" height="460" rx="20" ry="20" opacity="0.75"/>
+    <!-- Right interior stud -->
+    <rect x="132" y="-100" width="40" height="460" rx="20" ry="20" opacity="0.75"/>
+  </g>
+
+  <!--
+    Wordmark: two-tone split at the camelCase boundary.
+    "Frame" in brand orange (#F97316), "Work" in stone-300 (#D6D3D1).
+    Works on dark and medium surfaces. On light backgrounds, "Work"
+    becomes subtler — the icon + "Frame" carry the brand recognition.
+  -->
+  <text x="110" y="61"
+    font-family="'SF Pro Display', 'Inter', 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif"
+    font-size="42"
+    font-weight="700"
+    letter-spacing="-0.5">
+    <tspan fill="#F97316">Frame</tspan><tspan fill="#D6D3D1">Work</tspan>
+  </text>
+</svg>

@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { env } from './env'
+import { createActionItemNotification, createDeadlineNotification } from './notification-service'
 import type { EmailRecord, EmailAccountRecord } from '@/types'
 
 export class DatabaseService {
@@ -398,6 +399,28 @@ export class DatabaseService {
             })
 
           existingTitles.add(titleLower)
+
+          // Fire notification for high-priority new items
+          if (priority === 'high') {
+            await createActionItemNotification(projectId, item.text)
+          }
+        }
+      }
+
+      // Scan for tasks approaching deadline (within 3 days) and create notifications
+      const threeDaysOut = new Date()
+      threeDaysOut.setDate(threeDaysOut.getDate() + 3)
+      const { data: urgentTasks } = await supabase
+        .from('tasks')
+        .select('id, title, due_date')
+        .eq('project_id', projectId)
+        .neq('status', 'completed')
+        .gte('due_date', new Date().toISOString().split('T')[0])
+        .lte('due_date', threeDaysOut.toISOString().split('T')[0])
+
+      for (const task of urgentTasks || []) {
+        if (task.due_date) {
+          await createDeadlineNotification(projectId, task.title, task.due_date)
         }
       }
     } catch (error) {
@@ -517,6 +540,62 @@ export class DatabaseService {
       if (error) return []
 
       return data || []
+    } catch {
+      return []
+    }
+  }
+
+  /** Get upcoming deadlines: tasks due within N days + bids expiring within N days. */
+  async getUpcomingDeadlines(projectId: string, days: number = 7): Promise<Array<{
+    type: 'task' | 'bid'
+    title: string
+    due_date: string
+    days_remaining: number
+    link: string
+  }>> {
+    const now = new Date()
+    const cutoff = new Date()
+    cutoff.setDate(cutoff.getDate() + days)
+    const nowISO = now.toISOString().split('T')[0]
+    const cutoffISO = cutoff.toISOString().split('T')[0]
+
+    try {
+      const [tasksResult, bidsResult] = await Promise.all([
+        supabase
+          .from('tasks')
+          .select('title, due_date')
+          .eq('project_id', projectId)
+          .neq('status', 'completed')
+          .gte('due_date', nowISO)
+          .lte('due_date', cutoffISO)
+          .order('due_date', { ascending: true }),
+        supabase
+          .from('bids')
+          .select('vendor_name, category, valid_until')
+          .eq('project_id', projectId)
+          .neq('status', 'rejected')
+          .neq('status', 'expired')
+          .gte('valid_until', nowISO)
+          .lte('valid_until', cutoffISO)
+          .order('valid_until', { ascending: true }),
+      ])
+
+      const items: Array<{ type: 'task' | 'bid'; title: string; due_date: string; days_remaining: number; link: string }> = []
+
+      for (const t of tasksResult.data || []) {
+        if (!t.due_date) continue
+        const daysLeft = Math.ceil((new Date(t.due_date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        items.push({ type: 'task', title: t.title, due_date: t.due_date, days_remaining: daysLeft, link: '/project-status' })
+      }
+
+      for (const b of bidsResult.data || []) {
+        if (!b.valid_until) continue
+        const daysLeft = Math.ceil((new Date(b.valid_until).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        items.push({ type: 'bid', title: `${b.vendor_name} — ${b.category} bid expires`, due_date: b.valid_until, days_remaining: daysLeft, link: '/bids' })
+      }
+
+      items.sort((a, b) => a.days_remaining - b.days_remaining)
+      return items
     } catch {
       return []
     }

@@ -128,3 +128,30 @@ export async function createActionItemNotification(
     message: actionText,
   })
 }
+
+export async function createWorkflowAlertNotification(
+  projectId: string,
+  alertType: 'blocker' | 'decision_needed' | 'ready_to_start',
+  itemName: string,
+  message: string
+): Promise<void> {
+  const priorities: Record<string, 'low' | 'medium' | 'high'> = {
+    blocker: 'high',
+    decision_needed: 'medium',
+    ready_to_start: 'low',
+  }
+
+  const titles: Record<string, string> = {
+    blocker: `Blocked: ${itemName}`,
+    decision_needed: `Decision needed: ${itemName}`,
+    ready_to_start: `Ready to start: ${itemName}`,
+  }
+
+  await createNotification({
+    projectId,
+    type: 'workflow_alert',
+    priority: priorities[alertType] || 'medium',
+    title: titles[alertType] || `Workflow: ${itemName}`,
+    message,
+  })
+}

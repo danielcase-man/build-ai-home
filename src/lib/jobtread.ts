@@ -212,8 +212,7 @@ export class JobTreadService {
   async createComment(message: string): Promise<{ id: string }> {
     const result = await this.client.query<{ createComment: { id: string } }>({
       createComment: {
-        $: { jobId: this.jobId, message },
-        id: {},
+        $: { targetId: this.jobId, targetType: 'job', message },
       },
     })
     return result.createComment
@@ -233,7 +232,7 @@ export class JobTreadService {
     name: string,
     opts?: { description?: string; startDate?: string; endDate?: string }
   ): Promise<{ id: string }> {
-    const params: Record<string, unknown> = { jobId: this.jobId, name }
+    const params: Record<string, unknown> = { targetId: this.jobId, targetType: 'job', name }
     if (opts?.description) params.description = opts.description
     if (opts?.startDate) params.startDate = opts.startDate
     if (opts?.endDate) params.endDate = opts.endDate
@@ -241,10 +240,56 @@ export class JobTreadService {
     const result = await this.client.query<{ createTask: { id: string } }>({
       createTask: {
         $: params,
-        id: {},
       },
     })
     return result.createTask
+  }
+
+  async updateTask(
+    taskId: string,
+    fields: { name?: string; description?: string; completed?: number; startDate?: string; endDate?: string }
+  ): Promise<{ id: string }> {
+    const result = await this.client.query<{ updateTask: { id: string } }>({
+      updateTask: {
+        $: { id: taskId, ...fields },
+        id: {},
+      },
+    })
+    return result.updateTask
+  }
+
+  async createCostItem(fields: {
+    name: string
+    description?: string
+    cost: number // in cents
+    quantity?: number
+    unitCost?: number // in cents
+  }): Promise<{ id: string }> {
+    const params: Record<string, unknown> = { jobId: this.jobId, name: fields.name, cost: fields.cost }
+    if (fields.description) params.description = fields.description
+    if (fields.quantity != null) params.quantity = fields.quantity
+    if (fields.unitCost != null) params.unitCost = fields.unitCost
+
+    const result = await this.client.query<{ createCostItem: { id: string } }>({
+      createCostItem: {
+        $: params,
+        id: {},
+      },
+    })
+    return result.createCostItem
+  }
+
+  async updateCostItem(
+    costItemId: string,
+    fields: { name?: string; description?: string; cost?: number; quantity?: number; unitCost?: number }
+  ): Promise<{ id: string }> {
+    const result = await this.client.query<{ updateCostItem: { id: string } }>({
+      updateCostItem: {
+        $: { id: costItemId, ...fields },
+        id: {},
+      },
+    })
+    return result.updateCostItem
   }
 }
 

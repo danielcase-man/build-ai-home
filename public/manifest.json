@@ -1,11 +1,11 @@
 {
-  "name": "UBuildIt Process Manager",
-  "short_name": "UBuildIt",
-  "description": "Comprehensive home construction management for the UBuildIt process",
+  "name": "FrameWork",
+  "short_name": "FrameWork",
+  "description": "Construction project management — budget, bids, vendors, and build tracking",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#1e40af",
+  "background_color": "#0C0A09",
+  "theme_color": "#F97316",
   "orientation": "any",
   "categories": ["business", "productivity"],
   "icons": [

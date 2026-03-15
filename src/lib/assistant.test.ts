@@ -208,8 +208,8 @@ describe('assistant', () => {
   // -------------------------------------------------------------------
 
   describe('ASSISTANT_TOOLS', () => {
-    it('has 15 tools total (8 read + 7 write)', () => {
-      expect(ASSISTANT_TOOLS).toHaveLength(15)
+    it('has 33 tools total (22 read + 11 write)', () => {
+      expect(ASSISTANT_TOOLS).toHaveLength(33)
     })
 
     it('contains all expected read tools', () => {
@@ -222,6 +222,20 @@ describe('assistant', () => {
       expect(names).toContain('get_contacts')
       expect(names).toContain('get_planning_steps')
       expect(names).toContain('get_status_history')
+      expect(names).toContain('get_knowledge_tree')
+      expect(names).toContain('get_blockers')
+      expect(names).toContain('get_cascade_requirements')
+      expect(names).toContain('get_workflow_status')
+      expect(names).toContain('get_workflow_alerts')
+      expect(names).toContain('research_topic')
+      expect(names).toContain('get_plan_extractions')
+      expect(names).toContain('get_vendor_threads')
+      expect(names).toContain('get_follow_ups')
+      expect(names).toContain('get_change_orders')
+      expect(names).toContain('get_draw_schedule')
+      expect(names).toContain('get_warranties')
+      expect(names).toContain('get_punch_list')
+      expect(names).toContain('get_inspections')
     })
 
     it('contains all expected write tools', () => {
@@ -233,6 +247,10 @@ describe('assistant', () => {
       expect(names).toContain('update_budget_item')
       expect(names).toContain('add_budget_item')
       expect(names).toContain('update_milestone')
+      expect(names).toContain('complete_workflow_item')
+      expect(names).toContain('create_change_order')
+      expect(names).toContain('add_punch_item')
+      expect(names).toContain('schedule_inspection')
     })
 
     it('every tool has a valid input_schema', () => {

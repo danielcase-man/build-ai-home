@@ -4,6 +4,16 @@ import type { BudgetItemRecord } from './budget-service'
 
 const MODEL = 'claude-sonnet-4-6'
 
+export interface KnowledgeStateSummary {
+  totalItems: number
+  completed: number
+  inProgress: number
+  blocked: number
+  ready: number
+  pending: number
+  decisionsPending: number
+}
+
 export interface FullProjectContext {
   project: {
     name: string
@@ -32,6 +42,12 @@ export interface FullProjectContext {
   selections: Selection[]
   communications: Array<{ date: string; type: string | null; subject: string | null; summary: string | null }>
   loan?: ConstructionLoan | null
+  knowledgeState?: KnowledgeStateSummary | null
+  changeOrders?: Array<{ title: string; reason: string; status: string; cost_impact: number; schedule_impact_days: number | null }>
+  drawSchedule?: { total_draws: number; funded_amount: number; pending_amount: number }
+  expiringWarranties?: Array<{ vendor: string; category: string; end_date: string }>
+  complianceGaps?: { expired: number; expiring_soon: number; unverified: number }
+  punchListStats?: { total: number; completionRate: number; bySeverity: Record<string, number> }
 }
 
 function buildProjectDataSection(ctx: FullProjectContext): string {
@@ -135,6 +151,57 @@ Loan Contact: ${l.loan_contact_name ?? 'N/A'} ${l.loan_contact_email ? '(' + l.l
     sections.push(`=== RECENT COMMUNICATIONS (${ctx.communications.length}) ===\n${ctx.communications.map(c =>
       `  - ${c.date}${c.type ? ' [' + c.type + ']' : ''}: ${c.subject ?? '(no subject)'}${c.summary ? ' — ' + c.summary : ''}`
     ).join('\n')}`)
+  }
+
+  // Change Orders
+  if (ctx.changeOrders && ctx.changeOrders.length > 0) {
+    sections.push(`=== CHANGE ORDERS (${ctx.changeOrders.length}) ===\n${ctx.changeOrders.map(co =>
+      `  - ${co.title} [${co.status}] reason: ${co.reason} | cost impact: $${co.cost_impact.toLocaleString()}${co.schedule_impact_days ? ` | schedule: ${co.schedule_impact_days} days` : ''}`
+    ).join('\n')}`)
+  }
+
+  // Draw Schedule
+  if (ctx.drawSchedule) {
+    sections.push(`=== DRAW SCHEDULE ===
+Total Draws: ${ctx.drawSchedule.total_draws}
+Funded: $${ctx.drawSchedule.funded_amount.toLocaleString()}
+Pending: $${ctx.drawSchedule.pending_amount.toLocaleString()}`)
+  }
+
+  // Expiring Warranties
+  if (ctx.expiringWarranties && ctx.expiringWarranties.length > 0) {
+    sections.push(`=== EXPIRING WARRANTIES (30-day warning) ===\n${ctx.expiringWarranties.map(w =>
+      `  - ${w.vendor}: ${w.category} expires ${w.end_date}`
+    ).join('\n')}`)
+  }
+
+  // Compliance Gaps
+  if (ctx.complianceGaps && (ctx.complianceGaps.expired > 0 || ctx.complianceGaps.unverified > 0)) {
+    sections.push(`=== COMPLIANCE GAPS ===
+Expired Insurance: ${ctx.complianceGaps.expired}
+Expiring Soon: ${ctx.complianceGaps.expiring_soon}
+Unverified: ${ctx.complianceGaps.unverified}`)
+  }
+
+  // Punch List Stats
+  if (ctx.punchListStats && ctx.punchListStats.total > 0) {
+    sections.push(`=== PUNCH LIST ===
+Total Items: ${ctx.punchListStats.total}
+Completion Rate: ${ctx.punchListStats.completionRate}%
+By Severity: ${Object.entries(ctx.punchListStats.bySeverity).map(([k, v]) => `${k}: ${v}`).join(', ')}`)
+  }
+
+  // Knowledge Graph State
+  if (ctx.knowledgeState) {
+    const ks = ctx.knowledgeState
+    sections.push(`=== CONSTRUCTION KNOWLEDGE STATE ===
+Total Items: ${ks.totalItems}
+Completed: ${ks.completed}
+In Progress: ${ks.inProgress}
+Blocked: ${ks.blocked}
+Ready to Start: ${ks.ready}
+Pending: ${ks.pending}
+Decisions Pending: ${ks.decisionsPending}`)
   }
 
   return sections.join('\n\n')

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { analyzeProjectDocument } from '@/lib/document-analyzer'
+import { processUploadedPlan, processUploadedDXF } from '@/lib/plan-takeoff-service'
 import { supabase } from '@/lib/supabase'
 import { getProject } from '@/lib/project-service'
 import { successResponse, errorResponse, validationError } from '@/lib/api-utils'
@@ -13,6 +14,9 @@ const ALLOWED_TYPES = new Set([
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'message/rfc822',
   'application/vnd.ms-outlook',
+  'application/dxf',
+  'image/vnd.dxf',
+  'application/x-dxf',
 ])
 
 export async function POST(request: NextRequest) {
@@ -30,9 +34,9 @@ export async function POST(request: NextRequest) {
 
     // Allow common doc extensions even if MIME type is generic
     const ext = file.name.split('.').pop()?.toLowerCase()
-    const allowedExtensions = new Set(['pdf', 'txt', 'doc', 'docx', 'eml', 'msg'])
+    const allowedExtensions = new Set(['pdf', 'txt', 'doc', 'docx', 'eml', 'msg', 'dxf'])
     if (!ALLOWED_TYPES.has(file.type) && (!ext || !allowedExtensions.has(ext))) {
-      return validationError('Unsupported file type. Accepted: PDF, TXT, DOC, DOCX, EML, MSG')
+      return validationError('Unsupported file type. Accepted: PDF, DXF, TXT, DOC, DOCX, EML, MSG')
     }
 
     const project = await getProject()
@@ -109,11 +113,75 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Plan takeoff analysis for PDF or DXF files
+    let takeoff = null
+    let dxfResult = null
+    const isDXF = ext === 'dxf'
+    const isPDF = file.type === 'application/pdf' || ext === 'pdf'
+    const analyzePlan = formData.get('analyze_plan') === 'true'
+
+    // Get the document ID we just inserted (needed for both PDF and DXF takeoff)
+    let documentId: string | null = null
+    if (analysis && (analyzePlan || isDXF)) {
+      const { data: docRecord } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('project_id', project.id)
+        .eq('name', file.name)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      documentId = docRecord?.id || null
+    }
+
+    // DXF files always get parsed (they're structured data, no AI needed for extraction)
+    if (isDXF && documentId) {
+      try {
+        const dxfContent = buffer.toString('utf-8')
+        dxfResult = await processUploadedDXF(documentId, project.id, dxfContent, file.name)
+      } catch (dxfError) {
+        console.error('DXF extraction failed:', dxfError)
+      }
+    }
+
+    // PDF plan takeoff (AI-powered)
+    if (isPDF && analyzePlan && documentId) {
+      try {
+        takeoff = await processUploadedPlan(documentId, project.id, buffer, file.name)
+      } catch (takeoffError) {
+        console.error('Plan takeoff analysis failed:', takeoffError)
+      }
+    }
+
+    // Build response message
+    let message = 'Document uploaded and analyzed successfully'
+    if (dxfResult) {
+      message = `DXF file processed: ${dxfResult.rooms.length} rooms, ${dxfResult.fixtures.length} fixtures, ${dxfResult.windows.length} window types, ${dxfResult.doors.length} door types, ${dxfResult.layers.length} layers detected.`
+    } else if (takeoff) {
+      message = `Document uploaded and analyzed. Extracted ${takeoff.rooms.length} rooms, ${takeoff.totalFixtures} fixtures, ${takeoff.totalWindows} windows, ${takeoff.totalDoors} doors.`
+    }
+
     return successResponse({
       filename: file.name,
       size: file.size,
       analysis,
-      message: 'Document uploaded and analyzed successfully'
+      takeoff: takeoff ? {
+        rooms: takeoff.rooms.length,
+        extractions: takeoff.extractions.length,
+        totalFixtures: takeoff.totalFixtures,
+        totalWindows: takeoff.totalWindows,
+        totalDoors: takeoff.totalDoors,
+      } : null,
+      dxf: dxfResult ? {
+        layers: dxfResult.layers.length,
+        rooms: dxfResult.rooms.length,
+        fixtures: dxfResult.fixtures.length,
+        windows: dxfResult.windows.length,
+        doors: dxfResult.doors.length,
+        dimensions: dxfResult.dimensions.length,
+        raw_entities: dxfResult.raw_entity_count,
+      } : null,
+      message,
     })
   } catch (error) {
     return errorResponse(error, 'Failed to process file')

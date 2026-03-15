@@ -121,8 +121,7 @@ server.tool('jobtread_getFiles', 'Get files (photos, documents) from the Case Ho
 server.tool('jobtread_createComment', 'Add a comment to the Case Home job in JobTread', { message: z.string().describe('The comment text to add') }, async ({ message }) => {
     const result = await pave({
         createComment: {
-            $: { jobId: JOB_ID, message },
-            id: {}, message: {}, createdAt: {},
+            $: { targetId: JOB_ID, targetType: 'job', message },
         },
     });
     return jsonText(result);
@@ -145,7 +144,7 @@ server.tool('jobtread_createTask', 'Create a task in the Case Home job in JobTre
     startDate: z.string().optional().describe('Start date (YYYY-MM-DD)'),
     endDate: z.string().optional().describe('End date (YYYY-MM-DD)'),
 }, async ({ name, description, startDate, endDate }) => {
-    const params = { jobId: JOB_ID, name };
+    const params = { targetId: JOB_ID, targetType: 'job', name };
     if (description)
         params.description = description;
     if (startDate)
@@ -155,7 +154,6 @@ server.tool('jobtread_createTask', 'Create a task in the Case Home job in JobTre
     const result = await pave({
         createTask: {
             $: params,
-            id: {}, name: {}, description: {},
         },
     });
     return jsonText(result);

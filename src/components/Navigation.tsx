@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { HardHat, Menu, Home, Mail, BarChart3, ClipboardList, DollarSign, Gavel, MessageSquare, Grid3X3, Calendar, Landmark } from 'lucide-react'
+import Image from 'next/image'
+import { Menu, Home, Mail, BarChart3, ClipboardList, DollarSign, Gavel, MessageSquare, Grid3X3, Calendar, Landmark, ListChecks, Users, FileText, Receipt, ClipboardCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -25,7 +26,12 @@ const navLinks = [
   { href: '/selections', label: 'Selections', icon: ClipboardList },
   { href: '/coverage', label: 'Coverage', icon: Grid3X3 },
   { href: '/timeline', label: 'Timeline', icon: Calendar },
+  { href: '/workflow', label: 'Workflow', icon: ListChecks },
+  { href: '/vendors', label: 'Vendors', icon: Users },
+  { href: '/change-orders', label: 'Change Orders', icon: FileText },
   { href: '/financing', label: 'Financing', icon: Landmark },
+  { href: '/payments', label: 'Payments', icon: Receipt },
+  { href: '/punch-list', label: 'Punch List', icon: ClipboardCheck },
   { href: '/project-status', label: 'Project Status', icon: BarChart3 },
   { href: '/assistant', label: 'Assistant', icon: MessageSquare },
 ]
@@ -39,9 +45,9 @@ export default function Navigation() {
       <div className="container flex h-16 items-center justify-between">
         {/* Branding */}
         <Link href="/" className="flex items-center gap-2">
-          <HardHat className="h-6 w-6 text-primary" />
+          <Image src="/favicon-32x32.png" alt="FrameWork" width={28} height={28} className="rounded" />
           <div className="hidden sm:block">
-            <p className="text-sm font-bold leading-tight">UBuildIt Manager</p>
+            <p className="text-sm font-bold leading-tight"><span className="text-orange-500">Frame</span><span>Work</span></p>
             <p className="text-xs text-muted-foreground leading-tight">708 Purple Salvia Cove</p>
           </div>
         </Link>
@@ -83,8 +89,8 @@ export default function Navigation() {
               <SheetContent side="left" className="w-72">
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-2">
-                    <HardHat className="h-5 w-5 text-primary" />
-                    UBuildIt Manager
+                    <Image src="/favicon-32x32.png" alt="FrameWork" width={24} height={24} className="rounded" />
+                    <span><span className="text-orange-500">Frame</span>Work</span>
                   </SheetTitle>
                   <SheetDescription className="sr-only">
                     Main navigation menu

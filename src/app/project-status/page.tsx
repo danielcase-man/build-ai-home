@@ -2,6 +2,8 @@ import { Suspense } from 'react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabase'
 import { getProject, calculateCurrentStep } from '@/lib/project-service'
+import { getLocalPushableItems } from '@/lib/jobtread-push'
+import { env } from '@/lib/env'
 import StatusQuickStats from './StatusQuickStats'
 import StatusContentCards from './StatusContentCards'
 import StatusActionItems from './StatusActionItems'
@@ -10,6 +12,7 @@ import StatusBudget from './StatusBudget'
 import StatusGenerateButton from './StatusGenerateButton'
 import ExportButton from './ExportButton'
 import SectionSkeleton from './SectionSkeleton'
+import JobTreadPushPanel from '@/components/JobTreadPushPanel'
 
 // --- Async data-fetching server components ---
 
@@ -132,6 +135,18 @@ async function BudgetData() {
   return <StatusBudget budgetUsed={budgetUsed} budgetTotal={budgetTotal} contingencyRemaining={contingencyRemaining} />
 }
 
+async function JobTreadPush() {
+  if (!env.jobtreadApiKey) return null
+
+  const project = await getProject()
+  if (!project) return null
+
+  const pushableItems = await getLocalPushableItems(project.id)
+  if (pushableItems.length === 0) return null
+
+  return <JobTreadPushPanel items={pushableItems} />
+}
+
 // --- Main page with streaming layout ---
 
 export default function ProjectStatusPage() {
@@ -159,7 +174,12 @@ export default function ProjectStatusPage() {
         <StatusContent />
       </Suspense>
 
-      {/* Stream 3: Communications */}
+      {/* Stream 3: Push to JobTread */}
+      <Suspense fallback={<SectionSkeleton type="card" />}>
+        <JobTreadPush />
+      </Suspense>
+
+      {/* Stream 4: Communications */}
       <Suspense fallback={<SectionSkeleton type="card" />}>
         <Communications />
       </Suspense>

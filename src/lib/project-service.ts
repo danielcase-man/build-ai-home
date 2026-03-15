@@ -8,6 +8,11 @@ import { getBids } from './bids-service'
 import { getSelections } from './selections-service'
 import { getConstructionLoan } from './loan-service'
 import { createActionItemNotification } from './notification-service'
+import { getKnowledgeStateSummary } from './knowledge-graph'
+import { getChangeOrders } from './change-order-service'
+import { getDrawSummary } from './draw-schedule-service'
+import { getExpiringWarranties, getComplianceGaps } from './warranty-service'
+import { getPunchListStats } from './punch-list-service'
 import type { ProjectStatusData, DashboardData, Email, Question, KeyDataPoint } from '@/types'
 
 /** Derive the current step number from planning_phase_steps rows. */
@@ -179,6 +184,28 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
       summary: c.summary || null,
     })),
     loan,
+    knowledgeState: await getKnowledgeStateSummary(projectId).catch(() => null),
+    changeOrders: await getChangeOrders(projectId).then(orders =>
+      orders.map(o => ({ title: o.title, reason: o.reason, status: o.status, cost_impact: o.cost_impact, schedule_impact_days: o.schedule_impact_days }))
+    ).catch(() => []),
+    drawSchedule: await getDrawSummary(projectId).then(s => ({
+      total_draws: s.total_draws,
+      funded_amount: s.funded_amount,
+      pending_amount: s.pending_amount,
+    })).catch(() => undefined),
+    expiringWarranties: await getExpiringWarranties(projectId).then(ws =>
+      ws.map(w => ({ vendor: w.vendor_name || 'Unknown', category: w.category, end_date: w.end_date }))
+    ).catch(() => []),
+    complianceGaps: await getComplianceGaps(projectId).then(g => ({
+      expired: g.expired.length,
+      expiring_soon: g.expiring_soon.length,
+      unverified: g.unverified.length,
+    })).catch(() => undefined),
+    punchListStats: await getPunchListStats(projectId).then(s => ({
+      total: s.total,
+      completionRate: s.completionRate,
+      bySeverity: s.bySeverity,
+    })).catch(() => undefined),
   }
 }
 

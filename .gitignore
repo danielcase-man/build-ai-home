@@ -22,3 +22,29 @@ npm-debug.log*
 # misc
 .DS_Store
 *.tsbuildinfo
+
+# Temp screenshots and previews
+financing-edit-dialog.png
+financing-page-full.png
+horizontal-logo-preview.png
+logo-final-preview.png
+logo-horizontal-preview.png
+logo-preview-all.png
+logo-preview-refined.png
+signing-portal.png
+framework-icon-preview.png
+framework-icon-v4.png
+framework-v4-check.png
+logo-preview-all.png
+w2_*.jpg
+w2_*.png
+w2_*.bin
+tmp_tasks.json
+jobtread-form.md
+
+# Playwright
+.playwright-mcp/
+playwright-profile/
+
+# Claude local settings
+.claude/settings.local.json

@@ -9,6 +9,11 @@ import type { PendingAction } from '@/types'
 import { supabase } from './supabase'
 import { getProject } from './project-service'
 import { logChange } from './audit-service'
+import { completeWorkflowItem as completeWorkflowItemService } from './workflow-service'
+import { createChangeOrder } from './change-order-service'
+import type { ChangeOrderReason } from './change-order-service'
+import { createPunchItem, scheduleInspection } from './punch-list-service'
+import type { PunchSeverity, PunchSource } from './punch-list-service'
 
 export interface ActionResult {
   success: boolean
@@ -39,6 +44,14 @@ export async function executeAction(action: PendingAction): Promise<ActionResult
       return updateMilestone(action.data)
     case 'update_task':
       return updateTask(action.data, projectId)
+    case 'complete_workflow_item':
+      return completeWorkflowAction(action.data, projectId)
+    case 'create_change_order':
+      return createChangeOrderAction(action.data, projectId)
+    case 'add_punch_item':
+      return addPunchItemAction(action.data, projectId)
+    case 'schedule_inspection':
+      return scheduleInspectionAction(action.data, projectId)
     default:
       return { success: false, message: `Unknown action type: ${action.type}` }
   }
@@ -260,4 +273,127 @@ async function updateMilestone(data: Record<string, unknown>): Promise<ActionRes
 
   if (error) return { success: false, message: `Failed to update milestone: ${error.message}` }
   return { success: true, message: `Milestone ${milestone_id} updated` }
+}
+
+// ---------------------------------------------------------------------------
+// Workflow mutations
+// ---------------------------------------------------------------------------
+
+async function completeWorkflowAction(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  const { knowledge_id, completed_date, actual_cost, notes } = data
+  if (!knowledge_id) return { success: false, message: 'Missing knowledge_id' }
+
+  const result = await completeWorkflowItemService(projectId, knowledge_id as string, {
+    completedDate: completed_date as string | undefined,
+    actualCost: actual_cost ? Number(actual_cost) : undefined,
+    notes: notes as string | undefined,
+  })
+
+  if (!result) {
+    return { success: false, message: `Failed to complete workflow item: ${knowledge_id}` }
+  }
+
+  await logChange({
+    projectId,
+    entityType: 'workflow_item',
+    entityId: knowledge_id as string,
+    action: 'update',
+    fieldName: 'status',
+    newValue: 'completed',
+    actor: 'assistant',
+  })
+
+  return { success: true, message: `Workflow item completed: ${knowledge_id}` }
+}
+
+// ---------------------------------------------------------------------------
+// Change order mutations
+// ---------------------------------------------------------------------------
+
+async function createChangeOrderAction(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  const { title, reason, description, category, cost_impact, schedule_impact_days, notes } = data
+  if (!title || !reason) return { success: false, message: 'Missing title or reason' }
+
+  const order = await createChangeOrder({
+    project_id: projectId,
+    title: title as string,
+    description: (description as string) || '',
+    category: (category as string) || null,
+    requested_by: 'assistant',
+    reason: reason as ChangeOrderReason,
+    status: 'draft',
+    cost_impact: cost_impact ? Number(cost_impact) : 0,
+    schedule_impact_days: schedule_impact_days ? Number(schedule_impact_days) : null,
+    affected_milestone_id: null,
+    affected_budget_items: null,
+    contract_id: null,
+    approved_date: null,
+    notes: (notes as string) || null,
+  })
+
+  if (!order) return { success: false, message: 'Failed to create change order' }
+
+  await logChange({
+    projectId,
+    entityType: 'change_order',
+    entityId: order.id || '',
+    action: 'create',
+    actor: 'assistant',
+  })
+
+  return { success: true, message: `Change order CO-${order.change_order_number} created: ${title}` }
+}
+
+// ---------------------------------------------------------------------------
+// Punch list & inspection mutations
+// ---------------------------------------------------------------------------
+
+async function addPunchItemAction(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  if (!data.description) return { success: false, message: 'Missing description' }
+
+  const item = await createPunchItem({
+    project_id: projectId,
+    room: (data.room as string) || null,
+    location_detail: null,
+    category: (data.category as string) || null,
+    description: data.description as string,
+    severity: (data.severity as PunchSeverity) || 'functional',
+    status: 'identified',
+    assigned_vendor_id: null,
+    assigned_vendor_name: (data.assigned_vendor_name as string) || null,
+    before_photo_id: null,
+    after_photo_id: null,
+    source: 'consultant' as PunchSource,
+    due_date: null,
+    completed_date: null,
+    notes: (data.notes as string) || null,
+  })
+
+  if (!item) return { success: false, message: 'Failed to create punch item' }
+
+  await logChange({ projectId, entityType: 'punch_list', entityId: item.id || '', action: 'create', actor: 'assistant' })
+  return { success: true, message: `Punch item added: ${data.description}${data.room ? ` in ${data.room}` : ''}` }
+}
+
+async function scheduleInspectionAction(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  if (!data.inspection_type) return { success: false, message: 'Missing inspection_type' }
+
+  const inspection = await scheduleInspection({
+    project_id: projectId,
+    inspection_type: data.inspection_type as string,
+    knowledge_id: (data.knowledge_id as string) || null,
+    permit_id: (data.permit_id as string) || null,
+    status: data.scheduled_date ? 'scheduled' : 'not_scheduled',
+    scheduled_date: (data.scheduled_date as string) || null,
+    completed_date: null,
+    inspector_name: (data.inspector_name as string) || null,
+    deficiencies: [],
+    photos: [],
+    notes: (data.notes as string) || null,
+  })
+
+  if (!inspection) return { success: false, message: 'Failed to schedule inspection' }
+
+  await logChange({ projectId, entityType: 'inspection', entityId: inspection.id || '', action: 'create', actor: 'assistant' })
+  return { success: true, message: `Inspection scheduled: ${data.inspection_type}${data.scheduled_date ? ` on ${data.scheduled_date}` : ''}` }
 }

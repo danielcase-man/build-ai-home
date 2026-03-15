@@ -175,8 +175,7 @@ server.tool(
   async ({ message }) => {
     const result = await pave({
       createComment: {
-        $: { jobId: JOB_ID, message },
-        id: {}, message: {}, createdAt: {},
+        $: { targetId: JOB_ID, targetType: 'job', message },
       },
     })
     return jsonText(result)
@@ -211,7 +210,7 @@ server.tool(
     endDate: z.string().optional().describe('End date (YYYY-MM-DD)'),
   },
   async ({ name, description, startDate, endDate }) => {
-    const params: Record<string, unknown> = { jobId: JOB_ID, name }
+    const params: Record<string, unknown> = { targetId: JOB_ID, targetType: 'job', name }
     if (description) params.description = description
     if (startDate) params.startDate = startDate
     if (endDate) params.endDate = endDate
@@ -219,7 +218,6 @@ server.tool(
     const result = await pave({
       createTask: {
         $: params,
-        id: {}, name: {}, description: {},
       },
     })
     return jsonText(result)

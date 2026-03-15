@@ -117,3 +117,13 @@ export function getAllTrades(): (Trade & { phaseName: string; phaseNumber: numbe
 export function getAllBidCategories(): string[] {
   return getAllTrades().map(t => t.bidCategory)
 }
+
+/**
+ * Seed the knowledge graph from KNOWLEDGE_SEED_DATA.
+ * Convenience wrapper that imports seed data and calls seedKnowledgeGraph.
+ */
+export async function seedKnowledgeFromPhases(): Promise<{ created: number; errors: string[] }> {
+  const { KNOWLEDGE_SEED_DATA } = await import('./knowledge-seed-data')
+  const { seedKnowledgeGraph } = await import('./knowledge-graph')
+  return seedKnowledgeGraph(KNOWLEDGE_SEED_DATA)
+}

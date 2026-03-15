@@ -53,6 +53,12 @@ export const env = {
   get jobtreadOrgId() { return optionalEnv('JOBTREAD_ORG_ID', '22P8e7iPShMR') },
   get jobtreadJobId() { return optionalEnv('JOBTREAD_JOB_ID', '22PEVyJVCikd') },
 
+  // Plaid
+  get plaidClientId() { return optionalEnv('PLAID_CLIENT_ID') },
+  get plaidSecret() { return optionalEnv('PLAID_SECRET') },
+  get plaidEnv() { return optionalEnv('PLAID_ENV', 'sandbox') },
+  get plaidWebhookUrl() { return optionalEnv('PLAID_WEBHOOK_URL') },
+
   // App
   get vercelUrl() { return optionalEnv('VERCEL_URL') },
   get nodeEnv() { return optionalEnv('NODE_ENV', 'development') },
