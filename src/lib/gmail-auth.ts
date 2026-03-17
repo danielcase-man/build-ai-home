@@ -23,7 +23,15 @@ export async function getAuthenticatedGmailService(): Promise<GmailService | nul
   let needsEncryptionMigration = false
 
   if (isEncryptedTokens(emailAccount.oauth_tokens)) {
-    tokens = decryptTokens(emailAccount.oauth_tokens)
+    try {
+      tokens = decryptTokens(emailAccount.oauth_tokens)
+    } catch (error) {
+      // Decryption failed — likely TOKEN_ENCRYPTION_KEY changed between deployments.
+      // Clear the broken tokens so the user can re-auth.
+      console.error('Failed to decrypt OAuth tokens (encryption key mismatch?):', error)
+      await db.clearEmailAccountTokens(env.gmailUserEmail || '')
+      return null
+    }
   } else {
     // Legacy plaintext tokens — use directly, flag for migration
     tokens = emailAccount.oauth_tokens as Record<string, unknown>

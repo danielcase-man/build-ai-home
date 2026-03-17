@@ -29,7 +29,8 @@ interface EmailsClientProps {
 function EmailsContent({ initialEmails, initialStatus, gmailConfigured }: EmailsClientProps) {
   const searchParams = useSearchParams()
   const justConnected = searchParams.get('success') === 'connected'
-  const isConnected = gmailConfigured || justConnected
+  const wantsReconnect = searchParams.get('reconnect') === 'true'
+  const isConnected = (gmailConfigured || justConnected) && !wantsReconnect
 
   if (!isConnected) {
     return (
@@ -37,7 +38,9 @@ function EmailsContent({ initialEmails, initialStatus, gmailConfigured }: Emails
         <Alert variant="warning">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Gmail is not connected. Connect your account to view and analyze project-related emails from your team and vendors.
+            {wantsReconnect
+              ? 'Reconnect your Gmail account to restore email sync. Click "Connect Gmail Account" below.'
+              : 'Gmail is not connected. Connect your account to view and analyze project-related emails from your team and vendors.'}
           </AlertDescription>
         </Alert>
         <GmailConnect />

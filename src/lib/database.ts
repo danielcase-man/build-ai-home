@@ -601,6 +601,25 @@ export class DatabaseService {
     }
   }
 
+  /** Clear OAuth tokens for a Gmail account (used when tokens are broken and user needs to re-auth). */
+  async clearEmailAccountTokens(emailAddress: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('email_accounts')
+        .update({ oauth_tokens: null, updated_at: new Date().toISOString() })
+        .eq('email_address', emailAddress)
+
+      if (error) {
+        console.error('Error clearing email account tokens:', error)
+        return false
+      }
+      return true
+    } catch (error) {
+      console.error('Database error clearing tokens:', error)
+      return false
+    }
+  }
+
   /** Check whether a Gmail account with OAuth tokens exists. */
   async hasEmailAccountConfigured(): Promise<boolean> {
     try {
