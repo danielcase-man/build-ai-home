@@ -9,7 +9,9 @@ import type { PendingAction } from '@/types'
 import { supabase } from './supabase'
 import { getProject } from './project-service'
 import { logChange } from './audit-service'
-import { completeWorkflowItem as completeWorkflowItemService } from './workflow-service'
+import { completeWorkflowItem as completeWorkflowItemService, checkAndCompleteSelectionDecisions } from './workflow-service'
+import { resolveKnowledgeIdForSelection, getPhaseForSelectionCategory } from './category-mapping'
+import { parseLeadTimeDays } from './lead-time-utils'
 import { createChangeOrder } from './change-order-service'
 import type { ChangeOrderReason } from './change-order-service'
 import { createPunchItem, scheduleInspection } from './punch-list-service'
@@ -46,6 +48,8 @@ export async function executeAction(action: PendingAction): Promise<ActionResult
       return updateTask(action.data, projectId)
     case 'complete_workflow_item':
       return completeWorkflowAction(action.data, projectId)
+    case 'link_selection_to_decision':
+      return linkSelectionToDecision(action.data, projectId)
     case 'create_change_order':
       return createChangeOrderAction(action.data, projectId)
     case 'add_punch_item':
@@ -146,12 +150,26 @@ async function updateSelection(data: Record<string, unknown>): Promise<ActionRes
 }
 
 async function addSelection(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  const category = data.category as string
+  // Auto-resolve knowledge_id from category mapping if not provided
+  let knowledgeId = (data.knowledge_id as string) || null
+  if (!knowledgeId && category) {
+    knowledgeId = await resolveKnowledgeIdForSelection(category)
+  }
+  // Auto-resolve needed_by_phase
+  const neededByPhase = getPhaseForSelectionCategory(category) || null
+  // Parse lead_time string into days
+  let leadTimeDays: number | null = null
+  if (data.lead_time && typeof data.lead_time === 'string') {
+    leadTimeDays = parseLeadTimeDays(data.lead_time)
+  }
+
   const { error, data: inserted } = await supabase
     .from('selections')
     .insert({
       project_id: projectId,
       room: data.room,
-      category: data.category,
+      category,
       subcategory: data.subcategory || null,
       product_name: data.product_name,
       brand: data.brand || null,
@@ -162,14 +180,58 @@ async function addSelection(data: Record<string, unknown>, projectId: string): P
       unit_price: data.unit_price || null,
       total_price: data.total_price || null,
       status: (data.status as string) || 'considering',
+      lead_time: data.lead_time || null,
       notes: data.notes || null,
       product_url: data.product_url || null,
+      knowledge_id: knowledgeId,
+      needed_by_phase: neededByPhase,
+      lead_time_days: leadTimeDays,
     })
     .select('id')
     .single()
 
   if (error) return { success: false, message: `Failed to add selection: ${error.message}` }
   return { success: true, message: `Selection added: ${data.product_name} in ${data.room} (id: ${inserted?.id})` }
+}
+
+async function linkSelectionToDecision(data: Record<string, unknown>, projectId: string): Promise<ActionResult> {
+  const { selection_id, knowledge_id, confirm } = data
+  if (!selection_id) return { success: false, message: 'Missing selection_id' }
+  if (!knowledge_id) return { success: false, message: 'Missing knowledge_id' }
+
+  const updates: Record<string, unknown> = {
+    knowledge_id,
+    updated_at: new Date().toISOString(),
+  }
+  if (confirm) {
+    updates.status = 'selected'
+  }
+
+  const { error, data: updated } = await supabase
+    .from('selections')
+    .update(updates)
+    .eq('id', selection_id as string)
+    .select('category')
+    .single()
+
+  if (error) return { success: false, message: `Failed to link selection: ${error.message}` }
+
+  // If confirmed, check if this completes the category's decision
+  if (confirm && updated?.category) {
+    await checkAndCompleteSelectionDecisions(projectId, updated.category)
+  }
+
+  await logChange({
+    projectId,
+    entityType: 'selection',
+    entityId: selection_id as string,
+    action: 'update',
+    fieldName: 'knowledge_id',
+    newValue: knowledge_id,
+    actor: 'assistant',
+  })
+
+  return { success: true, message: `Selection ${selection_id} linked to decision ${knowledge_id}${confirm ? ' and confirmed' : ''}` }
 }
 
 // ---------------------------------------------------------------------------

@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { Progress } from '@/components/ui/progress'
 import { CONSTRUCTION_PHASES } from '@/lib/construction-phases'
-import type { Bid } from '@/types'
+import type { Bid, Selection } from '@/types'
 import type { BudgetItemRecord } from '@/lib/budget-service'
+import { getSelectionCategoryForBidCategory } from '@/lib/category-mapping'
 import {
   Grid3X3,
   CheckCircle2,
@@ -15,11 +16,13 @@ import {
   AlertTriangle,
   TrendingUp,
   HardHat,
+  Package,
 } from 'lucide-react'
 
 interface CoverageClientProps {
   bids: Bid[]
   budgetItems: BudgetItemRecord[]
+  selections: Selection[]
 }
 
 type CoverageStatus = 'selected' | 'bids_pending' | 'estimate_only' | 'gap'
@@ -33,6 +36,8 @@ interface TradeCoverage {
   bidCount: number
   lowestBid: number | null
   selectedBid: { vendor: string; amount: number } | null
+  selectionCount: number
+  selectionCost: number
   status: CoverageStatus
 }
 
@@ -67,7 +72,7 @@ function getStatusDot(status: CoverageStatus) {
   }
 }
 
-export default function CoverageClient({ bids, budgetItems }: CoverageClientProps) {
+export default function CoverageClient({ bids, budgetItems, selections }: CoverageClientProps) {
   const { coverageByPhase, summary } = useMemo(() => {
     const bidsByCategory = new Map<string, Bid[]>()
     for (const bid of bids) {
@@ -85,11 +90,21 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
       budgetByCategory.set(key, existing)
     }
 
+    // Selections indexed by selection category
+    const selectionsByCategory = new Map<string, Selection[]>()
+    for (const sel of selections) {
+      const key = sel.category.toLowerCase()
+      const existing = selectionsByCategory.get(key) || []
+      existing.push(sel)
+      selectionsByCategory.set(key, existing)
+    }
+
     let totalCovered = 0
     let totalCommitted = 0
     let totalBudgetEstimate = 0
     let totalLowestBids = 0
     let gapCount = 0
+    let totalSelections = 0
 
     const coverageByPhase = CONSTRUCTION_PHASES.map(phase => {
       const trades: TradeCoverage[] = phase.trades.map(trade => {
@@ -100,6 +115,17 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
         const lowestBid = tradeBids.length > 0
           ? Math.min(...tradeBids.filter(b => b.status !== 'rejected').map(b => b.total_amount))
           : null
+
+        // Selection data: map bid category to selection category
+        const selectionCategory = getSelectionCategoryForBidCategory(trade.bidCategory)
+        const tradeSelections = selectionCategory
+          ? (selectionsByCategory.get(selectionCategory.toLowerCase()) || [])
+          : []
+        const selectionCount = tradeSelections.length
+        const selectionCost = tradeSelections
+          .filter(s => s.status !== 'alternative')
+          .reduce((sum, s) => sum + (s.total_price ?? 0), 0)
+        totalSelections += selectionCount
 
         let status: CoverageStatus
         if (selectedBid) {
@@ -130,6 +156,8 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
           bidCount: tradeBids.length,
           lowestBid: lowestBid !== null && isFinite(lowestBid) ? lowestBid : null,
           selectedBid: selectedBid ? { vendor: selectedBid.vendor_name, amount: selectedBid.total_amount } : null,
+          selectionCount,
+          selectionCost,
           status,
         }
       })
@@ -148,9 +176,10 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
         lowestBids: totalLowestBids,
         delta: totalBudgetEstimate - totalCommitted,
         gaps: gapCount,
+        totalSelections,
       },
     }
-  }, [bids, budgetItems])
+  }, [bids, budgetItems, selections])
 
   return (
     <div className="container max-w-6xl py-8 space-y-6">
@@ -163,7 +192,7 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -203,6 +232,19 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
             <p className="text-xs text-muted-foreground mt-1">
               Est. {formatCurrency(summary.budgetEstimate)} total
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Selections
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.totalSelections}</p>
+            <p className="text-xs text-muted-foreground mt-1">products selected across trades</p>
           </CardContent>
         </Card>
 
@@ -298,6 +340,8 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
                         <th className="text-right py-2 px-3 font-medium">Actual</th>
                         <th className="text-center py-2 px-3 font-medium">Bids</th>
                         <th className="text-right py-2 px-3 font-medium">Lowest Bid</th>
+                        <th className="text-center py-2 px-3 font-medium">Sels</th>
+                        <th className="text-right py-2 px-3 font-medium">Sel Cost</th>
                         <th className="text-right py-2 px-3 font-medium">Selected</th>
                         <th className="text-center py-2 px-3 font-medium">Status</th>
                       </tr>
@@ -331,6 +375,18 @@ export default function CoverageClient({ bids, budgetItems }: CoverageClientProp
                           </td>
                           <td className="py-2 px-3 text-right">
                             {trade.lowestBid !== null ? formatCurrency(trade.lowestBid) : '-'}
+                          </td>
+                          <td className="py-2 px-3 text-center">
+                            {trade.selectionCount > 0 ? (
+                              <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-purple-100 text-purple-800 text-xs font-medium">
+                                {trade.selectionCount}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </td>
+                          <td className="py-2 px-3 text-right">
+                            {trade.selectionCost > 0 ? formatCurrency(trade.selectionCost) : '-'}
                           </td>
                           <td className="py-2 px-3 text-right">
                             {trade.selectedBid ? (

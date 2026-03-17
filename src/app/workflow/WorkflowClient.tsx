@@ -80,12 +80,14 @@ interface WorkflowStats {
 }
 
 interface WorkflowAlert {
-  type: 'blocker' | 'decision_needed' | 'ready_to_start' | 'phase_complete'
+  type: 'blocker' | 'decision_needed' | 'ready_to_start' | 'phase_complete' | 'lead_time_warning'
   priority: 'low' | 'medium' | 'high' | 'urgent'
   title: string
   message: string
   knowledge_id?: string
   phase_number?: number
+  selection_id?: string
+  order_by_date?: string
 }
 
 interface DecisionOption {
@@ -270,6 +272,7 @@ function getAlertIcon(type: WorkflowAlert['type']) {
     case 'decision_needed': return <AlertTriangle className={iconClass} />
     case 'ready_to_start': return <Sparkles className={iconClass} />
     case 'phase_complete': return <CheckCircle2 className={iconClass} />
+    case 'lead_time_warning': return <Clock className={iconClass} />
   }
 }
 

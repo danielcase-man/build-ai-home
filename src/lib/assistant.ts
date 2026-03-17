@@ -80,7 +80,9 @@ export const WRITE_TOOL_NAMES = new Set([
   'update_budget_item',
   'add_budget_item',
   'update_milestone',
+  'update_task',
   'complete_workflow_item',
+  'link_selection_to_decision',
   'create_change_order',
   'add_punch_item',
   'schedule_inspection',
@@ -121,6 +123,7 @@ const TOOL_STATUS_LABELS: Record<string, string> = {
   get_warranties: 'Loading warranties…',
   get_punch_list: 'Loading punch list…',
   get_inspections: 'Loading inspections…',
+  link_selection_to_decision: 'Linking selection to decision…',
 }
 
 export function getToolStatusLabel(name: string): string {
@@ -559,12 +562,12 @@ const WRITE_TOOLS: Anthropic.Tool[] = [
   {
     name: 'add_selection',
     description:
-      'Add a new product selection. Requires room, category, product name, and quantity.',
+      'Add a new product selection. Requires room, category, product name, and quantity. Auto-resolves knowledge_id and needed_by_phase from category mapping if not provided.',
     input_schema: {
       type: 'object' as const,
       properties: {
         room: { type: 'string', description: 'Room name (e.g. Kitchen, Master Bath)' },
-        category: { type: 'string', description: 'Category (e.g. plumbing, lighting, appliance)' },
+        category: { type: 'string', description: 'Category (e.g. plumbing, lighting, appliance, countertop, flooring, cabinetry, windows)' },
         subcategory: { type: 'string' },
         product_name: { type: 'string' },
         brand: { type: 'string' },
@@ -580,6 +583,8 @@ const WRITE_TOOLS: Anthropic.Tool[] = [
         },
         notes: { type: 'string' },
         product_url: { type: 'string' },
+        lead_time: { type: 'string', description: 'Lead time string (e.g. "6-8 weeks")' },
+        knowledge_id: { type: 'string', description: 'Knowledge graph decision point to link to (auto-resolved if not provided)' },
       },
       required: ['room', 'category', 'product_name', 'quantity'],
     },
@@ -636,6 +641,27 @@ const WRITE_TOOLS: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'update_task',
+    description:
+      'Update a task status, due date, or add a resolution note. Requires the task ID. Use this to mark tasks as completed, in_progress, or to add follow-up notes.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        task_id: { type: 'string', description: 'The task UUID to update' },
+        status: {
+          type: 'string',
+          enum: ['pending', 'in_progress', 'completed', 'deferred'],
+          description: 'New task status',
+        },
+        due_date: { type: 'string', description: 'Updated due date (ISO date)' },
+        resolution_note: { type: 'string', description: 'Note explaining what was done or why deferred — appended to existing notes with timestamp' },
+        title: { type: 'string', description: 'Updated task title' },
+        priority: { type: 'string', enum: ['low', 'medium', 'high', 'urgent'] },
+      },
+      required: ['task_id'],
+    },
+  },
+  {
     name: 'complete_workflow_item',
     description:
       'Mark a construction workflow item as completed. Requires the knowledge item ID. Optionally include completion date, actual cost, and notes. This automatically unlocks downstream items that depended on it.',
@@ -648,6 +674,20 @@ const WRITE_TOOLS: Anthropic.Tool[] = [
         notes: { type: 'string', description: 'Completion notes' },
       },
       required: ['knowledge_id'],
+    },
+  },
+  {
+    name: 'link_selection_to_decision',
+    description:
+      'Link a product selection to a knowledge graph decision point. Optionally confirm the selection (set status to "selected") and auto-complete the decision if all selections in that category are confirmed.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        selection_id: { type: 'string', description: 'The selection UUID to link' },
+        knowledge_id: { type: 'string', description: 'The knowledge item UUID (decision point) to link to' },
+        confirm: { type: 'boolean', description: 'If true, also set selection status to "selected" and check for auto-completion' },
+      },
+      required: ['selection_id', 'knowledge_id'],
     },
   },
   {
@@ -963,6 +1003,10 @@ async function getSelectionsForTool(
       total_price: s.total_price,
       status: s.status,
       lead_time: s.lead_time,
+      knowledge_id: s.knowledge_id,
+      needed_by_phase: s.needed_by_phase,
+      needed_by_date: s.needed_by_date,
+      lead_time_days: s.lead_time_days,
       notes: s.notes,
       product_url: s.product_url,
     })),

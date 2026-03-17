@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock supabase
 const mockChain: Record<string, ReturnType<typeof vi.fn>> = {}
-for (const m of ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'in', 'gte', 'order', 'limit', 'single', 'from', 'is'] as const) {
+for (const m of ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'in', 'gte', 'lte', 'not', 'order', 'limit', 'single', 'from', 'is'] as const) {
   mockChain[m] = vi.fn()
 }
 for (const m of Object.keys(mockChain)) {
@@ -38,6 +38,32 @@ vi.mock('./knowledge-graph', () => ({
   getProjectKnowledgeStates: (...args: unknown[]) => mockGetProjectKnowledgeStates(...args),
   updateKnowledgeState: (...args: unknown[]) => mockUpdateKnowledgeState(...args),
   initializeProjectKnowledgeStates: (...args: unknown[]) => mockInitializeProjectKnowledgeStates(...args),
+}))
+
+// Mock selections-service (used by lead-time alerts)
+const mockGetSelectionsWithLeadTime = vi.fn().mockResolvedValue([])
+const mockGetSelectionsByCategory = vi.fn().mockResolvedValue([])
+
+vi.mock('./selections-service', () => ({
+  getSelectionsWithLeadTime: (...args: unknown[]) => mockGetSelectionsWithLeadTime(...args),
+  getSelectionsByCategory: (...args: unknown[]) => mockGetSelectionsByCategory(...args),
+}))
+
+// Mock category-mapping
+vi.mock('./category-mapping', () => ({
+  getCategoryMapping: vi.fn().mockReturnValue(null),
+  getAllCategoryMappings: vi.fn().mockReturnValue([]),
+  resolveKnowledgeIdForSelection: vi.fn().mockResolvedValue(null),
+}))
+
+// Mock lead-time-utils
+vi.mock('./lead-time-utils', () => ({
+  parseLeadTimeDays: vi.fn().mockReturnValue(null),
+  calculateOrderByDate: vi.fn().mockImplementation((date: Date, days: number) => {
+    const result = new Date(date)
+    result.setDate(result.getDate() - days)
+    return result
+  }),
 }))
 
 import {

@@ -352,7 +352,7 @@ export interface Bid {
 // --- Selection Types ---
 
 export type SelectionStatus = 'considering' | 'selected' | 'ordered' | 'received' | 'installed' | 'alternative'
-export type SelectionCategory = 'plumbing' | 'lighting' | 'hardware' | 'appliance' | 'tile' | 'paint'
+export type SelectionCategory = 'plumbing' | 'lighting' | 'hardware' | 'appliance' | 'tile' | 'paint' | 'countertop' | 'flooring' | 'cabinetry' | 'windows'
 
 export interface Selection {
   id: string
@@ -378,6 +378,10 @@ export interface Selection {
   expected_delivery?: string
   product_url?: string
   notes?: string
+  knowledge_id?: string | null
+  needed_by_phase?: number | null
+  needed_by_date?: string | null
+  lead_time_days?: number | null
   bid_id?: string | null
   linked_bid?: { vendor_name: string; total_amount: number } | null
   created_at?: string
@@ -426,6 +430,7 @@ export interface ConstructionLoan {
   loan_contact_nmls?: string
   notes?: string
   loan_details?: Record<string, unknown>
+  is_active?: boolean
   created_at?: string
   updated_at?: string
 }
@@ -553,6 +558,7 @@ export type WriteToolName =
   | 'update_milestone'
   | 'update_task'
   | 'complete_workflow_item'
+  | 'link_selection_to_decision'
   | 'create_change_order'
   | 'add_punch_item'
   | 'schedule_inspection'

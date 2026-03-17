@@ -21,7 +21,11 @@ import type {
   KnowledgeItem,
   KnowledgeTreeNode,
   ProjectKnowledgeState,
+  Selection,
 } from '@/types'
+import { getSelectionsWithLeadTime, getSelectionsByCategory } from './selections-service'
+import { getCategoryMapping, getAllCategoryMappings, resolveKnowledgeIdForSelection } from './category-mapping'
+import { parseLeadTimeDays, calculateOrderByDate } from './lead-time-utils'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,12 +43,14 @@ export interface WorkflowPhase {
 }
 
 export interface WorkflowAlert {
-  type: 'blocker' | 'decision_needed' | 'ready_to_start' | 'phase_complete'
+  type: 'blocker' | 'decision_needed' | 'ready_to_start' | 'phase_complete' | 'lead_time_warning'
   priority: 'low' | 'medium' | 'high' | 'urgent'
   title: string
   message: string
   knowledge_id?: string
   phase_number?: number
+  selection_id?: string
+  order_by_date?: string
 }
 
 export interface WorkflowOverview {
@@ -162,12 +168,13 @@ export async function getUpcomingDecisions(
   return decisions.filter(d => !d.state || d.state.status === 'pending' || d.state.status === 'ready')
 }
 
-/** Generate workflow alerts for blocked items, pending decisions, and ready items */
+/** Generate workflow alerts for blocked items, pending decisions, ready items, and lead-time warnings */
 export async function getWorkflowAlerts(projectId: string): Promise<WorkflowAlert[]> {
-  const [blockers, readyItems, decisions] = await Promise.all([
+  const [blockers, readyItems, decisions, leadTimeAlerts] = await Promise.all([
     getBlockers(projectId),
     getReadyItems(projectId),
     getDecisionPoints(projectId),
+    getLeadTimeAlerts(projectId),
   ])
 
   const alerts: WorkflowAlert[] = []
@@ -183,6 +190,9 @@ export async function getWorkflowAlerts(projectId: string): Promise<WorkflowAler
       phase_number: blocker.item.phase_number,
     })
   }
+
+  // Lead-time warnings
+  alerts.push(...leadTimeAlerts)
 
   // Pending decisions for active phases
   const pendingDecisions = decisions.filter(d =>
@@ -293,6 +303,117 @@ export async function getWorkflowPhaseRecord(
     .single()
 
   return data
+}
+
+// ---------------------------------------------------------------------------
+// Selection ↔ Workflow Integration
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if all non-alternative selections in a category are confirmed,
+ * and if so, auto-complete the corresponding knowledge graph decision point.
+ */
+export async function checkAndCompleteSelectionDecisions(
+  projectId: string,
+  selectionCategory: string
+): Promise<boolean> {
+  const knowledgeId = await resolveKnowledgeIdForSelection(selectionCategory)
+  if (!knowledgeId) return false
+
+  const selections = await getSelectionsByCategory(projectId, selectionCategory)
+  const nonAlternatives = selections.filter(s => s.status !== 'alternative')
+
+  if (nonAlternatives.length === 0) return false
+
+  const allConfirmed = nonAlternatives.every(s =>
+    ['selected', 'ordered', 'received', 'installed'].includes(s.status)
+  )
+
+  if (!allConfirmed) return false
+
+  const result = await recordDecision(
+    projectId,
+    knowledgeId,
+    `All ${selectionCategory} selections confirmed`,
+    `Auto-completed: ${nonAlternatives.length} selection(s) confirmed`
+  )
+
+  return result !== null
+}
+
+/** Get estimated start date for a construction phase */
+export async function getPhaseEstimatedStart(
+  projectId: string,
+  phaseNumber: number
+): Promise<Date | null> {
+  // Try the actual workflow_phases record first
+  const record = await getWorkflowPhaseRecord(projectId, phaseNumber)
+  if (record?.started_date) {
+    return new Date(record.started_date)
+  }
+
+  // Fall back to the previous phase's estimated completion
+  if (phaseNumber > 1) {
+    const prevRecord = await getWorkflowPhaseRecord(projectId, phaseNumber - 1)
+    if (prevRecord?.completed_date) {
+      return new Date(prevRecord.completed_date)
+    }
+  }
+
+  return null
+}
+
+/** Generate lead-time alerts for selections with lead times that need to be ordered */
+export async function getLeadTimeAlerts(projectId: string): Promise<WorkflowAlert[]> {
+  const selections = await getSelectionsWithLeadTime(projectId)
+  if (selections.length === 0) return []
+
+  const alerts: WorkflowAlert[] = []
+  const now = new Date()
+
+  for (const sel of selections) {
+    if (!sel.lead_time_days || !sel.needed_by_phase) continue
+
+    // Skip if already ordered or beyond
+    if (['ordered', 'received', 'installed'].includes(sel.status)) continue
+
+    const phaseStart = await getPhaseEstimatedStart(projectId, sel.needed_by_phase)
+    if (!phaseStart) continue
+
+    const orderByDate = calculateOrderByDate(phaseStart, sel.lead_time_days)
+    const daysUntilOrder = Math.ceil((orderByDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    const orderByStr = orderByDate.toISOString().split('T')[0]
+
+    let priority: WorkflowAlert['priority']
+    if (daysUntilOrder < 0) {
+      priority = 'urgent' // overdue
+    } else if (daysUntilOrder < 14) {
+      priority = 'urgent'
+    } else if (daysUntilOrder < 28) {
+      priority = 'high'
+    } else if (daysUntilOrder < 56) {
+      priority = 'medium'
+    } else {
+      continue // more than 8 weeks out, skip
+    }
+
+    const mapping = getCategoryMapping(sel.category)
+
+    alerts.push({
+      type: 'lead_time_warning',
+      priority,
+      title: `Order by ${orderByStr}: ${sel.product_name}`,
+      message: daysUntilOrder < 0
+        ? `OVERDUE — ${sel.product_name} (${sel.lead_time_days}-day lead time) should have been ordered ${Math.abs(daysUntilOrder)} days ago for Phase ${sel.needed_by_phase}.`
+        : `${sel.product_name} has a ${sel.lead_time_days}-day lead time. Order by ${orderByStr} for Phase ${sel.needed_by_phase} (${daysUntilOrder} days remaining).`,
+      selection_id: sel.id,
+      order_by_date: orderByStr,
+      phase_number: mapping?.phase,
+      knowledge_id: sel.knowledge_id ?? undefined,
+    })
+  }
+
+  return alerts
 }
 
 /** Update workflow phase status */

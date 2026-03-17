@@ -208,8 +208,8 @@ describe('assistant', () => {
   // -------------------------------------------------------------------
 
   describe('ASSISTANT_TOOLS', () => {
-    it('has 33 tools total (22 read + 11 write)', () => {
-      expect(ASSISTANT_TOOLS).toHaveLength(33)
+    it('has 35 tools total (22 read + 13 write)', () => {
+      expect(ASSISTANT_TOOLS).toHaveLength(35)
     })
 
     it('contains all expected read tools', () => {
@@ -247,7 +247,9 @@ describe('assistant', () => {
       expect(names).toContain('update_budget_item')
       expect(names).toContain('add_budget_item')
       expect(names).toContain('update_milestone')
+      expect(names).toContain('update_task')
       expect(names).toContain('complete_workflow_item')
+      expect(names).toContain('link_selection_to_decision')
       expect(names).toContain('create_change_order')
       expect(names).toContain('add_punch_item')
       expect(names).toContain('schedule_inspection')

@@ -366,6 +366,14 @@ CREATE POLICY "Users can view notifications" ON notification_queue
 -- Migration: Add bid_id FK to selections for cross-referencing
 ALTER TABLE selections ADD COLUMN IF NOT EXISTS bid_id UUID REFERENCES bids(id) ON DELETE SET NULL;
 
+-- Migration: Selection ↔ Workflow Integration
+ALTER TABLE selections ADD COLUMN IF NOT EXISTS knowledge_id UUID REFERENCES construction_knowledge(id) ON DELETE SET NULL;
+ALTER TABLE selections ADD COLUMN IF NOT EXISTS needed_by_phase INTEGER;
+ALTER TABLE selections ADD COLUMN IF NOT EXISTS needed_by_date DATE;
+ALTER TABLE selections ADD COLUMN IF NOT EXISTS lead_time_days INTEGER;
+CREATE INDEX IF NOT EXISTS idx_selections_knowledge_id ON selections(knowledge_id);
+CREATE INDEX IF NOT EXISTS idx_selections_needed_by_date ON selections(needed_by_date);
+
 -- Migration: Add audit_log table for change tracking
 CREATE TABLE IF NOT EXISTS audit_log (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
