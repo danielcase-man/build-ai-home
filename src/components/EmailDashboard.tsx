@@ -14,55 +14,46 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import DraftEmailsPanel from '@/components/DraftEmailsPanel'
-import GmailConnect from '@/components/GmailConnect'
 import type { DraftEmail, EmailInsights, EmailTriage, EmailRecord, Question, KeyDataPoint } from '@/types'
 
-/** Disconnect + reconnect flow shown when Gmail auth is broken */
-function GmailReconnect({ onDisconnected }: { onDisconnected: () => void }) {
-  const [disconnecting, setDisconnecting] = useState(false)
-  const [disconnected, setDisconnected] = useState(false)
+/** One-click reconnect: clears bad tokens and starts OAuth flow */
+function GmailReconnect() {
+  const [reconnecting, setReconnecting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleDisconnect = async () => {
-    setDisconnecting(true)
+  const handleReconnect = async () => {
+    setReconnecting(true)
+    setError(null)
     try {
-      const res = await fetch('/api/gmail/disconnect', { method: 'POST' })
-      if (res.ok) {
-        setDisconnected(true)
-        onDisconnected()
+      // Step 1: Clear broken tokens
+      await fetch('/api/gmail/disconnect', { method: 'POST' })
+
+      // Step 2: Start OAuth flow
+      const res = await fetch('/api/gmail/auth')
+      const data = await res.json()
+      const authUrl = data.data?.authUrl ?? data.authUrl
+      if (authUrl) {
+        window.location.href = authUrl
+      } else {
+        setError('Failed to start Gmail authentication')
+        setReconnecting(false)
       }
     } catch {
-      // ignore
-    } finally {
-      setDisconnecting(false)
+      setError('Failed to reconnect Gmail')
+      setReconnecting(false)
     }
-  }
-
-  if (disconnected) {
-    return <GmailConnect />
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <AlertTriangle className="h-5 w-5 text-destructive" />
-          Gmail Connection Expired
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="py-6 space-y-3">
         <p className="text-sm text-muted-foreground">
-          Your Gmail OAuth tokens have expired or become invalid. This typically happens when:
+          Gmail connection expired. Click below to re-authorize access.
         </p>
-        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-          <li>The Google OAuth app is in &quot;Testing&quot; mode (tokens expire every 7 days)</li>
-          <li>You changed your Google password or revoked app access</li>
-          <li>The encryption key changed between deployments</li>
-        </ul>
-        <p className="text-sm text-muted-foreground">
-          Click below to clear the old credentials, then reconnect your Gmail account.
-        </p>
-        <Button variant="destructive" onClick={handleDisconnect} disabled={disconnecting}>
-          {disconnecting ? 'Disconnecting...' : 'Disconnect Gmail'}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <Button onClick={handleReconnect} disabled={reconnecting}>
+          <RefreshCw className={cn("h-4 w-4 mr-2", reconnecting && "animate-spin")} />
+          {reconnecting ? 'Reconnecting...' : 'Reconnect Gmail'}
         </Button>
       </CardContent>
     </Card>
@@ -184,17 +175,7 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
   }
 
   if (authFailed && emails.length === 0) {
-    return (
-      <div className="space-y-4">
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            Gmail authentication has expired or is invalid. Disconnect your account below, then reconnect to restore email access.
-          </AlertDescription>
-        </Alert>
-        <GmailReconnect onDisconnected={() => setAuthFailed(false)} />
-      </div>
-    )
+    return <GmailReconnect />
   }
 
   if (error && emails.length === 0) {
@@ -205,15 +186,7 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
     <div className="space-y-6">
       {/* Auth failure with cached data — show reconnect banner */}
       {authFailed && emails.length > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span>Gmail auth expired — showing cached data. Reconnect to sync new emails.</span>
-            <Button variant="outline" size="sm" className="ml-4" onClick={() => window.location.href = '/emails?reconnect=true'}>
-              Reconnect
-            </Button>
-          </AlertDescription>
-        </Alert>
+        <GmailReconnect />
       )}
 
       {/* Refresh error (non-blocking when we have cached data) */}
