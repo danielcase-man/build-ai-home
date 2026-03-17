@@ -27,10 +27,25 @@ describe('env', () => {
   it('throws for missing required env var', async () => {
     delete process.env.GOOGLE_CLIENT_ID
     delete process.env.GOOGLE_CLIENT_SECRET
-    delete process.env.GOOGLE_REDIRECT_URI
 
     const { env } = await import('./env')
     expect(() => env.googleClientId).toThrow('Missing required environment variable: GOOGLE_CLIENT_ID')
+  })
+
+  it('auto-derives googleRedirectUri from VERCEL_PROJECT_PRODUCTION_URL when not explicitly set', async () => {
+    delete process.env.GOOGLE_REDIRECT_URI
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'my-app.vercel.app'
+
+    const { env } = await import('./env')
+    expect(env.googleRedirectUri).toBe('https://my-app.vercel.app/api/auth/google/callback')
+  })
+
+  it('falls back to localhost for googleRedirectUri when nothing set', async () => {
+    delete process.env.GOOGLE_REDIRECT_URI
+    delete process.env.VERCEL_URL
+
+    const { env } = await import('./env')
+    expect(env.googleRedirectUri).toBe('http://localhost:3000/api/auth/google/callback')
   })
 
   it('returns undefined for missing optional env var', async () => {

@@ -23,7 +23,16 @@ export const env = {
   // Google OAuth
   get googleClientId() { return requiredEnv('GOOGLE_CLIENT_ID') },
   get googleClientSecret() { return requiredEnv('GOOGLE_CLIENT_SECRET') },
-  get googleRedirectUri() { return requiredEnv('GOOGLE_REDIRECT_URI') },
+  get googleRedirectUri() {
+    // Explicit override takes priority
+    const explicit = optionalEnv('GOOGLE_REDIRECT_URI')
+    if (explicit) return explicit
+    // Auto-derive from stable Vercel production URL
+    const prodUrl = optionalEnv('VERCEL_PROJECT_PRODUCTION_URL')
+    if (prodUrl) return `https://${prodUrl}/api/auth/google/callback`
+    // Fallback for local dev
+    return 'http://localhost:3000/api/auth/google/callback'
+  },
 
   // AI
   get anthropicApiKey() { return optionalEnv('ANTHROPIC_API_KEY') },
