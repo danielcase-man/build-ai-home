@@ -143,11 +143,11 @@ export async function GET(request: NextRequest) {
 
         // Notify about new emails
         await createEmailSyncNotification(project.id, emailsToStore.length)
-
-        // Trigger unified status update after new emails are stored
-        console.log('Triggering project status update...')
-        await updateProjectStatus(project.id)
       }
+
+      // Always regenerate status on manual refresh (even if no new emails)
+      console.log('Triggering project status update...')
+      await updateProjectStatus(project.id)
     }
 
     // Return latest unified project status
