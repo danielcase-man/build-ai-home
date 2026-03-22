@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Navigation from '@/components/Navigation'
 import { SIDEBAR_WIDTH_EXPANDED, SIDEBAR_WIDTH_COLLAPSED } from '@/components/Navigation'
 import RealtimeListener from '@/components/RealtimeListener'
+import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 
 /**
  * AppShell wraps the sidebar + top bar + main content area.
@@ -61,6 +62,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <Navigation />
       <RealtimeListener />
+      <KeyboardShortcuts />
       <main
         className="flex-1 transition-[margin-left] duration-200 ease-in-out md:ml-[var(--sidebar-w)]"
         style={{ '--sidebar-w': `${sidebarWidth}px` } as React.CSSProperties}
