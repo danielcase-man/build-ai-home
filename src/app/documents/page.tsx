@@ -5,7 +5,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorCard from '@/components/ui/ErrorCard'
 import { supabase } from '@/lib/supabase'
 
-interface Document {
+export interface Document {
   id: string
   project_id: string
   name: string
@@ -17,6 +17,19 @@ interface Document {
   upload_date: string | null
   jobtread_id: string | null
   created_at: string
+  // Versioning (Migration 002)
+  document_group_id: string | null
+  is_current: boolean | null
+  superseded_by: string | null
+  source_path: string | null
+  // Entity linking
+  vendor_id: string | null
+  contact_id: string | null
+  related_bid_id: string | null
+  related_selection_id: string | null
+  // AI
+  ai_summary: string | null
+  ai_classification: string | null
 }
 
 async function DocumentsData() {

@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import {
   FileText,
   File,
@@ -26,6 +33,13 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
+  GitBranch,
+  Sparkles,
+  Link2,
+  Eye,
+  EyeOff,
+  History,
+  ChevronDown,
 } from 'lucide-react'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
@@ -42,6 +56,19 @@ interface Document {
   upload_date: string | null
   jobtread_id: string | null
   created_at: string
+  // Versioning
+  document_group_id: string | null
+  is_current: boolean | null
+  superseded_by: string | null
+  source_path: string | null
+  // Entity linking
+  vendor_id: string | null
+  contact_id: string | null
+  related_bid_id: string | null
+  related_selection_id: string | null
+  // AI
+  ai_summary: string | null
+  ai_classification: string | null
 }
 
 interface DocumentsClientProps {
@@ -142,15 +169,62 @@ function getCategoryColor(category: string): string {
   }
 }
 
+function getClassificationColor(classification: string): string {
+  switch (classification.toLowerCase()) {
+    case 'bid':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    case 'contract':
+      return 'bg-violet-50 text-violet-700 border-violet-200'
+    case 'plan':
+    case 'plans':
+      return 'bg-blue-50 text-blue-700 border-blue-200'
+    case 'permit':
+      return 'bg-amber-50 text-amber-700 border-amber-200'
+    case 'correspondence':
+      return 'bg-slate-100 text-slate-600 border-slate-200'
+    case 'invoice':
+      return 'bg-rose-50 text-rose-700 border-rose-200'
+    case 'photo':
+      return 'bg-teal-50 text-teal-700 border-teal-200'
+    case 'report':
+      return 'bg-cyan-50 text-cyan-700 border-cyan-200'
+    default:
+      return 'bg-gray-50 text-gray-600 border-gray-200'
+  }
+}
+
 // ─── Document Card ──────────────────────────────────────────────────────────────
 
-function DocumentCard({ doc }: { doc: Document }) {
+function DocumentCard({ doc, allDocuments }: { doc: Document; allDocuments: Document[] }) {
+  const [historyOpen, setHistoryOpen] = useState(false)
   const ext = getExtension(doc)
   const { icon: Icon, color, bg } = getFileIcon(ext)
   const isJobTread = doc.jobtread_id !== null
+  const isSuperseded = doc.is_current === false
+
+  // Version group: find siblings with same document_group_id
+  const versionGroup = useMemo(() => {
+    if (!doc.document_group_id) return []
+    return allDocuments
+      .filter((d) => d.document_group_id === doc.document_group_id)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }, [doc.document_group_id, allDocuments])
+
+  // Determine version number within the group (1-based)
+  const versionNumber = versionGroup.length > 1
+    ? versionGroup.findIndex((d) => d.id === doc.id) + 1
+    : null
+
+  // Other versions (excluding current doc) for history display
+  const otherVersions = versionGroup.filter((d) => d.id !== doc.id)
+
+  // Entity link flags
+  const hasVendor = doc.vendor_id !== null
+  const hasBid = doc.related_bid_id !== null
+  const hasSelection = doc.related_selection_id !== null
 
   return (
-    <Card className="transition-shadow hover:shadow-md">
+    <Card className={`transition-shadow hover:shadow-md ${isSuperseded ? 'opacity-60' : ''}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           {/* File icon */}
@@ -162,13 +236,42 @@ function DocumentCard({ doc }: { doc: Document }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <h3 className="text-sm font-semibold leading-tight truncate" title={doc.name}>
-                  {doc.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold leading-tight truncate" title={doc.name}>
+                    {doc.name}
+                  </h3>
+                  {versionNumber !== null && (
+                    <Badge variant="outline" className="text-[10px] shrink-0 bg-gray-50 text-gray-600 border-gray-200 font-mono">
+                      v{versionNumber}
+                    </Badge>
+                  )}
+                  {isSuperseded && (
+                    <Badge variant="outline" className="text-[10px] shrink-0 bg-orange-50 text-orange-600 border-orange-200">
+                      <EyeOff className="h-2.5 w-2.5 mr-1" />
+                      Superseded
+                    </Badge>
+                  )}
+                </div>
                 {doc.description && (
                   <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                     {doc.description}
                   </p>
+                )}
+                {/* AI summary as expandable line below description */}
+                {doc.ai_summary && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-xs text-muted-foreground/80 mt-1 line-clamp-1 cursor-help italic">
+                          <Sparkles className="h-3 w-3 inline mr-1 text-violet-400" />
+                          {doc.ai_summary}
+                        </p>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-sm text-xs">
+                        {doc.ai_summary}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
 
@@ -193,6 +296,14 @@ function DocumentCard({ doc }: { doc: Document }) {
               {doc.category && (
                 <Badge variant="outline" className={`text-[11px] ${getCategoryColor(doc.category)}`}>
                   {doc.category}
+                </Badge>
+              )}
+
+              {/* AI classification badge */}
+              {doc.ai_classification && (
+                <Badge variant="outline" className={`text-[11px] ${getClassificationColor(doc.ai_classification)}`}>
+                  <Sparkles className="h-2.5 w-2.5 mr-1" />
+                  {doc.ai_classification}
                 </Badge>
               )}
 
@@ -226,7 +337,66 @@ function DocumentCard({ doc }: { doc: Document }) {
                   {formatDate(doc.upload_date || doc.created_at)}
                 </span>
               )}
+
+              {/* Entity link badges */}
+              {hasVendor && (
+                <Badge variant="outline" className="text-[10px] bg-sky-50 text-sky-700 border-sky-200">
+                  <Link2 className="h-2.5 w-2.5 mr-1" />
+                  Vendor
+                </Badge>
+              )}
+              {hasBid && (
+                <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <Link2 className="h-2.5 w-2.5 mr-1" />
+                  Bid
+                </Badge>
+              )}
+              {hasSelection && (
+                <Badge variant="outline" className="text-[10px] bg-purple-50 text-purple-700 border-purple-200">
+                  <Link2 className="h-2.5 w-2.5 mr-1" />
+                  Selection
+                </Badge>
+              )}
             </div>
+
+            {/* Version history collapsible */}
+            {otherVersions.length > 0 && (
+              <Collapsible open={historyOpen} onOpenChange={setHistoryOpen}>
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center gap-1.5 mt-2 text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+                    <History className="h-3 w-3" />
+                    <span>{otherVersions.length} other version{otherVersions.length > 1 ? 's' : ''}</span>
+                    <ChevronDown className={`h-3 w-3 transition-transform ${historyOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <div className="mt-2 ml-1 border-l-2 border-muted pl-3 space-y-1.5">
+                    {otherVersions.map((v, idx) => {
+                      const vIdx = versionGroup.findIndex((d) => d.id === v.id) + 1
+                      const vIsCurrent = v.is_current !== false
+                      return (
+                        <div key={v.id} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <GitBranch className="h-3 w-3 shrink-0" />
+                          <span className="font-mono text-[10px]">v{vIdx}</span>
+                          <span className="truncate" title={v.name}>{v.name}</span>
+                          <span className="shrink-0">{formatDate(v.upload_date || v.created_at)}</span>
+                          {vIsCurrent && (
+                            <Badge variant="outline" className="text-[9px] py-0 h-4 bg-emerald-50 text-emerald-600 border-emerald-200">
+                              Current
+                            </Badge>
+                          )}
+                          {v.file_url && (
+                            <a href={v.file_url} target="_blank" rel="noopener noreferrer" className="shrink-0">
+                              <ExternalLink className="h-3 w-3 hover:text-foreground transition-colors" />
+                            </a>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            )}
           </div>
         </div>
       </CardContent>
@@ -241,6 +411,7 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [showAllVersions, setShowAllVersions] = useState(false)
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle')
   const [uploadProgress, setUploadProgress] = useState(0)
   const [uploadMessage, setUploadMessage] = useState('')
@@ -260,11 +431,20 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
     const categoryCount = categories.length
     const jobTreadCount = documents.filter((d) => d.jobtread_id !== null).length
     const uploadCount = total - jobTreadCount
-    return { total, categoryCount, jobTreadCount, uploadCount }
+    const aiClassifiedCount = documents.filter((d) => d.ai_classification !== null).length
+    const versionGroupCount = new Set(
+      documents.filter((d) => d.document_group_id !== null).map((d) => d.document_group_id)
+    ).size
+    return { total, categoryCount, jobTreadCount, uploadCount, aiClassifiedCount, versionGroupCount }
   }, [documents, categories])
 
   const filteredDocuments = useMemo(() => {
     let result = documents
+
+    // Version filter: hide superseded documents by default
+    if (!showAllVersions) {
+      result = result.filter((d) => d.is_current !== false)
+    }
 
     // Category filter
     if (activeCategory) {
@@ -278,12 +458,13 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
         (d) =>
           d.name.toLowerCase().includes(query) ||
           (d.category && d.category.toLowerCase().includes(query)) ||
-          (d.description && d.description.toLowerCase().includes(query))
+          (d.description && d.description.toLowerCase().includes(query)) ||
+          (d.ai_classification && d.ai_classification.toLowerCase().includes(query))
       )
     }
 
     return result
-  }, [documents, searchQuery, activeCategory])
+  }, [documents, searchQuery, activeCategory, showAllVersions])
 
   // ─── Upload Handler ─────────────────────────────────────────────────────────
 
@@ -446,12 +627,12 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <FolderOpen className="h-4 w-4" />
-              Total Documents
+              Total
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -475,7 +656,7 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <CloudDownload className="h-4 w-4" />
-              From JobTread
+              JobTread
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -487,11 +668,35 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
               <Upload className="h-4 w-4" />
-              From Uploads
+              Uploads
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">{summary.uploadCount}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Sparkles className="h-4 w-4" />
+              AI Classified
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.aiClassifiedCount}</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <GitBranch className="h-4 w-4" />
+              Version Groups
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{summary.versionGroupCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -533,17 +738,34 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
               </Badge>
             )
           })}
+
+          {/* Separator and version toggle */}
+          <Separator orientation="vertical" className="h-5 mx-1" />
+          <Badge
+            variant={showAllVersions ? 'default' : 'outline'}
+            className="cursor-pointer text-xs gap-1"
+            onClick={() => setShowAllVersions(!showAllVersions)}
+          >
+            {showAllVersions ? (
+              <><Eye className="h-3 w-3" /> All versions</>
+            ) : (
+              <><EyeOff className="h-3 w-3" /> Current only</>
+            )}
+          </Badge>
         </div>
       )}
 
       {/* Filter info */}
-      {(searchQuery || activeCategory) && filteredDocuments.length > 0 && (
+      {(searchQuery || activeCategory || !showAllVersions) && filteredDocuments.length > 0 && filteredDocuments.length !== documents.length && (
         <p className="text-sm text-muted-foreground">
           Showing {filteredDocuments.length} of {documents.length} documents
           {activeCategory && (
             <>
               {' '}in <span className="font-medium">{activeCategory}</span>
             </>
+          )}
+          {!showAllVersions && (
+            <> (current versions only)</>
           )}
         </p>
       )}
@@ -552,7 +774,7 @@ export default function DocumentsClient({ documents, projectId }: DocumentsClien
       {filteredDocuments.length > 0 ? (
         <div className="space-y-3">
           {filteredDocuments.map((doc) => (
-            <DocumentCard key={doc.id} doc={doc} />
+            <DocumentCard key={doc.id} doc={doc} allDocuments={documents} />
           ))}
         </div>
       ) : documents.length === 0 ? (
