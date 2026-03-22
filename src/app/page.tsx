@@ -1,6 +1,9 @@
 import { Suspense } from 'react'
 import { getProjectDashboard, getProject } from '@/lib/project-service'
 import { db } from '@/lib/database'
+import { getFollowUpsNeeded } from '@/lib/vendor-thread-service'
+import { getBids } from '@/lib/bids-service'
+import { CONSTRUCTION_PHASES } from '@/lib/construction-phases'
 import HomeClient from './HomeClient'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -54,13 +57,22 @@ function DashboardSkeleton() {
 async function DashboardData() {
   const project = await getProject()
 
-  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth, deadlines] = await Promise.all([
+  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth, deadlines, vendorFollowUps, bids] = await Promise.all([
     getProjectDashboard(),
     project?.id ? db.getLatestProjectStatus(project.id) : Promise.resolve(null),
     db.getRecentEmailPreviews(3),
     db.hasEmailAccountConfigured(),
     project?.id ? db.getUpcomingDeadlines(project.id) : Promise.resolve([]),
+    project?.id ? getFollowUpsNeeded(project.id, 5).catch(() => []) : Promise.resolve([]),
+    project?.id ? getBids(project.id).catch(() => []) : Promise.resolve([]),
   ])
+
+  // Compute coverage gaps: trades that have zero bids
+  const bidCategories = new Set(bids.map(b => b.category))
+  const allTrades = CONSTRUCTION_PHASES.flatMap(p => p.trades)
+  const uncoveredTrades = allTrades
+    .filter(t => t.required && !bidCategories.has(t.bidCategory))
+    .map(t => ({ name: t.name, phase: CONSTRUCTION_PHASES.find(p => p.trades.includes(t))?.name || '' }))
 
   return (
     <HomeClient
@@ -69,6 +81,13 @@ async function DashboardData() {
       initialEmails={emailPreviews}
       gmailConnected={hasGmailAuth}
       initialDeadlines={deadlines}
+      vendorFollowUps={vendorFollowUps.map(f => ({
+        vendorName: f.thread.vendor_name,
+        daysWaiting: f.days_waiting,
+        reason: f.reason,
+        category: f.thread.category,
+      }))}
+      coverageGaps={uncoveredTrades.slice(0, 5)}
     />
   )
 }

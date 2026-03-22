@@ -62,11 +62,23 @@ interface DeadlineItem {
 }
 
 interface AttentionItem {
-  type: 'deadline' | 'action' | 'email' | 'question'
+  type: 'deadline' | 'action' | 'email' | 'question' | 'vendor' | 'coverage'
   urgency: 'urgent' | 'warning' | 'normal' | 'info'
   text: string
   detail?: string
   link: string
+}
+
+interface VendorFollowUp {
+  vendorName: string
+  daysWaiting: number
+  reason: string
+  category: string | null
+}
+
+interface CoverageGap {
+  name: string
+  phase: string
 }
 
 interface StatusSnapshot {
@@ -84,6 +96,8 @@ interface HomeClientProps {
   initialEmails: EmailPreview[]
   gmailConnected: boolean
   initialDeadlines: DeadlineItem[]
+  vendorFollowUps?: VendorFollowUp[]
+  coverageGaps?: CoverageGap[]
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -93,6 +107,8 @@ const ATTENTION_ICONS = {
   action: ListTodo,
   email: Mail,
   question: CircleHelp,
+  vendor: Users,
+  coverage: AlertTriangle,
 } as const
 
 const URGENCY_DOT_COLORS = {
@@ -123,6 +139,8 @@ export default function HomeClient({
   initialEmails,
   gmailConnected,
   initialDeadlines,
+  vendorFollowUps = [],
+  coverageGaps = [],
 }: HomeClientProps) {
   const [projectData, setProjectData] = useState<DashboardData>(initialData)
   const [hotTopics, setHotTopics] = useState<string[]>(() => {
@@ -181,6 +199,28 @@ export default function HomeClient({
       })
     }
 
+    // Vendor follow-ups (unresponsive vendors)
+    for (const v of vendorFollowUps) {
+      items.push({
+        type: 'vendor',
+        urgency: v.daysWaiting >= 14 ? 'urgent' : v.daysWaiting >= 7 ? 'warning' : 'normal',
+        text: `${v.vendorName} — no response${v.category ? ` (${v.category})` : ''}`,
+        detail: `${v.daysWaiting} days waiting. ${v.reason}`,
+        link: '/vendors',
+      })
+    }
+
+    // Coverage gaps (required trades with no bids)
+    for (const gap of coverageGaps.slice(0, 3)) {
+      items.push({
+        type: 'coverage',
+        urgency: 'warning',
+        text: `No bids for ${gap.name}`,
+        detail: gap.phase,
+        link: '/coverage',
+      })
+    }
+
     // Open questions
     for (const q of openQuestions) {
       items.push({
@@ -197,7 +237,7 @@ export default function HomeClient({
     }
 
     return items
-  }, [initialDeadlines, pendingActionItems, openQuestions])
+  }, [initialDeadlines, pendingActionItems, vendorFollowUps, coverageGaps, openQuestions])
 
   // ── Refresh handlers ──
 
