@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { getProject } from '@/lib/project-service'
-import { getConstructionLoan } from '@/lib/loan-service'
+import { getActiveConstructionLoan, getConstructionLoanHistory } from '@/lib/loan-service'
 import FinancingClient from './FinancingClient'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorCard from '@/components/ui/ErrorCard'
@@ -12,9 +12,12 @@ async function FinancingData() {
     return <ErrorCard message="No project found. Create a project first." />
   }
 
-  const loan = await getConstructionLoan(project.id)
+  const [loan, history] = await Promise.all([
+    getActiveConstructionLoan(project.id),
+    getConstructionLoanHistory(project.id),
+  ])
 
-  return <FinancingClient loan={loan} projectId={project.id} />
+  return <FinancingClient loan={loan} history={history} projectId={project.id} />
 }
 
 export default function FinancingPage() {

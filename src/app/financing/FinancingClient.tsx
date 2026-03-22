@@ -25,6 +25,11 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
+import {
   Landmark,
   ExternalLink,
   Phone,
@@ -35,18 +40,22 @@ import {
   CheckCircle2,
   Circle,
   ChevronRight,
+  ChevronDown,
   Pencil,
+  Plus,
   User,
   Building2,
   CreditCard,
   CalendarDays,
   StickyNote,
   Shield,
+  Archive,
 } from 'lucide-react'
 import type { ConstructionLoan } from '@/types'
 
 interface FinancingClientProps {
   loan: ConstructionLoan | null
+  history: ConstructionLoan[]
   projectId: string
 }
 
@@ -314,10 +323,12 @@ function EditLoanDialog({
   loan,
   projectId,
   onSave,
+  isNewApplication = false,
 }: {
   loan: ConstructionLoan | null
   projectId: string
-  onSave: (updated: ConstructionLoan) => void
+  onSave: (updated: ConstructionLoan, history?: ConstructionLoan[]) => void
+  isNewApplication?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -354,8 +365,9 @@ function EditLoanDialog({
   async function handleSubmit() {
     setSaving(true)
     try {
-      const payload: Partial<ConstructionLoan> = {
-        ...loan, // preserve existing fields like loan_details
+      const payload: Partial<ConstructionLoan> & { _action?: string } = {
+        ...(isNewApplication ? {} : loan), // preserve existing fields only when editing
+        ...(isNewApplication ? { _action: 'new_application' } : {}),
         lender_name: form.lender_name,
         loan_type: form.loan_type as ConstructionLoan['loan_type'],
         loan_amount: parseFloat(form.loan_amount) || 0,
@@ -388,7 +400,7 @@ function EditLoanDialog({
 
       const result = await res.json()
       if (result.success && result.data?.loan) {
-        onSave(result.data.loan)
+        onSave(result.data.loan, result.data.history)
         setOpen(false)
       }
     } catch {
@@ -401,16 +413,18 @@ function EditLoanDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
-          <Pencil className="h-3.5 w-3.5" />
-          Edit Details
+        <Button variant={isNewApplication ? "secondary" : "outline"} size="sm" className="gap-1.5">
+          {isNewApplication ? <Plus className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+          {isNewApplication ? "New Application" : "Edit Details"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Edit Loan Details</DialogTitle>
+          <DialogTitle>{isNewApplication ? 'New Loan Application' : 'Edit Loan Details'}</DialogTitle>
           <DialogDescription>
-            Update your construction loan application information.
+            {isNewApplication
+              ? 'Start a new loan application. The current application will be archived.'
+              : 'Update your construction loan application information.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -577,11 +591,67 @@ function EditLoanDialog({
   )
 }
 
+// --- Previous Applications ---
+
+function PreviousApplications({ loans }: { loans: ConstructionLoan[] }) {
+  const [open, setOpen] = useState(false)
+
+  if (loans.length === 0) return null
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        <Archive className="h-4 w-4" />
+        Previous Applications ({loans.length})
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="mt-3 space-y-3">
+          {loans.map(hist => (
+            <Card key={hist.id} className="bg-muted/30">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{hist.lender_name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {getLoanTypeLabel(hist.loan_type)}
+                      {hist.loan_amount > 0 && ` — ${formatCurrency(hist.loan_amount)}`}
+                    </p>
+                    {hist.application_date && (
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Applied: {formatDate(hist.application_date)}
+                      </p>
+                    )}
+                  </div>
+                  <Badge variant={getStatusBadgeVariant(hist.application_status)}>
+                    {getStatusLabel(hist.application_status)}
+                  </Badge>
+                </div>
+                {hist.notes && (
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{hist.notes}</p>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  )
+}
+
 // --- Empty State ---
 
-function EmptyLoanState({ projectId, onSave }: { projectId: string; onSave: (loan: ConstructionLoan) => void }) {
+function EmptyLoanState({
+  projectId,
+  history,
+  onSave,
+}: {
+  projectId: string
+  history: ConstructionLoan[]
+  onSave: (loan: ConstructionLoan, history?: ConstructionLoan[]) => void
+}) {
   return (
-    <div className="container max-w-5xl py-8">
+    <div className="container max-w-5xl py-8 space-y-6">
       <Card>
         <CardContent className="py-16">
           <div className="text-center space-y-4">
@@ -589,26 +659,35 @@ function EmptyLoanState({ projectId, onSave }: { projectId: string; onSave: (loa
               <Landmark className="h-8 w-8 text-muted-foreground" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">No Financing Set Up</h2>
+              <h2 className="text-xl font-semibold">
+                {history.length > 0 ? 'No Active Application' : 'No Financing Set Up'}
+              </h2>
               <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
                 Track your construction loan application progress, documents, and lender contacts all in one place.
               </p>
             </div>
-            <EditLoanDialog loan={null} projectId={projectId} onSave={onSave} />
+            <EditLoanDialog loan={null} projectId={projectId} onSave={onSave} isNewApplication />
           </div>
         </CardContent>
       </Card>
+      <PreviousApplications loans={history} />
     </div>
   )
 }
 
 // --- Main Component ---
 
-export default function FinancingClient({ loan: initialLoan, projectId }: FinancingClientProps) {
+export default function FinancingClient({ loan: initialLoan, history: initialHistory, projectId }: FinancingClientProps) {
   const [loan, setLoan] = useState<ConstructionLoan | null>(initialLoan)
+  const [history, setHistory] = useState<ConstructionLoan[]>(initialHistory)
+
+  function handleSave(updated: ConstructionLoan, newHistory?: ConstructionLoan[]) {
+    setLoan(updated)
+    if (newHistory) setHistory(newHistory)
+  }
 
   if (!loan) {
-    return <EmptyLoanState projectId={projectId} onSave={setLoan} />
+    return <EmptyLoanState projectId={projectId} history={history} onSave={handleSave} />
   }
 
   const details = loan.loan_details as Record<string, unknown> | undefined
@@ -639,7 +718,8 @@ export default function FinancingClient({ loan: initialLoan, projectId }: Financ
           >
             {getStatusLabel(loan.application_status)}
           </Badge>
-          <EditLoanDialog loan={loan} projectId={projectId} onSave={setLoan} />
+          <EditLoanDialog loan={loan} projectId={projectId} onSave={handleSave} />
+          <EditLoanDialog loan={null} projectId={projectId} onSave={handleSave} isNewApplication />
         </div>
       </div>
 
@@ -876,6 +956,9 @@ export default function FinancingClient({ loan: initialLoan, projectId }: Financ
           </CardContent>
         </Card>
       )}
+
+      {/* Previous Applications */}
+      <PreviousApplications loans={history} />
     </div>
   )
 }

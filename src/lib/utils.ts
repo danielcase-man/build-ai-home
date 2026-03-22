@@ -37,8 +37,10 @@ export function formatDate(
 
 export function getDaysRemaining(startDate: Date, totalDays: number): number {
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
   const start = new Date(startDate)
-  const daysElapsed = Math.floor((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  start.setHours(0, 0, 0, 0)
+  const daysElapsed = Math.round((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
   return Math.max(0, totalDays - daysElapsed)
 }
 

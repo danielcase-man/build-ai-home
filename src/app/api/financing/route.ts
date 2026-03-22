@@ -1,16 +1,20 @@
 import { getProject } from '@/lib/project-service'
-import { getConstructionLoan, upsertConstructionLoan } from '@/lib/loan-service'
+import { getActiveConstructionLoan, getConstructionLoanHistory, upsertConstructionLoan } from '@/lib/loan-service'
 import { successResponse, errorResponse } from '@/lib/api-utils'
 
 export async function GET() {
   try {
     const project = await getProject()
     if (!project) {
-      return successResponse({ loan: null })
+      return successResponse({ loan: null, history: [] })
     }
 
-    const loan = await getConstructionLoan(project.id)
-    return successResponse({ loan })
+    const [loan, history] = await Promise.all([
+      getActiveConstructionLoan(project.id),
+      getConstructionLoanHistory(project.id),
+    ])
+
+    return successResponse({ loan, history })
   } catch (error) {
     return errorResponse(error, 'Failed to fetch financing data')
   }
@@ -24,13 +28,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const loan = await upsertConstructionLoan(project.id, body)
+    const result = await upsertConstructionLoan(project.id, body)
 
-    if (!loan) {
+    if (!result.loan) {
       return errorResponse(new Error('Failed to save loan'), 'Failed to save loan data')
     }
 
-    return successResponse({ loan })
+    return successResponse({ loan: result.loan, history: result.history })
   } catch (error) {
     return errorResponse(error, 'Failed to save financing data')
   }

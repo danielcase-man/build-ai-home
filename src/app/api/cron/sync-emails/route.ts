@@ -8,6 +8,7 @@ import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { AuthenticationError } from '@/lib/errors'
 import { env } from '@/lib/env'
 import { createEmailSyncNotification } from '@/lib/notification-service'
+import { detectAndUpdateLoanStatus } from '@/lib/loan-status-detection'
 import type { EmailRecord } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -176,6 +177,40 @@ export async function POST(request: NextRequest) {
       console.log('Project status snapshot updated')
     } catch (statusError) {
       console.error('Failed to update project status (non-fatal):', statusError)
+    }
+
+    // Reconcile project state from evidence (milestones, planning steps, vendor statuses)
+    try {
+      const { ProjectReconciler } = await import('@/lib/reconciler')
+      const reconciler = new ProjectReconciler(projectId)
+      const reconcileResult = await reconciler.reconcileAll()
+      if (reconcileResult.changes.length > 0) {
+        console.log(`Reconciler: ${reconcileResult.changes.length} updates (${reconcileResult.duration}ms)`)
+        reconcileResult.changes.forEach(c => console.log(`  ${c.entity_type} "${c.entity_name}": ${c.old_value} → ${c.new_value} (${c.reason})`))
+      }
+    } catch (reconcileErr) {
+      console.error('Reconciler failed (non-fatal):', reconcileErr)
+    }
+
+    // Detect loan status changes from new emails
+    if (emailsToStore.length > 0) {
+      try {
+        console.log('Checking for loan status updates...')
+        const loanUpdate = await detectAndUpdateLoanStatus(
+          projectId,
+          emailsToStore.map(e => ({
+            from: `${e.sender_name || ''} <${e.sender_email || ''}>`,
+            subject: e.subject || '',
+            body: e.body_text || '',
+            date: e.received_date || '',
+          }))
+        )
+        if (loanUpdate.updated) {
+          console.log(`Loan status auto-updated: ${loanUpdate.reason}`)
+        }
+      } catch (loanError) {
+        console.error('Loan status detection failed (non-fatal):', loanError)
+      }
     }
 
     console.log(`Email sync completed. Processed ${emailsToStore.length} new emails`)

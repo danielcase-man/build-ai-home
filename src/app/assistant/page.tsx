@@ -1,7 +1,7 @@
 import AssistantChat from './AssistantChat'
 
 export const metadata = {
-  title: 'Project Assistant | UBuildIt Manager',
+  title: 'Project Assistant | FrameWork',
 }
 
 export default function AssistantPage() {

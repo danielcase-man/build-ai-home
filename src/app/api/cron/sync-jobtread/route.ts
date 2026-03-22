@@ -31,6 +31,18 @@ export async function POST(request: NextRequest) {
     const syncService = new JobTreadSyncService(project.id)
     const result = await syncService.syncAll()
 
+    // Reconcile project state from evidence (milestones, planning steps, vendor statuses)
+    try {
+      const { ProjectReconciler } = await import('@/lib/reconciler')
+      const reconciler = new ProjectReconciler(project.id)
+      const reconcileResult = await reconciler.reconcileAll()
+      if (reconcileResult.changes.length > 0) {
+        console.log(`Reconciler: ${reconcileResult.changes.length} updates (${reconcileResult.duration}ms)`)
+      }
+    } catch (reconcileErr) {
+      console.error('Reconciler failed (non-fatal):', reconcileErr)
+    }
+
     // Refresh AI status after sync (so budget data is included in next report)
     try {
       await updateProjectStatus(project.id)

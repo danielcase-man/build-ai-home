@@ -43,7 +43,7 @@ async function WorkflowData() {
 
   return (
     <WorkflowClient
-      overview={overview}
+      overview={overview as unknown as Parameters<typeof WorkflowClient>[0]['overview']}
       phaseTree={phaseTree}
       projectId={project.id}
     />

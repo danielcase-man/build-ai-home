@@ -1,7 +1,7 @@
 import PaymentsClient from './PaymentsClient'
 
 export const metadata = {
-  title: 'Payments | UBuildIt Manager',
+  title: 'Payments | FrameWork',
   description: 'Track transactions, contracts, invoices, and vendor balances',
 }
 

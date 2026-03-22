@@ -58,7 +58,7 @@ export async function createLinkToken(userId: string): Promise<string> {
 
   const request: LinkTokenCreateRequest = {
     user: { client_user_id: userId },
-    client_name: 'UBuildIt Manager',
+    client_name: 'FrameWork',
     products: [Products.Transactions],
     country_codes: [CountryCode.Us],
     language: 'en',

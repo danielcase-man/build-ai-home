@@ -77,7 +77,7 @@ export function addTable(
 export function addFooter(doc: typeof PDFDocument.prototype) {
   doc.moveDown(1)
   doc.fontSize(8).font('Helvetica').fillColor('#999')
-    .text(`Generated ${new Date().toLocaleDateString()} by UBuildIt Manager`, { align: 'center' })
+    .text(`Generated ${new Date().toLocaleDateString()} by FrameWork`, { align: 'center' })
   doc.fillColor('#000')
 }
 

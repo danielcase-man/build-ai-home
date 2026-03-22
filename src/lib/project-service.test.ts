@@ -59,6 +59,9 @@ vi.mock('./bids-service', () => ({
 vi.mock('./selections-service', () => ({
   getSelections: vi.fn().mockResolvedValue([]),
 }))
+vi.mock('./loan-service', () => ({
+  getConstructionLoan: vi.fn().mockResolvedValue(null),
+}))
 
 import {
   calculateCurrentStep,
