@@ -315,14 +315,19 @@ describe('assistant', () => {
       expect(prompt).toContain('WRITE tools')
     })
 
-    it('does not include detailed bid, selection, or email data', async () => {
+    it('does not include detailed bid, selection, or email data but includes construction expertise', async () => {
       const prompt = await buildSystemPrompt('proj-1')
 
+      // Should not embed specific project data (that comes via tools)
       expect(prompt).not.toContain('Pella')
       expect(prompt).not.toContain('Doorwin')
-      expect(prompt).not.toContain('AGA')
       expect(prompt).not.toContain('Window bid attached')
-      expect(prompt.length).toBeLessThan(1000)
+
+      // Should include construction domain expertise
+      expect(prompt).toContain('CRITICAL PATH')
+      expect(prompt).toContain('LEAD TIME')
+      expect(prompt).toContain('RED FLAGS')
+      expect(prompt).toContain('BID EVALUATION')
     })
   })
 

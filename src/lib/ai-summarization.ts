@@ -1,6 +1,7 @@
 import { getAnthropicClient, parseAIJsonResponse } from './ai-clients'
 import type { Email, Question, KeyDataPoint, Bid, Selection, ConstructionLoan } from '@/types'
 import type { BudgetItemRecord } from './budget-service'
+import { getStatusReportExpertise, getEmailTriageExpertise } from './construction-expertise'
 
 const MODEL = 'claude-sonnet-4-6'
 
@@ -221,7 +222,7 @@ Body: ${email.body}`
       model: MODEL,
       max_tokens: 200,
       temperature: 0.3,
-      system: 'You are a construction project manager assistant. Provide concise, actionable summaries of construction-related emails.',
+      system: getEmailTriageExpertise(),
       messages: [{ role: 'user', content: prompt }]
     })
 
@@ -337,7 +338,11 @@ Body: ${e.body}
 
   const projectDataSection = buildProjectDataSection(projectContext)
 
+  const constructionExpertise = getStatusReportExpertise()
+
   const prompt = `You are updating a running project status report for a home construction project.
+
+${constructionExpertise}
 
 === GROUNDING RULES (MANDATORY) ===
 You MUST ONLY reference facts, names, numbers, dates, vendors, materials that appear in the PROJECT DATA below.
@@ -382,7 +387,7 @@ Return valid JSON only, no markdown fences.`
       model: MODEL,
       max_tokens: 4096,
       temperature: 0.2,
-      system: 'You are a construction project manager maintaining a running status report. You MUST only use facts from the provided project data. Do NOT invent vendor names, bid amounts, materials, or any other details. Respond with valid JSON only.',
+      system: 'You are an expert construction project manager maintaining a running status report for a custom home build. You understand critical path scheduling, trade sequencing, TX building codes, and owner-builder risks. You MUST only use facts from the provided project data. Do NOT invent vendor names, bid amounts, materials, or any other details. Apply the construction analysis expertise provided to prioritize and classify items. Respond with valid JSON only.',
       messages: [{ role: 'user', content: prompt }]
     })
 
