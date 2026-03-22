@@ -58,6 +58,22 @@ export async function getEntityHistory(
   return data || []
 }
 
+/** Get recent audit log entries across all entities for a project */
+export async function getRecentAuditLog(
+  projectId: string,
+  limit = 50
+): Promise<AuditEntry[]> {
+  const { data, error } = await supabase
+    .from('audit_log')
+    .select('*')
+    .eq('project_id', projectId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) return []
+  return data || []
+}
+
 export function diffObject(
   oldObj: Record<string, unknown>,
   newObj: Record<string, unknown>

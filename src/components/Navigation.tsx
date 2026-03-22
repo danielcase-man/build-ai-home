@@ -24,6 +24,7 @@ import {
   FolderOpen,
   PanelLeftClose,
   PanelLeft,
+  History,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -101,6 +102,7 @@ const navSections: NavSection[] = [
       { href: '/documents', label: 'Documents', icon: FolderOpen },
       { href: '/punch-list', label: 'Punch List', icon: ClipboardCheck },
       { href: '/warranties', label: 'Warranties', icon: Shield },
+      { href: '/audit', label: 'Audit Trail', icon: History },
     ],
   },
 ]
