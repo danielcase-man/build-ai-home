@@ -1,11 +1,5 @@
-import React from 'react'
-import MobileLayout from '@/components/mobile/MobileLayout'
-import QuickActions from '@/components/mobile/QuickActions'
+import { redirect } from 'next/navigation'
 
 export default function MobileTasksPage() {
-  return (
-    <MobileLayout title="Quick Actions">
-      <QuickActions />
-    </MobileLayout>
-  )
+  redirect('/mobile/punch-list')
 }

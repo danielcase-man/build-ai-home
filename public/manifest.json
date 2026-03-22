@@ -1,14 +1,19 @@
 {
   "name": "FrameWork",
   "short_name": "FrameWork",
-  "description": "Construction project management — budget, bids, vendors, and build tracking",
-  "start_url": "/",
+  "description": "AI-powered construction project management",
+  "start_url": "/mobile",
   "display": "standalone",
   "background_color": "#0C0A09",
-  "theme_color": "#F97316",
-  "orientation": "any",
+  "theme_color": "#EA580C",
+  "orientation": "portrait",
   "categories": ["business", "productivity"],
   "icons": [
+    {
+      "src": "/favicon-48x48.png",
+      "sizes": "48x48",
+      "type": "image/png"
+    },
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
@@ -22,38 +27,28 @@
   ],
   "shortcuts": [
     {
+      "name": "Job Site",
+      "short_name": "Site",
+      "url": "/mobile",
+      "description": "Daily site visit tools and status"
+    },
+    {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "url": "/dashboard",
-      "description": "View project dashboard"
+      "url": "/",
+      "description": "Full project dashboard"
     },
     {
-      "name": "Job Site",
-      "short_name": "Job Site",
-      "url": "/job-site",
-      "description": "Job site management and updates"
+      "name": "Budget",
+      "short_name": "Budget",
+      "url": "/budget",
+      "description": "Budget tracking"
     },
     {
-      "name": "Vendor Research",
-      "short_name": "Vendors",
-      "url": "/vendor-research",
-      "description": "Research and compare vendors"
-    },
-    {
-      "name": "Compliance",
-      "short_name": "Compliance",
-      "url": "/compliance",
-      "description": "Permits and regulatory compliance"
-    }
-  ],
-  "file_handlers": [
-    {
-      "action": "/import",
-      "accept": {
-        "application/json": [".json"],
-        "text/csv": [".csv"],
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
-      }
+      "name": "Emails",
+      "short_name": "Emails",
+      "url": "/emails",
+      "description": "Project emails"
     }
   ]
 }
