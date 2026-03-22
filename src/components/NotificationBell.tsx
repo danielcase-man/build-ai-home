@@ -51,11 +51,19 @@ export default function NotificationBell() {
     }
   }, [])
 
-  // Poll count every 60 seconds
+  // Poll count every 60 seconds + listen for realtime pushes
   useEffect(() => {
     fetchCount()
     const interval = setInterval(fetchCount, 60_000)
-    return () => clearInterval(interval)
+
+    // Instant refresh when RealtimeListener detects a new notification
+    const onRealtimeUpdate = () => fetchCount()
+    window.addEventListener('notification-update', onRealtimeUpdate)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('notification-update', onRealtimeUpdate)
+    }
   }, [fetchCount])
 
   // Fetch full list when dropdown opens
