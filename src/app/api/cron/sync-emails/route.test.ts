@@ -70,7 +70,17 @@ vi.mock('@/lib/ui-helpers', () => ({
 }))
 
 vi.mock('@/lib/env', () => ({
-  env: { cronSecret: 'cron-secret', gmailUserEmail: 'test@gmail.com' },
+  env: { cronSecret: 'cron-secret', gmailUserEmail: 'test@gmail.com', supabaseUrl: 'https://test.supabase.co', supabaseAnonKey: 'test-key' },
+}))
+
+vi.mock('@/lib/loan-status-detection', () => ({
+  detectAndUpdateLoanStatus: vi.fn().mockResolvedValue({ updated: false }),
+}))
+
+vi.mock('@/lib/reconciler', () => ({
+  ProjectReconciler: vi.fn().mockImplementation(() => ({
+    reconcileAll: vi.fn().mockResolvedValue({ changes: [], duration: 0 }),
+  })),
 }))
 
 import { POST, GET } from './route'

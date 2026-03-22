@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
-import { Menu, Home, Mail, BarChart3, ClipboardList, DollarSign, Gavel, MessageSquare, Grid3X3, Calendar, Landmark, ListChecks, Users, FileText, Receipt, ClipboardCheck } from 'lucide-react'
+import { Menu, Home, Mail, BarChart3, ClipboardList, DollarSign, Gavel, MessageSquare, Grid3X3, Calendar, Landmark, ListChecks, Users, FileText, Receipt, ClipboardCheck, Shield, FolderOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -29,9 +29,11 @@ const navLinks = [
   { href: '/workflow', label: 'Workflow', icon: ListChecks },
   { href: '/vendors', label: 'Vendors', icon: Users },
   { href: '/change-orders', label: 'Change Orders', icon: FileText },
+  { href: '/documents', label: 'Documents', icon: FolderOpen },
   { href: '/financing', label: 'Financing', icon: Landmark },
   { href: '/payments', label: 'Payments', icon: Receipt },
   { href: '/punch-list', label: 'Punch List', icon: ClipboardCheck },
+  { href: '/warranties', label: 'Warranties', icon: Shield },
   { href: '/project-status', label: 'Project Status', icon: BarChart3 },
   { href: '/assistant', label: 'Assistant', icon: MessageSquare },
 ]
