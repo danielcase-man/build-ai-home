@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Navigation from '@/components/Navigation'
+import AppShell from '@/components/AppShell'
 import BackgroundSync from '@/components/BackgroundSync'
 import { Toaster } from '@/components/ui/sonner'
 
@@ -34,10 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
-        <div className="flex min-h-screen flex-col">
-          <Navigation />
-          <main className="flex-1">{children}</main>
-        </div>
+        <AppShell>{children}</AppShell>
         <BackgroundSync />
         <Toaster />
       </body>
