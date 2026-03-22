@@ -6,6 +6,7 @@ import {
   getAssistantExpertise,
   getStatusReportExpertise,
   getEmailTriageExpertise,
+  getLeadTimeAlerts,
 } from './construction-expertise'
 
 describe('construction-expertise', () => {
@@ -201,6 +202,73 @@ describe('construction-expertise', () => {
       expect(expertise).toContain('estimate')
       expect(expertise).toContain('Lien waiver')
       expect(expertise).toContain('inspector')
+    })
+  })
+
+  // -------------------------------------------------------------------
+  // Lead time alerts
+  // -------------------------------------------------------------------
+
+  describe('getLeadTimeAlerts', () => {
+    it('returns alerts for items with no selections or bids', () => {
+      const alerts = getLeadTimeAlerts([], [])
+
+      expect(alerts.length).toBeGreaterThan(0)
+      expect(alerts.every(a => a.message.length > 0)).toBe(true)
+    })
+
+    it('returns no alerts when all items have selections and bids', () => {
+      const selections = [
+        { category: 'window', status: 'selected' },
+        { category: 'cabinet', status: 'selected' },
+        { category: 'stone', status: 'selected' },
+        { category: 'appliance', status: 'selected' },
+        { category: 'countertop', status: 'selected' },
+        { category: 'flooring', status: 'selected' },
+      ]
+      const bids = [
+        { category: 'Windows', status: 'selected' },
+        { category: 'Cabinets', status: 'pending' },
+        { category: 'Stone', status: 'under_review' },
+        { category: 'Appliances', status: 'selected' },
+        { category: 'Countertops', status: 'pending' },
+        { category: 'Flooring', status: 'selected' },
+      ]
+
+      const alerts = getLeadTimeAlerts(selections, bids)
+      expect(alerts).toHaveLength(0)
+    })
+
+    it('flags windows as critical urgency (8-14 week lead time)', () => {
+      const alerts = getLeadTimeAlerts([], [])
+      const windowAlert = alerts.find(a => a.item.includes('window'))
+
+      expect(windowAlert).toBeDefined()
+      expect(windowAlert!.urgency).toBe('critical')
+    })
+
+    it('sorts alerts by urgency (critical first)', () => {
+      const alerts = getLeadTimeAlerts([], [])
+
+      if (alerts.length >= 2) {
+        const urgencyOrder = { critical: 0, warning: 1, info: 2 }
+        for (let i = 1; i < alerts.length; i++) {
+          expect(urgencyOrder[alerts[i].urgency]).toBeGreaterThanOrEqual(
+            urgencyOrder[alerts[i - 1].urgency]
+          )
+        }
+      }
+    })
+
+    it('shows different message when bid exists but no selection', () => {
+      const alerts = getLeadTimeAlerts(
+        [],
+        [{ category: 'Windows', status: 'pending' }]
+      )
+      const windowAlert = alerts.find(a => a.item.includes('window'))
+
+      expect(windowAlert).toBeDefined()
+      expect(windowAlert!.message).toContain('no selection made')
     })
   })
 })

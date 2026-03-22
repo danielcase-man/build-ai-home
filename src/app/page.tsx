@@ -3,7 +3,9 @@ import { getProjectDashboard, getProject } from '@/lib/project-service'
 import { db } from '@/lib/database'
 import { getFollowUpsNeeded } from '@/lib/vendor-thread-service'
 import { getBids } from '@/lib/bids-service'
+import { getSelections } from '@/lib/selections-service'
 import { CONSTRUCTION_PHASES } from '@/lib/construction-phases'
+import { getLeadTimeAlerts } from '@/lib/construction-expertise'
 import HomeClient from './HomeClient'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -57,7 +59,7 @@ function DashboardSkeleton() {
 async function DashboardData() {
   const project = await getProject()
 
-  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth, deadlines, vendorFollowUps, bids] = await Promise.all([
+  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth, deadlines, vendorFollowUps, bids, selections] = await Promise.all([
     getProjectDashboard(),
     project?.id ? db.getLatestProjectStatus(project.id) : Promise.resolve(null),
     db.getRecentEmailPreviews(3),
@@ -65,6 +67,7 @@ async function DashboardData() {
     project?.id ? db.getUpcomingDeadlines(project.id) : Promise.resolve([]),
     project?.id ? getFollowUpsNeeded(project.id, 5).catch(() => []) : Promise.resolve([]),
     project?.id ? getBids(project.id).catch(() => []) : Promise.resolve([]),
+    project?.id ? getSelections(project.id).catch(() => []) : Promise.resolve([]),
   ])
 
   // Compute coverage gaps: trades that have zero bids
@@ -73,6 +76,12 @@ async function DashboardData() {
   const uncoveredTrades = allTrades
     .filter(t => t.required && !bidCategories.has(t.bidCategory))
     .map(t => ({ name: t.name, phase: CONSTRUCTION_PHASES.find(p => p.trades.includes(t))?.name || '' }))
+
+  // Lead time alerts: long-lead items missing selections or bids
+  const leadTimeAlerts = getLeadTimeAlerts(
+    selections.map(s => ({ category: s.category, status: s.status })),
+    bids.map(b => ({ category: b.category, status: b.status })),
+  )
 
   return (
     <HomeClient
@@ -88,6 +97,7 @@ async function DashboardData() {
         category: f.thread.category,
       }))}
       coverageGaps={uncoveredTrades.slice(0, 5)}
+      leadTimeAlerts={leadTimeAlerts}
     />
   )
 }

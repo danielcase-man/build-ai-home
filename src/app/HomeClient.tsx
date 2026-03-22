@@ -90,6 +90,13 @@ interface StatusSnapshot {
   date?: string
 }
 
+interface LeadTimeAlertData {
+  item: string
+  weeks: string
+  urgency: 'critical' | 'warning' | 'info'
+  message: string
+}
+
 interface HomeClientProps {
   initialData: DashboardData
   initialStatus: StatusSnapshot | null
@@ -98,6 +105,7 @@ interface HomeClientProps {
   initialDeadlines: DeadlineItem[]
   vendorFollowUps?: VendorFollowUp[]
   coverageGaps?: CoverageGap[]
+  leadTimeAlerts?: LeadTimeAlertData[]
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -141,6 +149,7 @@ export default function HomeClient({
   initialDeadlines,
   vendorFollowUps = [],
   coverageGaps = [],
+  leadTimeAlerts = [],
 }: HomeClientProps) {
   const [projectData, setProjectData] = useState<DashboardData>(initialData)
   const [hotTopics, setHotTopics] = useState<string[]>(() => {
@@ -199,6 +208,17 @@ export default function HomeClient({
       })
     }
 
+    // Lead time alerts (long-lead items needing selection/bids)
+    for (const lt of leadTimeAlerts.slice(0, 3)) {
+      items.push({
+        type: 'deadline',
+        urgency: lt.urgency === 'critical' ? 'urgent' : 'warning',
+        text: lt.message,
+        detail: `${lt.weeks} week lead time`,
+        link: '/selections',
+      })
+    }
+
     // Vendor follow-ups (unresponsive vendors)
     for (const v of vendorFollowUps) {
       items.push({
@@ -237,7 +257,7 @@ export default function HomeClient({
     }
 
     return items
-  }, [initialDeadlines, pendingActionItems, vendorFollowUps, coverageGaps, openQuestions])
+  }, [initialDeadlines, pendingActionItems, leadTimeAlerts, vendorFollowUps, coverageGaps, openQuestions])
 
   // ── Refresh handlers ──
 

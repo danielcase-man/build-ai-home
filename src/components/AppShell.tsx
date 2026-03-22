@@ -28,6 +28,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
     setMounted(true)
 
+    // Register service worker for offline support
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {
+        // SW registration failure is non-fatal
+      })
+    }
+
     // Listen for storage changes from the Navigation component
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'framework-sidebar-collapsed') {

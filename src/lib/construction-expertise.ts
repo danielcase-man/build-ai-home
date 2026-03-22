@@ -48,6 +48,102 @@ export const LEAD_TIME_ITEMS = [
   { item: 'Hardwood flooring', weeks: '2-4', orderBy: 'Before painting complete' },
 ] as const
 
+// Map lead time items to selection categories so we can check what's been selected
+const LEAD_TIME_SELECTION_MAP: Record<string, { selectionCategories: string[]; bidCategories: string[] }> = {
+  'Custom windows': {
+    selectionCategories: ['window', 'windows'],
+    bidCategories: ['Windows', 'Windows & Doors'],
+  },
+  'Cabinets (custom painted)': {
+    selectionCategories: ['cabinet', 'cabinetry'],
+    bidCategories: ['Cabinets', 'Cabinetry'],
+  },
+  'Exterior stone': {
+    selectionCategories: ['stone', 'masonry'],
+    bidCategories: ['Stone', 'Masonry', 'Exterior Stone'],
+  },
+  'Appliances': {
+    selectionCategories: ['appliance'],
+    bidCategories: ['Appliances'],
+  },
+  'Countertops (natural stone)': {
+    selectionCategories: ['countertop'],
+    bidCategories: ['Countertops'],
+  },
+  'Hardwood flooring': {
+    selectionCategories: ['flooring', 'hardwood'],
+    bidCategories: ['Flooring', 'Hardwood'],
+  },
+}
+
+export interface LeadTimeAlert {
+  item: string
+  weeks: string
+  orderBy: string
+  hasSelection: boolean
+  hasBid: boolean
+  urgency: 'critical' | 'warning' | 'info'
+  message: string
+}
+
+/**
+ * Check which long-lead items are missing selections or bids.
+ * Returns alerts sorted by urgency.
+ */
+export function getLeadTimeAlerts(
+  selections: Array<{ category: string; status: string }>,
+  bids: Array<{ category: string; status: string }>,
+): LeadTimeAlert[] {
+  const alerts: LeadTimeAlert[] = []
+
+  for (const lt of LEAD_TIME_ITEMS) {
+    const mapping = LEAD_TIME_SELECTION_MAP[lt.item]
+    if (!mapping) continue
+
+    const hasSelection = selections.some(s =>
+      mapping.selectionCategories.some(cat =>
+        s.category.toLowerCase().includes(cat)
+      ) && s.status === 'selected'
+    )
+
+    const hasBid = bids.some(b =>
+      mapping.bidCategories.some(cat =>
+        b.category.toLowerCase().includes(cat.toLowerCase())
+      ) && (b.status === 'selected' || b.status === 'under_review' || b.status === 'pending')
+    )
+
+    if (!hasSelection || !hasBid) {
+      const maxWeeks = parseInt(lt.weeks.split('-')[1] || lt.weeks)
+      const urgency: LeadTimeAlert['urgency'] = maxWeeks >= 10 ? 'critical' : maxWeeks >= 6 ? 'warning' : 'info'
+
+      let message = ''
+      if (!hasSelection && !hasBid) {
+        message = `No selection or bids for ${lt.item} — ${lt.weeks} week lead time. Order by: ${lt.orderBy}`
+      } else if (!hasSelection) {
+        message = `${lt.item}: bids received but no selection made yet — ${lt.weeks} week lead time`
+      } else {
+        message = `${lt.item}: selected but no bid finalized — ${lt.weeks} week lead time`
+      }
+
+      alerts.push({
+        item: lt.item,
+        weeks: lt.weeks,
+        orderBy: lt.orderBy,
+        hasSelection,
+        hasBid,
+        urgency,
+        message,
+      })
+    }
+  }
+
+  // Sort: critical first, then warning, then info
+  const urgencyOrder = { critical: 0, warning: 1, info: 2 }
+  alerts.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency])
+
+  return alerts
+}
+
 // ---------------------------------------------------------------------------
 // Red flags the AI should watch for
 // ---------------------------------------------------------------------------
