@@ -1,10 +1,20 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 import {
   Building2,
   Users,
@@ -15,6 +25,12 @@ import {
   User,
   UserX,
   LinkIcon,
+  Send,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Copy,
 } from 'lucide-react'
 
 interface Vendor {
@@ -43,8 +59,19 @@ interface VendorWithContact extends Vendor {
   } | null
 }
 
+interface VendorInvitation {
+  id: string
+  vendor_id: string
+  email: string
+  token: string
+  expires_at: string
+  accepted_at: string | null
+  created_at: string
+}
+
 interface VendorsClientProps {
   vendors: VendorWithContact[]
+  invitations?: VendorInvitation[]
   projectId: string
 }
 
@@ -104,7 +131,17 @@ function formatStatus(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase()
 }
 
-function VendorCard({ vendor }: { vendor: VendorWithContact }) {
+function VendorCard({
+  vendor,
+  vendorInvitations,
+  onInvite,
+}: {
+  vendor: VendorWithContact
+  vendorInvitations: VendorInvitation[]
+  onInvite: (vendorId: string, email: string) => void
+}) {
+  const hasActiveInvite = vendorInvitations.some(inv => !inv.accepted_at && new Date(inv.expires_at) > new Date())
+  const hasAcceptedInvite = vendorInvitations.some(inv => inv.accepted_at)
   const contact = vendor.linked_contact
   const hasLinkedContact = contact !== null
 
@@ -199,13 +236,94 @@ function VendorCard({ vendor }: { vendor: VendorWithContact }) {
             {vendor.notes}
           </p>
         )}
+
+        {/* Invitation status */}
+        <div className="mt-3 pt-3 border-t flex items-center justify-between">
+          {hasAcceptedInvite ? (
+            <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" /> Portal access active
+            </span>
+          ) : hasActiveInvite ? (
+            <span className="text-xs text-amber-600 font-medium flex items-center gap-1">
+              <Clock className="h-3 w-3" /> Invitation pending
+            </span>
+          ) : (
+            <span className="text-xs text-muted-foreground">No portal access</span>
+          )}
+          {!hasAcceptedInvite && contactEmail && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => onInvite(vendor.id, contactEmail)}
+            >
+              <Send className="h-3 w-3" />
+              {hasActiveInvite ? 'Resend' : 'Invite'}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   )
 }
 
-export default function VendorsClient({ vendors, projectId }: VendorsClientProps) {
+export default function VendorsClient({ vendors, invitations = [], projectId }: VendorsClientProps) {
+  const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
+  const [inviteVendorId, setInviteVendorId] = useState<string | null>(null)
+  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteLoading, setInviteLoading] = useState(false)
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
+  const [copiedToken, setCopiedToken] = useState<string | null>(null)
+
+  const invitationsByVendor = useMemo(() => {
+    const map = new Map<string, VendorInvitation[]>()
+    for (const inv of invitations) {
+      const list = map.get(inv.vendor_id) || []
+      list.push(inv)
+      map.set(inv.vendor_id, list)
+    }
+    return map
+  }, [invitations])
+
+  const handleInvite = useCallback(async () => {
+    if (!inviteVendorId || !inviteEmail.includes('@')) return
+    setInviteLoading(true)
+    try {
+      const res = await fetch('/api/vendors/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendor_id: inviteVendorId, email: inviteEmail }),
+      })
+      if (res.ok) {
+        setInviteEmail('')
+        setInviteVendorId(null)
+        setInviteDialogOpen(false)
+        router.refresh()
+      }
+    } catch {
+      // silent
+    } finally {
+      setInviteLoading(false)
+    }
+  }, [inviteVendorId, inviteEmail, router])
+
+  const handleRevoke = useCallback(async (id: string) => {
+    await fetch('/api/vendors/invite', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    router.refresh()
+  }, [router])
+
+  const copyInviteLink = useCallback((token: string) => {
+    const url = `${window.location.origin}/invite/${token}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedToken(token)
+      setTimeout(() => setCopiedToken(null), 2000)
+    })
+  }, [])
 
   const filteredVendors = useMemo(() => {
     if (!searchQuery.trim()) return vendors
@@ -307,7 +425,16 @@ export default function VendorsClient({ vendors, projectId }: VendorsClientProps
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredVendors.map((vendor) => (
-              <VendorCard key={vendor.id} vendor={vendor} />
+              <VendorCard
+                key={vendor.id}
+                vendor={vendor}
+                vendorInvitations={invitationsByVendor.get(vendor.id) || []}
+                onInvite={(vendorId, email) => {
+                  setInviteVendorId(vendorId)
+                  setInviteEmail(email)
+                  setInviteDialogOpen(true)
+                }}
+              />
             ))}
           </div>
         </>
@@ -332,6 +459,115 @@ export default function VendorsClient({ vendors, projectId }: VendorsClientProps
           </CardContent>
         </Card>
       )}
+
+      {/* Active Invitations */}
+      {invitations.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Send className="h-4 w-4 text-primary" />
+              Vendor Invitations
+              <Badge variant="secondary" className="ml-auto">{invitations.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {invitations.map((inv) => {
+                const vendor = vendors.find(v => v.id === inv.vendor_id)
+                const isExpired = new Date(inv.expires_at) < new Date()
+                const isAccepted = !!inv.accepted_at
+
+                return (
+                  <div key={inv.id} className="flex items-center justify-between gap-3 py-2 border-b last:border-0">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {vendor?.company_name || 'Unknown vendor'}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{inv.email}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isAccepted ? (
+                        <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200 text-xs">Accepted</Badge>
+                      ) : isExpired ? (
+                        <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">Expired</Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">Pending</Badge>
+                      )}
+                      {!isAccepted && !isExpired && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => copyInviteLink(inv.token)}
+                        >
+                          {copiedToken === inv.token ? (
+                            <><CheckCircle2 className="h-3 w-3 text-emerald-500" /> Copied</>
+                          ) : (
+                            <><Copy className="h-3 w-3" /> Link</>
+                          )}
+                        </Button>
+                      )}
+                      {!isAccepted && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-red-500"
+                          onClick={() => handleRevoke(inv.id)}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Invite Dialog */}
+      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Invite Vendor to Portal</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <p className="text-sm text-muted-foreground">
+              Send a portal invitation so this vendor can view their bids, documents, and project communications.
+              The link expires in 7 days.
+            </p>
+            <div>
+              <Label htmlFor="invite-email">Email address</Label>
+              <Input
+                id="invite-email"
+                type="email"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="vendor@company.com"
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setInviteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleInvite}
+                disabled={!inviteEmail.includes('@') || inviteLoading}
+                className="gap-2"
+              >
+                {inviteLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                Send Invitation
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
