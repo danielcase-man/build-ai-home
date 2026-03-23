@@ -30,10 +30,11 @@ vi.mock('@/lib/supabase', () => ({
     },
     from: (table: string) => {
       const result = mockFromResults[table] || { data: null, error: null }
-      const chain = {
+      const chain: Record<string, unknown> = {
         select: () => chain,
         eq: () => chain,
         single: () => Promise.resolve(result),
+        upsert: () => chain,
       }
       return chain
     },

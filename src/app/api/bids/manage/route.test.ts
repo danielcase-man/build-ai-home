@@ -19,17 +19,28 @@ vi.mock('@/lib/supabase', () => ({
   supabase: mockChain,
 }))
 
+const { mockGetAuthContext } = vi.hoisted(() => ({
+  mockGetAuthContext: vi.fn(),
+}))
+
 vi.mock('@/lib/authorization', () => ({
-  getAuthContext: vi.fn().mockResolvedValue(null),
+  getAuthContext: mockGetAuthContext,
   getVendorScope: vi.fn().mockReturnValue(null),
 }))
 
 import { GET, PATCH, POST } from './route'
 
+const fakeAuth = {
+  user: { id: 'user-1', email: 'owner@test.com' },
+  profile: { id: 'prof-1', role: 'owner', vendor_id: null },
+  membership: { project_id: 'proj-1', role: 'owner', permissions: { all: true } },
+}
+
 describe('GET /api/bids/manage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResult.current = { data: null, error: null }
+    mockGetAuthContext.mockResolvedValue(null) // GET allows null auth (vendor scoping only)
   })
 
   it('returns bids list', async () => {
@@ -78,6 +89,7 @@ describe('PATCH /api/bids/manage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResult.current = { data: null, error: null }
+    mockGetAuthContext.mockResolvedValue(fakeAuth)
   })
 
   it('returns validation error when missing bid_id', async () => {
@@ -147,6 +159,7 @@ describe('POST /api/bids/manage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResult.current = { data: null, error: null }
+    mockGetAuthContext.mockResolvedValue(fakeAuth)
   })
 
   it('returns validation error when missing bid_id or action', async () => {

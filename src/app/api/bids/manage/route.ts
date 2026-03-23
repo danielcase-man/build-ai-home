@@ -47,6 +47,12 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    // Verify auth — middleware blocks vendor writes, but defense-in-depth
+    const auth = await getAuthContext()
+    if (!auth) {
+      return errorResponse(new Error('Authentication required'), 'Authentication required')
+    }
+
     const body = await request.json()
     const { bid_id, action, ...updates } = body
 
@@ -117,6 +123,12 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify auth — middleware blocks vendor writes, but defense-in-depth
+    const auth = await getAuthContext()
+    if (!auth) {
+      return errorResponse(new Error('Authentication required'), 'Authentication required')
+    }
+
     const body = await request.json()
     const { bid_id, action } = body
 

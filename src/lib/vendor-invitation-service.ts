@@ -11,7 +11,7 @@ import crypto from 'crypto'
 export interface VendorInvitation {
   id: string
   project_id: string
-  vendor_id: string
+  vendor_id: string | null
   email: string
   token: string
   role: string

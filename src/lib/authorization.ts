@@ -8,6 +8,7 @@
  */
 
 import { createAuthServerClient } from './supabase-auth-server'
+import { NextResponse } from 'next/server'
 
 // ─── Types ──────────────────────────────────────────────────────────────────────
 
@@ -156,13 +157,13 @@ export async function getAuthContext(): Promise<AuthContext | null> {
 
   if (!profile || !profile.is_active) return null
 
-  // Get project membership
+  // Get project membership (maybeSingle: user may not have membership yet during setup)
   const { data: membership } = await supabase
     .from('project_members')
     .select('project_id, role, permissions')
     .eq('user_profile_id', profile.id)
     .limit(1)
-    .single()
+    .maybeSingle()
 
   return {
     user: { id: user.id, email: user.email },
@@ -203,8 +204,6 @@ export function getVisibleNavKeys(role: UserRole): string[] {
 }
 
 // ─── API Route Helpers ──────────────────────────────────────────────────────────
-
-import { NextResponse } from 'next/server'
 
 /**
  * Require authentication for an API route. Returns the auth context

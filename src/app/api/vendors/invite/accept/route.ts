@@ -145,6 +145,38 @@ export async function POST(request: NextRequest) {
         return errorResponse(signUpError, 'Failed to create account')
       }
       userId = signUpData.user?.id || null
+
+      // Create user_profile and project_member (same as admin path)
+      if (userId) {
+        const inviteRole = invitation.role || 'vendor'
+        await supabase.from('user_profiles').upsert({
+          auth_user_id: userId,
+          email: invitation.email,
+          display_name: body.display_name || invitation.email.split('@')[0],
+          role: inviteRole,
+          vendor_id: invitation.vendor_id || null,
+          is_active: true,
+        }, { onConflict: 'email' })
+
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('id')
+          .eq('email', invitation.email)
+          .single()
+
+        if (profile) {
+          const permissions = inviteRole === 'consultant'
+            ? { read: true, write: false }
+            : { read: true }
+
+          await supabase.from('project_members').upsert({
+            project_id: invitation.project_id,
+            user_profile_id: profile.id,
+            role: inviteRole,
+            permissions,
+          }, { onConflict: 'project_id,user_profile_id' })
+        }
+      }
     }
 
     // Mark invitation as accepted

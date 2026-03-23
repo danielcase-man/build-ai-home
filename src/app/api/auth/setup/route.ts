@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // Require the cron secret as a safety check
-    if (body.secret !== env.cronSecret) {
+    if (!env.cronSecret || body.secret !== env.cronSecret) {
       return errorResponse(new Error('Unauthorized'), 'Invalid secret')
     }
 

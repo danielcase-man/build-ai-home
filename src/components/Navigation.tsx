@@ -122,7 +122,7 @@ function filterNavByRole(sections: NavSection[], role: UserRole | undefined): Na
     .filter(section => section.items.length > 0)
 }
 
-// Flat list for mobile drawer
+// Flat list — use filterNavByRole() for role-aware rendering
 const allNavLinks = navSections.flatMap((s) => s.items)
 
 // ─── localStorage key for collapsed state ──────────────────────────────────────

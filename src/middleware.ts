@@ -160,8 +160,12 @@ export async function middleware(request: NextRequest) {
     .single()
 
   // If no profile exists yet (edge case during setup), allow through
-  // so the setup endpoint can create the profile
-  const role: UserRole = (profile?.role as UserRole) || 'vendor' // default to most restrictive
+  // so the setup endpoint or /api/auth/me can create/return the profile
+  if (!profile) {
+    return response
+  }
+
+  const role: UserRole = profile.role as UserRole
 
   const permKey = getPermissionKey(pathname)
 
@@ -185,11 +189,21 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  // Set role header so downstream can use it without re-querying
-  response.headers.set('x-user-role', role)
-  response.headers.set('x-user-id', user.id)
+  // Pass role to downstream via request headers (readable by API routes/server components)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-user-role', role)
+  requestHeaders.set('x-user-id', user.id)
 
-  return response
+  const finalResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  })
+
+  // Preserve refreshed Supabase auth cookies from the session refresh
+  response.cookies.getAll().forEach(cookie => {
+    finalResponse.cookies.set(cookie.name, cookie.value, cookie)
+  })
+
+  return finalResponse
 }
 
 export const config = {
