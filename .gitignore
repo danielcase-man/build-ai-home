@@ -48,3 +48,7 @@ playwright-profile/
 
 # Claude local settings
 .claude/settings.local.json
+
+# Experiment artifacts
+.letta/
+chris_draft_snapshot.md
