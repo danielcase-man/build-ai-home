@@ -25,6 +25,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   History,
+  LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -263,8 +264,33 @@ function DesktopSidebar({
         </TooltipProvider>
       </nav>
 
-      {/* Collapse toggle at the bottom */}
-      <div className="shrink-0 border-t p-3">
+      {/* Sign out + collapse toggle */}
+      <div className="shrink-0 border-t p-3 space-y-1">
+        <TooltipProvider disableHoverableContent>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  'w-full justify-center text-muted-foreground hover:text-red-600',
+                  !collapsed && 'justify-start gap-3 px-3'
+                )}
+                onClick={async () => {
+                  await fetch('/api/auth/signout', { method: 'POST' })
+                  window.location.href = '/login'
+                }}
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+                {!collapsed && <span className="text-sm">Sign Out</span>}
+              </Button>
+            </TooltipTrigger>
+            {collapsed && (
+              <TooltipContent side="right">Sign Out</TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
         <TooltipProvider disableHoverableContent>
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
