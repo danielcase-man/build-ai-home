@@ -43,6 +43,13 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       userId = existing.id
+      // Update password for existing user (e.g., after password compromise)
+      const { error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
+        password: body.password,
+      })
+      if (updateError) {
+        console.error('Password update error:', updateError)
+      }
     } else {
       // Create auth user with confirmed email
       const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({

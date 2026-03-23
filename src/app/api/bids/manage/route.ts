@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { supabase } from '@/lib/supabase'
 import { successResponse, errorResponse, validationError } from '@/lib/api-utils'
+import { getAuthContext, getVendorScope } from '@/lib/authorization'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,6 +25,13 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       query = query.eq('status', status)
+    }
+
+    // Vendor scoping: vendors only see their own bids
+    const auth = await getAuthContext()
+    const vendorScope = auth ? getVendorScope(auth) : null
+    if (vendorScope) {
+      query = query.eq('vendor_id', vendorScope)
     }
 
     const { data, error } = await query

@@ -43,10 +43,11 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { LucideIcon } from 'lucide-react'
 import NotificationBell from '@/components/NotificationBell'
 import GlobalSearch from '@/components/GlobalSearch'
+import { useUserRole, type UserRole } from '@/components/UserRoleProvider'
 
 // ─── Layout Constants ──────────────────────────────────────────────────────────
 // Exported so layout.tsx can apply matching left margin to <main>
@@ -60,6 +61,8 @@ interface NavItem {
   href: string
   label: string
   icon: LucideIcon
+  /** Roles that can see this item. If omitted, visible to all. */
+  roles?: UserRole[]
 }
 
 interface NavSection {
@@ -77,36 +80,47 @@ const navSections: NavSection[] = [
   {
     title: 'Project',
     items: [
-      { href: '/emails', label: 'Emails', icon: Mail },
-      { href: '/project-status', label: 'Project Status', icon: BarChart3 },
-      { href: '/assistant', label: 'Assistant', icon: MessageSquare },
-      { href: '/timeline', label: 'Timeline', icon: Calendar },
-      { href: '/workflow', label: 'Workflow', icon: ListChecks },
+      { href: '/emails', label: 'Emails', icon: Mail, roles: ['owner', 'consultant'] },
+      { href: '/project-status', label: 'Project Status', icon: BarChart3, roles: ['owner', 'consultant'] },
+      { href: '/assistant', label: 'Assistant', icon: MessageSquare, roles: ['owner', 'consultant'] },
+      { href: '/timeline', label: 'Timeline', icon: Calendar, roles: ['owner', 'consultant'] },
+      { href: '/workflow', label: 'Workflow', icon: ListChecks, roles: ['owner', 'consultant'] },
     ],
   },
   {
     title: 'Financial',
     items: [
-      { href: '/budget', label: 'Budget', icon: DollarSign },
+      { href: '/budget', label: 'Budget', icon: DollarSign, roles: ['owner'] },
       { href: '/bids', label: 'Bids', icon: Gavel },
-      { href: '/selections', label: 'Selections', icon: ClipboardList },
-      { href: '/coverage', label: 'Coverage', icon: Grid3X3 },
-      { href: '/financing', label: 'Financing', icon: Landmark },
-      { href: '/payments', label: 'Payments', icon: Receipt },
+      { href: '/selections', label: 'Selections', icon: ClipboardList, roles: ['owner', 'consultant'] },
+      { href: '/coverage', label: 'Coverage', icon: Grid3X3, roles: ['owner', 'consultant'] },
+      { href: '/financing', label: 'Financing', icon: Landmark, roles: ['owner'] },
+      { href: '/payments', label: 'Payments', icon: Receipt, roles: ['owner'] },
     ],
   },
   {
     title: 'Construction',
     items: [
       { href: '/change-orders', label: 'Change Orders', icon: FileText },
-      { href: '/vendors', label: 'Vendors', icon: Users },
+      { href: '/vendors', label: 'Vendors', icon: Users, roles: ['owner', 'consultant'] },
       { href: '/documents', label: 'Documents', icon: FolderOpen },
       { href: '/punch-list', label: 'Punch List', icon: ClipboardCheck },
-      { href: '/warranties', label: 'Warranties', icon: Shield },
-      { href: '/audit', label: 'Audit Trail', icon: History },
+      { href: '/warranties', label: 'Warranties', icon: Shield, roles: ['owner', 'consultant'] },
+      { href: '/audit', label: 'Audit Trail', icon: History, roles: ['owner'] },
     ],
   },
 ]
+
+/** Filter nav sections by user role */
+function filterNavByRole(sections: NavSection[], role: UserRole | undefined): NavSection[] {
+  if (!role) return sections // not loaded yet, show all (middleware will block)
+  return sections
+    .map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.roles || item.roles.includes(role)),
+    }))
+    .filter(section => section.items.length > 0)
+}
 
 // Flat list for mobile drawer
 const allNavLinks = navSections.flatMap((s) => s.items)
@@ -191,6 +205,11 @@ function DesktopSidebar({
   onToggle: () => void
 }) {
   const pathname = usePathname()
+  const { user } = useUserRole()
+  const filteredSections = useMemo(
+    () => filterNavByRole(navSections, user?.role),
+    [user?.role]
+  )
 
   return (
     <aside
@@ -232,7 +251,7 @@ function DesktopSidebar({
       {/* Scrollable nav sections */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4">
         <TooltipProvider disableHoverableContent>
-          {navSections.map((section, idx) => (
+          {filteredSections.map((section, idx) => (
             <div key={section.title} className={cn(idx > 0 && 'mt-6')}>
               {/* Section header — hidden when collapsed, but keeps spacing */}
               {!collapsed ? (
@@ -264,8 +283,17 @@ function DesktopSidebar({
         </TooltipProvider>
       </nav>
 
-      {/* Sign out + collapse toggle */}
+      {/* User info + sign out + collapse toggle */}
       <div className="shrink-0 border-t p-3 space-y-1">
+        {/* Role badge */}
+        {user && !collapsed && (
+          <div className="flex items-center gap-2 px-3 py-1.5 mb-1">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-medium">{user.display_name}</p>
+              <p className="truncate text-[10px] text-muted-foreground capitalize">{user.role}</p>
+            </div>
+          </div>
+        )}
         <TooltipProvider disableHoverableContent>
           <Tooltip delayDuration={0}>
             <TooltipTrigger asChild>
@@ -331,6 +359,11 @@ function DesktopSidebar({
 function TopBar({ sidebarWidth }: { sidebarWidth: number }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const pathname = usePathname()
+  const { user } = useUserRole()
+  const filteredSections = useMemo(
+    () => filterNavByRole(navSections, user?.role),
+    [user?.role]
+  )
 
   return (
     <header
@@ -369,7 +402,7 @@ function TopBar({ sidebarWidth }: { sidebarWidth: number }) {
                 </SheetDescription>
               </SheetHeader>
               <nav className="overflow-y-auto px-3 py-4">
-                {navSections.map((section, idx) => (
+                {filteredSections.map((section, idx) => (
                   <div key={section.title} className={cn(idx > 0 && 'mt-5')}>
                     <h3 className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
                       {section.title}

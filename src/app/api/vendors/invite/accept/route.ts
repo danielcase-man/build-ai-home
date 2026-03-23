@@ -15,22 +15,32 @@ export async function GET(request: NextRequest) {
       return errorResponse(new Error('Invitation not found or expired'), 'Invitation not found or expired')
     }
 
-    const [vendorResult, projectResult] = await Promise.all([
-      supabase.from('vendors').select('company_name, category').eq('id', invitation.vendor_id).single(),
-      supabase.from('projects').select('address, phase').eq('id', invitation.project_id).single(),
-    ])
+    const projectResult = await supabase
+      .from('projects')
+      .select('address, phase')
+      .eq('id', invitation.project_id)
+      .single()
+
+    // Vendor lookup only for vendor role
+    let vendor = null
+    if (invitation.vendor_id) {
+      const { data } = await supabase
+        .from('vendors')
+        .select('company_name, category')
+        .eq('id', invitation.vendor_id)
+        .single()
+      vendor = data ? { company_name: data.company_name, category: data.category } : null
+    }
 
     return successResponse({
       invitation: {
         id: invitation.id,
         email: invitation.email,
+        role: invitation.role,
         expires_at: invitation.expires_at,
         accepted_at: invitation.accepted_at,
       },
-      vendor: vendorResult.data ? {
-        company_name: vendorResult.data.company_name,
-        category: vendorResult.data.category,
-      } : null,
+      vendor,
       project: projectResult.data ? {
         address: projectResult.data.address,
         phase: projectResult.data.phase,
@@ -90,12 +100,13 @@ export async function POST(request: NextRequest) {
 
       // Create user_profile
       if (userId) {
+        const inviteRole = invitation.role || 'vendor'
         await adminClient.from('user_profiles').upsert({
           auth_user_id: userId,
           email: invitation.email,
           display_name: body.display_name || invitation.email.split('@')[0],
-          role: invitation.role || 'vendor',
-          vendor_id: invitation.vendor_id,
+          role: inviteRole,
+          vendor_id: invitation.vendor_id || null,
           is_active: true,
         }, { onConflict: 'email' })
 
@@ -107,11 +118,16 @@ export async function POST(request: NextRequest) {
           .single()
 
         if (profile) {
+          // Consultant gets read-only; vendor gets read-only scoped to their vendor
+          const permissions = inviteRole === 'consultant'
+            ? { read: true, write: false }
+            : { read: true }
+
           await adminClient.from('project_members').upsert({
             project_id: invitation.project_id,
             user_profile_id: profile.id,
-            role: invitation.role || 'vendor',
-            permissions: { read: true },
+            role: inviteRole,
+            permissions,
           }, { onConflict: 'project_id,user_profile_id' })
         }
       }

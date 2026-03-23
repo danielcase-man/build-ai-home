@@ -19,6 +19,7 @@ interface InviteData {
   invitation: {
     id: string
     email: string
+    role: 'vendor' | 'consultant'
     expires_at: string
     accepted_at: string | null
   }
@@ -91,7 +92,9 @@ export default function InviteAcceptClient({ token }: { token: string }) {
         <CardTitle className="text-xl">
           <span className="text-orange-500">Frame</span>Work
         </CardTitle>
-        <p className="text-sm text-muted-foreground">Vendor Portal Invitation</p>
+        <p className="text-sm text-muted-foreground">
+          {data?.invitation.role === 'consultant' ? 'Consultant Access Invitation' : 'Vendor Portal Invitation'}
+        </p>
       </CardHeader>
 
       <CardContent>
@@ -128,20 +131,37 @@ export default function InviteAcceptClient({ token }: { token: string }) {
 
             <div className="space-y-2">
               <h3 className="text-sm font-medium">By accepting, you will be able to:</h3>
-              <ul className="text-sm text-muted-foreground space-y-1.5">
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  View your bids and bid status
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  Access shared project documents
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
-                  View project communications relevant to your scope
-                </li>
-              </ul>
+              {data.invitation.role === 'consultant' ? (
+                <ul className="text-sm text-muted-foreground space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    View project status, timeline, and workflow
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    View bids, selections, and vendor information
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    Access project documents and email communications
+                  </li>
+                </ul>
+              ) : (
+                <ul className="text-sm text-muted-foreground space-y-1.5">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    View your bids and bid status
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    Access shared project documents
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 shrink-0" />
+                    View project communications relevant to your scope
+                  </li>
+                </ul>
+              )}
             </div>
 
             <div className="space-y-3 border-t pt-4">
@@ -173,7 +193,9 @@ export default function InviteAcceptClient({ token }: { token: string }) {
 
             <div className="flex items-start gap-2 text-xs text-muted-foreground bg-gray-50 rounded p-3">
               <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              Your access is scoped to your vendor relationship only. You will not see other vendors&apos; bids or financial details.
+              {data.invitation.role === 'consultant'
+                ? 'Your access is read-only. Budget, financing, and payment details are not visible.'
+                : 'Your access is scoped to your vendor relationship only. You will not see other vendors\' bids or financial details.'}
             </div>
 
             <Button

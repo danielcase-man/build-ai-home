@@ -7,6 +7,7 @@ import { SIDEBAR_WIDTH_EXPANDED, SIDEBAR_WIDTH_COLLAPSED } from '@/components/Na
 import RealtimeListener from '@/components/RealtimeListener'
 import KeyboardShortcuts from '@/components/KeyboardShortcuts'
 import BackgroundSync from '@/components/BackgroundSync'
+import UserRoleProvider from '@/components/UserRoleProvider'
 
 // Routes that render WITHOUT the app shell (no sidebar, no nav)
 const SHELL_EXCLUDED_ROUTES = ['/login', '/register', '/invite/']
@@ -65,17 +66,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     : SIDEBAR_WIDTH_EXPANDED
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navigation />
-      <RealtimeListener />
-      <KeyboardShortcuts />
-      <BackgroundSync />
-      <main
-        className="flex-1 transition-[margin-left] duration-200 ease-in-out md:ml-[var(--sidebar-w)]"
-        style={{ '--sidebar-w': `${sidebarWidth}px` } as React.CSSProperties}
-      >
-        {children}
-      </main>
-    </div>
+    <UserRoleProvider>
+      <div className="flex min-h-screen flex-col">
+        <Navigation />
+        <RealtimeListener />
+        <KeyboardShortcuts />
+        <BackgroundSync />
+        <main
+          className="flex-1 transition-[margin-left] duration-200 ease-in-out md:ml-[var(--sidebar-w)]"
+          style={{ '--sidebar-w': `${sidebarWidth}px` } as React.CSSProperties}
+        >
+          {children}
+        </main>
+      </div>
+    </UserRoleProvider>
   )
 }

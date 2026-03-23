@@ -19,6 +19,11 @@ vi.mock('@/lib/supabase', () => ({
   supabase: mockChain,
 }))
 
+vi.mock('@/lib/authorization', () => ({
+  getAuthContext: vi.fn().mockResolvedValue(null),
+  getVendorScope: vi.fn().mockReturnValue(null),
+}))
+
 import { GET, PATCH, POST } from './route'
 
 describe('GET /api/bids/manage', () => {

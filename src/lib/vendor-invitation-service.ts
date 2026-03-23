@@ -21,13 +21,14 @@ export interface VendorInvitation {
 }
 
 /**
- * Create an invitation for a vendor to access the project.
+ * Create an invitation for a vendor or consultant to access the project.
  * Generates a secure random token with a 7-day expiration.
  */
 export async function createVendorInvitation(
   projectId: string,
-  vendorId: string,
+  vendorId: string | null,
   email: string,
+  role: 'vendor' | 'consultant' = 'vendor',
 ): Promise<VendorInvitation | null> {
   const token = crypto.randomBytes(32).toString('hex')
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -39,14 +40,14 @@ export async function createVendorInvitation(
       vendor_id: vendorId,
       email,
       token,
-      role: 'vendor',
+      role,
       expires_at: expiresAt,
     })
     .select()
     .single()
 
   if (error) {
-    console.error('Error creating vendor invitation:', error)
+    console.error('Error creating invitation:', error)
     return null
   }
 

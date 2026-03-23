@@ -25,8 +25,17 @@ export async function POST(request: NextRequest) {
     if (!project) return errorResponse(new Error('No project'), 'No project found')
 
     const body = await request.json()
-    if (!body.vendor_id || !body.email) {
-      return validationError('Missing required fields: vendor_id, email')
+    const role = body.role || 'vendor'
+
+    // Vendor invitations require vendor_id; consultant invitations don't
+    if (role === 'vendor' && !body.vendor_id) {
+      return validationError('Missing required field: vendor_id')
+    }
+    if (!body.email) {
+      return validationError('Missing required field: email')
+    }
+    if (!['vendor', 'consultant'].includes(role)) {
+      return validationError('Role must be "vendor" or "consultant"')
     }
 
     // Basic email validation
@@ -36,8 +45,9 @@ export async function POST(request: NextRequest) {
 
     const invitation = await createVendorInvitation(
       project.id,
-      body.vendor_id,
+      body.vendor_id || null,
       body.email,
+      role,
     )
 
     if (!invitation) {

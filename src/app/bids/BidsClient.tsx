@@ -233,10 +233,10 @@ function PhaseSection({
       </AccordionTrigger>
       <AccordionContent>
         <div className="space-y-4 pl-10">
-          {phase.trades.map((trade) => {
+          {phase.trades.map((trade, tradeIdx) => {
             const tradeBids = bidsByCategory.get(trade.bidCategory) || []
             return (
-              <div key={trade.bidCategory}>
+              <div key={`${trade.bidCategory}-${tradeIdx}`}>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-medium flex items-center gap-2">
                     <HardHat className="h-3.5 w-3.5 text-muted-foreground" />

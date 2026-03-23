@@ -3,8 +3,6 @@
  * bid categories, knowledge graph trades, and construction phases.
  */
 
-import { supabase } from './supabase'
-
 export interface CategoryMapping {
   selectionCategory: string
   bidCategory: string
@@ -68,6 +66,7 @@ export async function resolveKnowledgeIdForSelection(selectionCategory: string):
     return knowledgeIdCache.get(cacheKey)!
   }
 
+  const { supabase } = await import('./supabase')
   const { data } = await supabase
     .from('construction_knowledge')
     .select('id')

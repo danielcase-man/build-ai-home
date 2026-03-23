@@ -73,7 +73,7 @@ describe('POST /api/vendors/invite', () => {
     const json = await res.json()
     expect(json.success).toBe(true)
     expect(json.data.invitation).toEqual(created)
-    expect(mockCreateVendorInvitation).toHaveBeenCalledWith('proj-1', 'v-1', 'newvendor@test.com')
+    expect(mockCreateVendorInvitation).toHaveBeenCalledWith('proj-1', 'v-1', 'newvendor@test.com', 'vendor')
   })
 
   it('returns validation error when missing vendor_id', async () => {
