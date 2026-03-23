@@ -38,6 +38,8 @@ export default function InviteAcceptClient({ token }: { token: string }) {
   const [state, setState] = useState<PageState>('loading')
   const [data, setData] = useState<InviteData | null>(null)
   const [accepting, setAccepting] = useState(false)
+  const [password, setPassword] = useState('')
+  const [displayName, setDisplayName] = useState('')
 
   useEffect(() => {
     fetch(`/api/vendors/invite/accept?token=${encodeURIComponent(token)}`)
@@ -60,12 +62,13 @@ export default function InviteAcceptClient({ token }: { token: string }) {
   }, [token])
 
   const handleAccept = async () => {
+    if (password.length < 8) return
     setAccepting(true)
     try {
       const res = await fetch('/api/vendors/invite/accept', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
+        body: JSON.stringify({ token, password, display_name: displayName || undefined }),
       })
       if (res.ok) {
         setState('accepted')
@@ -141,6 +144,33 @@ export default function InviteAcceptClient({ token }: { token: string }) {
               </ul>
             </div>
 
+            <div className="space-y-3 border-t pt-4">
+              <h3 className="text-sm font-medium">Create your account</h3>
+              <div>
+                <label htmlFor="display-name" className="text-sm text-muted-foreground">Your name</label>
+                <input
+                  id="display-name"
+                  type="text"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  placeholder="Your name"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="text-sm text-muted-foreground">Choose a password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="Minimum 8 characters"
+                  className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                  minLength={8}
+                />
+              </div>
+            </div>
+
             <div className="flex items-start gap-2 text-xs text-muted-foreground bg-gray-50 rounded p-3">
               <Shield className="h-3.5 w-3.5 mt-0.5 shrink-0" />
               Your access is scoped to your vendor relationship only. You will not see other vendors&apos; bids or financial details.
@@ -150,12 +180,12 @@ export default function InviteAcceptClient({ token }: { token: string }) {
               className="w-full"
               size="lg"
               onClick={handleAccept}
-              disabled={accepting}
+              disabled={accepting || password.length < 8}
             >
               {accepting ? (
-                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Accepting...</>
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Creating account...</>
               ) : (
-                'Accept Invitation'
+                'Accept & Create Account'
               )}
             </Button>
           </div>

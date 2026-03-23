@@ -15,8 +15,19 @@ vi.mock('@/lib/vendor-invitation-service', () => ({
   acceptInvitation: mockAcceptInvitation,
 }))
 
+vi.mock('@/lib/env', () => ({
+  env: {
+    supabaseUrl: 'https://test.supabase.co',
+    supabaseAnonKey: 'test-anon-key',
+    supabaseServiceRoleKey: undefined, // No service role → uses fallback signUp
+  },
+}))
+
 vi.mock('@/lib/supabase', () => ({
   supabase: {
+    auth: {
+      signUp: vi.fn().mockResolvedValue({ data: { user: { id: 'new-user-id' } }, error: null }),
+    },
     from: (table: string) => {
       const result = mockFromResults[table] || { data: null, error: null }
       const chain = {
@@ -122,7 +133,7 @@ describe('POST /api/vendors/invite/accept', () => {
 
     const req = new NextRequest('http://localhost/api/vendors/invite/accept', {
       method: 'POST',
-      body: JSON.stringify({ token: 'abc123' }),
+      body: JSON.stringify({ token: 'abc123', password: 'TestPass123!' }),
     })
     const res = await POST(req)
     expect(res.status).toBe(200)
@@ -143,7 +154,7 @@ describe('POST /api/vendors/invite/accept', () => {
 
     const req = new NextRequest('http://localhost/api/vendors/invite/accept', {
       method: 'POST',
-      body: JSON.stringify({ token: 'abc123' }),
+      body: JSON.stringify({ token: 'abc123', password: 'TestPass123!' }),
     })
     const res = await POST(req)
     expect(res.status).toBe(200)
@@ -169,7 +180,7 @@ describe('POST /api/vendors/invite/accept', () => {
 
     const req = new NextRequest('http://localhost/api/vendors/invite/accept', {
       method: 'POST',
-      body: JSON.stringify({ token: 'badtoken' }),
+      body: JSON.stringify({ token: 'badtoken', password: 'TestPass123!' }),
     })
     const res = await POST(req)
     expect(res.status).toBe(500)
@@ -177,7 +188,7 @@ describe('POST /api/vendors/invite/accept', () => {
     expect(json.success).toBe(false)
   })
 
-  it('returns error when accept fails', async () => {
+  it('still succeeds even if accept marking fails (user account was created)', async () => {
     mockGetInvitationByToken.mockResolvedValueOnce({
       id: 'inv-1',
       email: 'vendor@test.com',
@@ -190,11 +201,12 @@ describe('POST /api/vendors/invite/accept', () => {
 
     const req = new NextRequest('http://localhost/api/vendors/invite/accept', {
       method: 'POST',
-      body: JSON.stringify({ token: 'abc123' }),
+      body: JSON.stringify({ token: 'abc123', password: 'TestPass123!' }),
     })
     const res = await POST(req)
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(200)
     const json = await res.json()
-    expect(json.success).toBe(false)
+    expect(json.success).toBe(true)
+    expect(json.data.accepted).toBe(true)
   })
 })
