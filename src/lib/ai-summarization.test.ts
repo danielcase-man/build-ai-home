@@ -180,4 +180,48 @@ describe('generateProjectStatusSnapshot', () => {
     expect(prompt).toContain('Old topic')
     expect(prompt).toContain('2026-01-14')
   })
+
+  it('parses draft_email action items with context', async () => {
+    const snapshot = {
+      hot_topics: [],
+      action_items: [
+        {
+          status: 'pending',
+          text: 'Follow up with vendor',
+          action_type: 'draft_email',
+          action_context: { to: 'vendor@test.com', to_name: 'Acme', subject_hint: 'Bid follow-up', context: 'They submitted a bid last week' },
+        },
+      ],
+      recent_decisions: [],
+      next_steps: [],
+      open_questions: [],
+      key_data_points: [],
+      ai_summary: 'Follow-up needed.',
+    }
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: JSON.stringify(snapshot) }],
+    })
+
+    const result = await generateProjectStatusSnapshot([makeEmail()], makeFullContext())
+    expect(result.action_items).toHaveLength(1)
+    expect(result.action_items[0].action_type).toBe('draft_email')
+    expect(result.action_items[0].action_context?.to).toBe('vendor@test.com')
+    expect(result.action_items[0].action_context?.subject_hint).toBe('Bid follow-up')
+  })
+
+  it('handles zero emails and no previous status gracefully', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: JSON.stringify({ hot_topics: [], action_items: [], recent_decisions: [], next_steps: [], open_questions: [], key_data_points: [], ai_summary: 'No activity' }) }],
+    })
+
+    const result = await generateProjectStatusSnapshot(
+      [],
+      makeFullContext(),
+      undefined
+    )
+    expect(result.ai_summary).toBe('No activity')
+    // The prompt should still include project data even with no emails
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content
+    expect(prompt).toContain('Test Project')
+  })
 })

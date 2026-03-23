@@ -61,6 +61,26 @@ export async function getVendorsWithContacts(projectId: string): Promise<VendorW
   }))
 }
 
+export interface ProjectContact {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  role: string | null
+  company: string | null
+}
+
+export async function getProjectContacts(projectId: string): Promise<ProjectContact[]> {
+  const { data, error } = await supabase
+    .from('contacts')
+    .select('id, name, email, phone, role, company')
+    .eq('project_id', projectId)
+    .order('name', { ascending: true })
+
+  if (error) return []
+  return data || []
+}
+
 export async function linkVendorToContact(vendorId: string, contactId: string): Promise<boolean> {
   const { error } = await supabase
     .from('vendors')

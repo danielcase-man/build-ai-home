@@ -185,6 +185,7 @@ export class DatabaseService {
             filename: att.filename,
             file_type: att.mimeType,
             file_size: att.size,
+            gmail_attachment_id: att.attachmentId,
             is_document: /\.(pdf|doc|docx|xls|xlsx|csv|txt)$/i.test(att.filename),
             is_image: /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(att.filename),
           })),
@@ -195,6 +196,33 @@ export class DatabaseService {
       }
     } catch (error) {
       console.error('Database error storing attachments:', error)
+    }
+  }
+
+  async getEmailAttachments(emailId: string): Promise<Array<{
+    id: string
+    filename: string
+    file_type: string
+    file_size: number
+    gmail_attachment_id: string | null
+    is_document: boolean
+    is_image: boolean
+  }>> {
+    try {
+      const { data, error } = await supabase
+        .from('email_attachments')
+        .select('id, filename, file_type, file_size, gmail_attachment_id, is_document, is_image')
+        .eq('email_id', emailId)
+        .order('filename', { ascending: true })
+
+      if (error) {
+        console.error('Error fetching email attachments:', error)
+        return []
+      }
+      return data || []
+    } catch (error) {
+      console.error('Database error fetching attachments:', error)
+      return []
     }
   }
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import {
   Target, AlertTriangle, CheckCircle, HelpCircle, ArrowRight, BarChart3,
-  ClipboardList, ChevronDown, RefreshCw, FileText
+  ClipboardList, ChevronDown, RefreshCw, FileText, Paperclip, Download, Loader2
 } from 'lucide-react'
 import { getPriorityColor, getImportanceBadge, formatEmailDate } from '@/lib/ui-helpers'
 import ErrorCard from '@/components/ui/ErrorCard'
@@ -60,13 +60,25 @@ function GmailReconnect() {
   )
 }
 
+interface EmailAttachment {
+  id: string
+  filename: string
+  file_type: string
+  file_size: number
+  gmail_attachment_id: string | null
+  is_document: boolean
+  is_image: boolean
+}
+
 interface DisplayEmail {
   id: string
+  dbId?: string
   subject: string
   from: string
   date: string
   body: string
   snippet: string
+  hasAttachments?: boolean
   insights?: EmailInsights
   triage?: EmailTriage
   aiSummary?: string
@@ -87,11 +99,13 @@ interface UnifiedStatus {
 function toDisplayEmail(email: EmailRecord): DisplayEmail {
   return {
     id: email.message_id,
+    dbId: email.id,
     subject: email.subject,
     from: email.sender_name ? `${email.sender_name} <${email.sender_email}>` : email.sender_email,
     date: email.received_date,
     body: email.body_text || '',
     snippet: email.body_text?.substring(0, 200) || '',
+    hasAttachments: email.has_attachments,
     aiSummary: email.ai_summary || undefined,
   }
 }
@@ -112,6 +126,9 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
   const [drafts, setDrafts] = useState<DraftEmail[]>([])
   const [draftsLoading, setDraftsLoading] = useState(false)
   const [authFailed, setAuthFailed] = useState(false)
+  const [attachmentCache, setAttachmentCache] = useState<Record<string, EmailAttachment[]>>({})
+  const [attachmentLoading, setAttachmentLoading] = useState<Set<string>>(new Set())
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
   /** Refresh from Gmail API — only used for manual refresh button */
   const refreshEmails = async () => {
@@ -164,14 +181,73 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
     fetchDrafts()
   }, [])
 
-  const toggleEmailExpanded = (emailId: string) => {
+  const toggleEmailExpanded = (emailId: string, dbId?: string) => {
     const newExpanded = new Set(expandedEmails)
     if (newExpanded.has(emailId)) {
       newExpanded.delete(emailId)
     } else {
       newExpanded.add(emailId)
+      // Fetch attachments when expanding if this email has them and we haven't cached
+      if (dbId && !attachmentCache[dbId]) {
+        fetchAttachments(dbId)
+      }
     }
     setExpandedEmails(newExpanded)
+  }
+
+  const fetchAttachments = async (dbId: string) => {
+    if (attachmentLoading.has(dbId)) return
+    setAttachmentLoading(prev => new Set(prev).add(dbId))
+    try {
+      const res = await fetch(`/api/emails/attachments?emailId=${dbId}`)
+      const data = await res.json()
+      if (data.success && data.data?.attachments) {
+        setAttachmentCache(prev => ({ ...prev, [dbId]: data.data.attachments }))
+      }
+    } catch {
+      // silent — attachments are supplementary
+    } finally {
+      setAttachmentLoading(prev => {
+        const next = new Set(prev)
+        next.delete(dbId)
+        return next
+      })
+    }
+  }
+
+  const downloadAttachment = async (dbId: string, att: EmailAttachment) => {
+    if (!att.gmail_attachment_id) return
+    setDownloadingId(att.id)
+    try {
+      const res = await fetch('/api/emails/attachments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emailId: dbId,
+          attachmentId: att.gmail_attachment_id,
+          filename: att.filename,
+        }),
+      })
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = att.filename
+        a.click()
+        URL.revokeObjectURL(url)
+      }
+    } catch {
+      // silent
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
   }
 
   if (authFailed && emails.length === 0) {
@@ -359,7 +435,7 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
                 <Collapsible
                   key={email.id}
                   open={expandedEmails.has(email.id)}
-                  onOpenChange={() => toggleEmailExpanded(email.id)}
+                  onOpenChange={() => toggleEmailExpanded(email.id, email.dbId)}
                 >
                   <div className={cn(
                     "border rounded-lg transition-all",
@@ -384,8 +460,11 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
                               </Badge>
                             )}
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                             From: {email.from} • {formatEmailDate(email.date)}
+                            {email.hasAttachments && (
+                              <Paperclip className="h-3 w-3 ml-1 text-muted-foreground" />
+                            )}
                           </p>
                           {email.triage?.urgent && (
                             <p className="mt-1 text-xs font-semibold text-destructive flex items-center gap-1">
@@ -496,6 +575,57 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
                             {email.body || email.snippet}
                           </div>
                         </div>
+
+                        {/* Attachments */}
+                        {email.hasAttachments && email.dbId && (
+                          <div className="mt-3">
+                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-1">
+                              <Paperclip className="h-3.5 w-3.5" />
+                              Attachments:
+                            </h4>
+                            {attachmentLoading.has(email.dbId) ? (
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Loading attachments...
+                              </div>
+                            ) : attachmentCache[email.dbId]?.length ? (
+                              <div className="space-y-1">
+                                {attachmentCache[email.dbId].map((att) => (
+                                  <div
+                                    key={att.id}
+                                    className="flex items-center justify-between bg-muted rounded px-3 py-2 text-xs"
+                                  >
+                                    <div className="flex items-center gap-2 min-w-0">
+                                      <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                      <span className="truncate font-medium">{att.filename}</span>
+                                      <span className="text-muted-foreground shrink-0">
+                                        {formatFileSize(att.file_size)}
+                                      </span>
+                                    </div>
+                                    {att.gmail_attachment_id && (
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-6 px-2 text-xs gap-1"
+                                        disabled={downloadingId === att.id}
+                                        onClick={() => downloadAttachment(email.dbId!, att)}
+                                      >
+                                        {downloadingId === att.id ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <Download className="h-3 w-3" />
+                                        )}
+                                        Download
+                                      </Button>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-muted-foreground">No attachment data available</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </CollapsibleContent>
                   </div>

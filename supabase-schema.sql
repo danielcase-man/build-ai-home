@@ -184,10 +184,12 @@ CREATE TABLE email_attachments (
     filename VARCHAR(255),
     file_type VARCHAR(50),
     file_size INTEGER,
+    gmail_attachment_id VARCHAR(255),
     storage_url TEXT,
     is_document BOOLEAN DEFAULT FALSE,
     is_image BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    UNIQUE(email_id, filename)
 );
 
 -- Communications log

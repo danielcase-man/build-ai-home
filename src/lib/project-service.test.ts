@@ -62,6 +62,25 @@ vi.mock('./selections-service', () => ({
 vi.mock('./loan-service', () => ({
   getConstructionLoan: vi.fn().mockResolvedValue(null),
 }))
+vi.mock('./notification-service', () => ({
+  createActionItemNotification: vi.fn().mockResolvedValue(undefined),
+}))
+vi.mock('./knowledge-graph', () => ({
+  getKnowledgeStateSummary: vi.fn().mockResolvedValue(null),
+}))
+vi.mock('./change-order-service', () => ({
+  getChangeOrders: vi.fn().mockResolvedValue([]),
+}))
+vi.mock('./draw-schedule-service', () => ({
+  getDrawSummary: vi.fn().mockResolvedValue(null),
+}))
+vi.mock('./warranty-service', () => ({
+  getExpiringWarranties: vi.fn().mockResolvedValue([]),
+  getComplianceGaps: vi.fn().mockResolvedValue(null),
+}))
+vi.mock('./punch-list-service', () => ({
+  getPunchListStats: vi.fn().mockResolvedValue(null),
+}))
 
 import {
   calculateCurrentStep,
@@ -79,6 +98,7 @@ import { generateProjectStatusSnapshot } from './ai-summarization'
 import { getBudgetItems } from './budget-service'
 import { getBids } from './bids-service'
 import { getSelections } from './selections-service'
+import { createActionItemNotification } from './notification-service'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -826,5 +846,236 @@ describe('updateProjectStatus', () => {
       expect.any(Object),
       previousStatus,
     )
+  })
+
+  it('normalizes string-formatted previous status fields', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    // Previous status has string-encoded JSONB (legacy format)
+    const previousStatus = {
+      hot_topics: JSON.stringify([{ priority: 'high', text: 'String topic' }]),
+      action_items: JSON.stringify([{ status: 'pending', text: 'String action' }]),
+      recent_decisions: JSON.stringify([]),
+      next_steps: [],
+      open_questions: [],
+      key_data_points: [],
+      ai_summary: 'Old summary',
+      date: '2026-02-26',
+    }
+    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(previousStatus as any)
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
+      { message_id: 'm1', subject: 'Test', sender_email: 'test@test.com', body_text: 'Hi', received_date: '2026-02-28' } as any,
+    ])
+
+    await updateProjectStatus('proj-1')
+
+    // After normalization, AI should receive parsed arrays, not strings
+    const aiCall = vi.mocked(generateProjectStatusSnapshot).mock.calls[0]
+    const prevArg = aiCall[2]
+    expect(Array.isArray(prevArg?.hot_topics)).toBe(true)
+    expect(Array.isArray(prevArg?.action_items)).toBe(true)
+    expect(Array.isArray(prevArg?.recent_decisions)).toBe(true)
+    expect(prevArg?.hot_topics).toEqual([{ priority: 'high', text: 'String topic' }])
+  })
+
+  it('creates notifications only for draft_email action items that are not completed', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
+      { message_id: 'm1', subject: 'Test', sender_email: 'v@test.com', body_text: 'Hi', received_date: '2026-02-28' } as any,
+    ])
+
+    const mockSnapshot = {
+      hot_topics: [],
+      action_items: [
+        { status: 'pending', text: 'Draft email to vendor', action_type: 'draft_email' as const },
+        { status: 'completed', text: 'Old draft', action_type: 'draft_email' as const },
+        { status: 'pending', text: 'Call inspector', action_type: null },
+      ],
+      recent_decisions: [],
+      next_steps: [],
+      open_questions: [],
+      key_data_points: [],
+      ai_summary: 'Test summary.',
+    }
+    vi.mocked(generateProjectStatusSnapshot).mockResolvedValueOnce(mockSnapshot)
+
+    await updateProjectStatus('proj-1')
+
+    // Only the first item should trigger notification (draft_email + not completed)
+    expect(createActionItemNotification).toHaveBeenCalledTimes(1)
+    expect(createActionItemNotification).toHaveBeenCalledWith('proj-1', 'Draft email to vendor')
+  })
+
+  it('computes budget_status as Over Budget when spent exceeds total', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Construction',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '100000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([
+      { id: 'b1', category: 'Foundation', estimated_cost: 50000, actual_cost: 60000 },
+      { id: 'b2', category: 'Framing', estimated_cost: 50000, actual_cost: 50000 },
+    ] as any)
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
+      { message_id: 'm1', subject: 'Test', sender_email: 'v@test.com', body_text: 'Hi', received_date: '2026-02-28' } as any,
+    ])
+
+    await updateProjectStatus('proj-1')
+
+    expect(db.upsertProjectStatus).toHaveBeenCalledWith('proj-1', expect.objectContaining({
+      budget_status: 'Over Budget',
+      budget_used: 110000,
+    }))
+  })
+})
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// getFullProjectContext — additional edge cases
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+describe('getFullProjectContext — edge cases', () => {
+  it('parses string square_footage to number', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      square_footage: '7500',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getFullProjectContext('proj-1')
+    expect(result!.project.squareFootage).toBe(7500)
+  })
+
+  it('defaults budget total to 450000 when not set', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: null,
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getFullProjectContext('proj-1')
+    expect(result!.budget.total).toBe(450000)
+  })
+
+  it('sums actual_cost correctly across multiple budget items', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '500000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([
+      { id: 'b1', actual_cost: 25000 },
+      { id: 'b2', actual_cost: 75000 },
+      { id: 'b3', actual_cost: null },
+      { id: 'b4', actual_cost: 0 },
+    ] as any)
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getFullProjectContext('proj-1')
+    expect(result!.budget.spent).toBe(100000)
+    expect(result!.budget.remaining).toBe(400000)
+  })
+
+  it('sets currentStep 1 and totalSteps 6 when no planning steps', async () => {
+    const project = {
+      id: 'proj-1',
+      name: 'Test House',
+      phase: 'Planning',
+      created_at: '2025-12-01T00:00:00Z',
+      budget_total: '450000',
+    }
+    mockChain.single.mockResolvedValueOnce({ data: project, error: null })
+
+    vi.mocked(getBudgetItems).mockResolvedValueOnce([])
+    vi.mocked(getBids).mockResolvedValueOnce([])
+    vi.mocked(getSelections).mockResolvedValueOnce([])
+
+    Object.defineProperty(mockChain, 'then', {
+      value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
+      writable: true, configurable: true,
+    })
+
+    const result = await getFullProjectContext('proj-1')
+    expect(result!.project.currentStep).toBe(1)
+    expect(result!.project.totalSteps).toBe(6)
   })
 })

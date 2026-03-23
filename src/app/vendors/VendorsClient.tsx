@@ -61,17 +61,29 @@ interface VendorWithContact extends Vendor {
 
 interface VendorInvitation {
   id: string
-  vendor_id: string
+  project_id: string
+  vendor_id: string | null
   email: string
   token: string
+  role: string
   expires_at: string
   accepted_at: string | null
   created_at: string
 }
 
+interface Contact {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  role: string | null
+  company: string | null
+}
+
 interface VendorsClientProps {
   vendors: VendorWithContact[]
   invitations?: VendorInvitation[]
+  contacts?: Contact[]
   projectId: string
 }
 
@@ -135,10 +147,12 @@ function VendorCard({
   vendor,
   vendorInvitations,
   onInvite,
+  onLinkContact,
 }: {
   vendor: VendorWithContact
   vendorInvitations: VendorInvitation[]
   onInvite: (vendorId: string, email: string) => void
+  onLinkContact: (vendorId: string, currentContactId: string | null) => void
 }) {
   const hasActiveInvite = vendorInvitations.some(inv => !inv.accepted_at && new Date(inv.expires_at) > new Date())
   const hasAcceptedInvite = vendorInvitations.some(inv => inv.accepted_at)
@@ -185,13 +199,23 @@ function VendorCard({
 
         {hasAnyContactInfo ? (
           <div className="space-y-2">
-            {/* Linked contact indicator */}
-            {hasLinkedContact && (
-              <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium mb-1">
-                <LinkIcon className="h-3 w-3" />
-                Linked Contact
-              </div>
-            )}
+            {/* Linked contact indicator with change button */}
+            <div className="flex items-center justify-between">
+              {hasLinkedContact && (
+                <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                  <LinkIcon className="h-3 w-3" />
+                  Linked Contact
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 text-xs text-muted-foreground hover:text-primary px-2"
+                onClick={() => onLinkContact(vendor.id, contact?.id ?? null)}
+              >
+                Change
+              </Button>
+            </div>
 
             {contactName && (
               <div className="flex items-center gap-2 text-sm text-foreground">
@@ -225,9 +249,20 @@ function VendorCard({
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
-            <UserX className="h-4 w-4 shrink-0" />
-            <span>No contact linked</span>
+          <div className="flex items-center justify-between py-1">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <UserX className="h-4 w-4 shrink-0" />
+              <span>No contact linked</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1"
+              onClick={() => onLinkContact(vendor.id, null)}
+            >
+              <LinkIcon className="h-3 w-3" />
+              Link
+            </Button>
           </div>
         )}
 
@@ -267,7 +302,7 @@ function VendorCard({
   )
 }
 
-export default function VendorsClient({ vendors, invitations = [], projectId }: VendorsClientProps) {
+export default function VendorsClient({ vendors, invitations = [], contacts = [], projectId }: VendorsClientProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [inviteVendorId, setInviteVendorId] = useState<string | null>(null)
@@ -276,9 +311,17 @@ export default function VendorsClient({ vendors, invitations = [], projectId }: 
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
+  // Contact linking state
+  const [linkVendorId, setLinkVendorId] = useState<string | null>(null)
+  const [linkCurrentContactId, setLinkCurrentContactId] = useState<string | null>(null)
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false)
+  const [linkLoading, setLinkLoading] = useState(false)
+  const [contactSearch, setContactSearch] = useState('')
+
   const invitationsByVendor = useMemo(() => {
     const map = new Map<string, VendorInvitation[]>()
     for (const inv of invitations) {
+      if (!inv.vendor_id) continue
       const list = map.get(inv.vendor_id) || []
       list.push(inv)
       map.set(inv.vendor_id, list)
@@ -324,6 +367,51 @@ export default function VendorsClient({ vendors, invitations = [], projectId }: 
       setTimeout(() => setCopiedToken(null), 2000)
     })
   }, [])
+
+  const handleLinkContact = useCallback(async (contactId: string | null) => {
+    if (!linkVendorId) return
+    setLinkLoading(true)
+    try {
+      const res = await fetch('/api/vendors/link-contact', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vendorId: linkVendorId, contactId }),
+      })
+      if (res.ok) {
+        setLinkDialogOpen(false)
+        setLinkVendorId(null)
+        setContactSearch('')
+        router.refresh()
+      }
+    } catch {
+      // silent
+    } finally {
+      setLinkLoading(false)
+    }
+  }, [linkVendorId, router])
+
+  const openLinkDialog = useCallback((vendorId: string, currentContactId: string | null) => {
+    setLinkVendorId(vendorId)
+    setLinkCurrentContactId(currentContactId)
+    setContactSearch('')
+    setLinkDialogOpen(true)
+  }, [])
+
+  const filteredContacts = useMemo(() => {
+    if (!contactSearch.trim()) return contacts
+    const q = contactSearch.toLowerCase()
+    return contacts.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.company && c.company.toLowerCase().includes(q)) ||
+      (c.email && c.email.toLowerCase().includes(q)) ||
+      (c.role && c.role.toLowerCase().includes(q))
+    )
+  }, [contacts, contactSearch])
+
+  const linkVendorName = useMemo(() => {
+    if (!linkVendorId) return ''
+    return vendors.find(v => v.id === linkVendorId)?.company_name || ''
+  }, [linkVendorId, vendors])
 
   const filteredVendors = useMemo(() => {
     if (!searchQuery.trim()) return vendors
@@ -434,6 +522,7 @@ export default function VendorsClient({ vendors, invitations = [], projectId }: 
                   setInviteEmail(email)
                   setInviteDialogOpen(true)
                 }}
+                onLinkContact={openLinkDialog}
               />
             ))}
           </div>
@@ -525,6 +614,74 @@ export default function VendorsClient({ vendors, invitations = [], projectId }: 
           </CardContent>
         </Card>
       )}
+
+      {/* Link Contact Dialog */}
+      <Dialog open={linkDialogOpen} onOpenChange={(open) => { setLinkDialogOpen(open); if (!open) setContactSearch('') }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Link Contact to {linkVendorName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search contacts..."
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <div className="max-h-64 overflow-y-auto border rounded-md divide-y">
+              {filteredContacts.length > 0 ? (
+                filteredContacts.map((c) => (
+                  <button
+                    key={c.id}
+                    className={`w-full text-left px-3 py-2.5 hover:bg-accent transition-colors flex items-center justify-between gap-2 ${
+                      c.id === linkCurrentContactId ? 'bg-accent' : ''
+                    }`}
+                    disabled={linkLoading}
+                    onClick={() => handleLinkContact(c.id)}
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{c.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[c.role, c.company].filter(Boolean).join(' — ') || c.email || 'No details'}
+                      </p>
+                    </div>
+                    {c.id === linkCurrentContactId && (
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                    )}
+                  </button>
+                ))
+              ) : (
+                <div className="px-3 py-6 text-center text-sm text-muted-foreground">
+                  {contacts.length === 0 ? 'No contacts in project' : 'No contacts match search'}
+                </div>
+              )}
+            </div>
+
+            {linkCurrentContactId && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2 text-muted-foreground"
+                disabled={linkLoading}
+                onClick={() => handleLinkContact(null)}
+              >
+                {linkLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <UserX className="h-3.5 w-3.5" />
+                )}
+                Remove linked contact
+              </Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Invite Dialog */}
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
