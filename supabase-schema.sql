@@ -192,6 +192,53 @@ CREATE TABLE email_attachments (
     UNIQUE(email_id, filename)
 );
 
+-- Bid line items (normalized from bids.line_items JSONB)
+CREATE TABLE bid_line_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bid_id UUID NOT NULL REFERENCES bids(id) ON DELETE CASCADE,
+    item_name VARCHAR(255) NOT NULL,
+    item_description TEXT,
+    specs TEXT,
+    room VARCHAR(100),
+    location_detail VARCHAR(255),
+    quantity DECIMAL(10, 2) DEFAULT 1,
+    unit VARCHAR(50),
+    unit_price DECIMAL(12, 2),
+    total_price DECIMAL(12, 2) NOT NULL,
+    brand VARCHAR(100),
+    model_number VARCHAR(100),
+    finish VARCHAR(100),
+    color VARCHAR(100),
+    material VARCHAR(100),
+    category VARCHAR(100),
+    subcategory VARCHAR(100),
+    selection_id UUID REFERENCES selections(id) ON DELETE SET NULL,
+    sort_order INTEGER DEFAULT 0,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
+);
+
+-- Bid documents (source files for AI extraction)
+CREATE TABLE bid_documents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    bid_id UUID REFERENCES bids(id) ON DELETE SET NULL,
+    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    filename VARCHAR(255) NOT NULL,
+    file_type VARCHAR(50),
+    file_size INTEGER,
+    storage_path TEXT NOT NULL,
+    source VARCHAR(50) DEFAULT 'upload',
+    email_id UUID REFERENCES emails(id) ON DELETE SET NULL,
+    dropbox_path TEXT,
+    extraction_status VARCHAR(30) DEFAULT 'pending',
+    extracted_text TEXT,
+    ai_confidence DECIMAL(3, 2),
+    ai_extraction_notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW())
+);
+
 -- Communications log
 CREATE TABLE communications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

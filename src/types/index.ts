@@ -349,6 +349,95 @@ export interface Bid {
   selection_notes?: string
 }
 
+// --- Bid Line Items & Documents ---
+
+export interface BidLineItem {
+  id: string
+  bid_id: string
+  item_name: string
+  item_description?: string
+  specs?: string
+  room?: string
+  location_detail?: string
+  quantity: number
+  unit?: string
+  unit_price?: number
+  total_price: number
+  brand?: string
+  model_number?: string
+  finish?: string
+  color?: string
+  material?: string
+  category?: string
+  subcategory?: string
+  selection_id?: string | null
+  sort_order: number
+  notes?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BidDocument {
+  id: string
+  bid_id?: string | null
+  project_id: string
+  filename: string
+  file_type?: string
+  file_size?: number
+  storage_path: string
+  source: 'upload' | 'email_attachment' | 'dropbox'
+  email_id?: string | null
+  dropbox_path?: string | null
+  extraction_status: 'pending' | 'processing' | 'completed' | 'failed'
+  extracted_text?: string | null
+  ai_confidence?: number | null
+  ai_extraction_notes?: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BidWithLineItems extends Bid {
+  line_items_normalized: BidLineItem[]
+  document?: BidDocument | null
+}
+
+export interface ExtractedLineItem {
+  item_name: string
+  item_description?: string
+  room?: string
+  quantity: number
+  unit?: string
+  unit_price?: number
+  total_price: number
+  brand?: string
+  model_number?: string
+  finish?: string
+  color?: string
+  material?: string
+  specs?: string
+  notes?: string
+  category?: string
+  subcategory?: string
+}
+
+export interface ExtractedBidV2 extends ExtractedBid {
+  line_items_v2: ExtractedLineItem[]
+}
+
+export interface VendorBidComparison {
+  category: string
+  vendors: Array<{
+    bid_id: string
+    vendor_name: string
+    total_amount: number
+    line_item_count: number
+    status: string
+    lead_time_weeks?: number
+    pros?: string
+    cons?: string
+  }>
+}
+
 // --- Selection Types ---
 
 export type SelectionStatus = 'considering' | 'selected' | 'ordered' | 'received' | 'installed' | 'alternative'
