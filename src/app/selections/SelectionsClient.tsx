@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -56,6 +57,9 @@ import {
   Zap,
   ThermometerSun,
   CircleDot,
+  Loader2,
+  Users,
+  ArrowLeftRight,
 } from 'lucide-react'
 import type { Selection, SelectionStatus } from '@/types'
 
@@ -121,6 +125,25 @@ const EMPTY_FORM = {
   notes: '',
 }
 
+interface VendorBid {
+  bid_id: string
+  vendor_name: string
+  total_amount: number
+  status: string
+  lead_time_weeks?: number | null
+  selected: boolean
+}
+
+interface VendorCategory {
+  category: string
+  label: string
+  vendor_count: number
+  price_min: number
+  price_max: number
+  selected_vendor?: string | null
+  bids: VendorBid[]
+}
+
 interface SelectionsClientProps {
   initialSelections: Selection[]
   leadTimeAlerts?: WorkflowAlert[]
@@ -130,11 +153,59 @@ export default function SelectionsClient({ initialSelections, leadTimeAlerts = [
   const [selections, setSelections] = useState<Selection[]>(initialSelections)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [activeView, setActiveView] = useState<'decisions' | 'all'>('decisions')
+  const [activeView, setActiveView] = useState<'decisions' | 'all' | 'vendors'>('decisions')
   const [activeCategoryTab, setActiveCategoryTab] = useState<string | null>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createSaving, setCreateSaving] = useState(false)
   const [createForm, setCreateForm] = useState({ ...EMPTY_FORM })
+
+  // Vendor comparison state
+  const router = useRouter()
+  const [vendorData, setVendorData] = useState<VendorCategory[] | null>(null)
+  const [vendorLoading, setVendorLoading] = useState(false)
+  const [vendorCategory, setVendorCategory] = useState<string | null>(null)
+  const [selectingBidId, setSelectingBidId] = useState<string | null>(null)
+
+  const fetchVendorData = useCallback(async () => {
+    setVendorLoading(true)
+    try {
+      const res = await fetch('/api/bids/compare-vendors')
+      if (res.ok) {
+        const json = await res.json()
+        setVendorData(json.data?.categories ?? [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch vendor comparison data:', error)
+    } finally {
+      setVendorLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeView === 'vendors' && vendorData === null) {
+      fetchVendorData()
+    }
+  }, [activeView, vendorData, fetchVendorData])
+
+  const handleSelectVendor = useCallback(async (bidId: string) => {
+    setSelectingBidId(bidId)
+    try {
+      const res = await fetch('/api/bids/select-vendor', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bid_id: bidId }),
+      })
+      if (res.ok) {
+        // Refresh vendor data and page data
+        await fetchVendorData()
+        router.refresh()
+      }
+    } catch (error) {
+      console.error('Failed to select vendor:', error)
+    } finally {
+      setSelectingBidId(null)
+    }
+  }, [fetchVendorData, router])
 
   function updateCreateField(field: string, value: string) {
     setCreateForm(prev => ({ ...prev, [field]: value }))
@@ -518,6 +589,15 @@ export default function SelectionsClient({ initialSelections, leadTimeAlerts = [
             <Package className="h-4 w-4" />
             All Selections
           </Button>
+          <Button
+            variant={activeView === 'vendors' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => { setActiveView('vendors'); setVendorCategory(null) }}
+            className="gap-1.5"
+          >
+            <Users className="h-4 w-4" />
+            By Vendor
+          </Button>
         </div>
 
         {/* ═══ DECISIONS VIEW ═══ */}
@@ -826,6 +906,163 @@ export default function SelectionsClient({ initialSelections, leadTimeAlerts = [
           })}
         </Tabs>
           </>
+        )}
+
+        {/* ═══ VENDORS VIEW ═══ */}
+        {activeView === 'vendors' && (
+          <div className="space-y-4">
+            {vendorLoading ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">Loading vendor comparisons...</p>
+                </CardContent>
+              </Card>
+            ) : !vendorData || vendorData.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <Users className="h-12 w-12 text-muted-foreground/40 mb-3" />
+                  <h3 className="text-lg font-semibold mb-1">No vendor bids to compare</h3>
+                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                    Once you have bids from multiple vendors for the same category, they&apos;ll appear here for side-by-side comparison.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : vendorCategory === null ? (
+              /* Category grid */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {vendorData.map(cat => {
+                  const hasSelection = !!cat.selected_vendor
+                  return (
+                    <button
+                      key={cat.category}
+                      onClick={() => setVendorCategory(cat.category)}
+                      className="text-left"
+                    >
+                      <Card className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                        hasSelection ? 'border-l-emerald-400' : 'border-l-blue-400'
+                      }`}>
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm">{cat.label || cat.category}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {cat.vendor_count} vendor{cat.vendor_count !== 1 ? 's' : ''} &middot;{' '}
+                                {cat.price_min === cat.price_max
+                                  ? formatCurrency(cat.price_min)
+                                  : `${formatCurrency(cat.price_min)} - ${formatCurrency(cat.price_max)}`
+                                }
+                              </p>
+                              {hasSelection && (
+                                <div className="flex items-center gap-1.5 mt-2">
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  <span className="text-xs font-medium text-emerald-700">{cat.selected_vendor}</span>
+                                </div>
+                              )}
+                            </div>
+                            <Badge variant={hasSelection ? 'default' : 'secondary'} className={hasSelection ? 'bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100' : ''}>
+                              {hasSelection ? 'Selected' : 'Open'}
+                            </Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </button>
+                  )
+                })}
+              </div>
+            ) : (
+              /* Vendor drill-in for selected category */
+              (() => {
+                const cat = vendorData.find(c => c.category === vendorCategory)
+                if (!cat) return null
+
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Button variant="ghost" size="sm" onClick={() => setVendorCategory(null)} className="gap-1">
+                        &larr; Back
+                      </Button>
+                      <h2 className="text-xl font-bold">{cat.label || cat.category}</h2>
+                      <Badge variant="secondary">{cat.vendor_count} vendor{cat.vendor_count !== 1 ? 's' : ''}</Badge>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {cat.bids.map(bid => {
+                        const isSelected = bid.selected
+                        const isSelecting = selectingBidId === bid.bid_id
+
+                        return (
+                          <Card key={bid.bid_id} className={`relative ${isSelected ? 'ring-2 ring-emerald-400 border-emerald-200' : ''}`}>
+                            <CardContent className="p-5">
+                              <div className="flex items-start justify-between gap-3 mb-3">
+                                <div className="min-w-0">
+                                  <p className="font-semibold">{bid.vendor_name}</p>
+                                  <p className="text-2xl font-bold mt-1">{formatCurrency(bid.total_amount)}</p>
+                                </div>
+                                <Badge className={
+                                  bid.status === 'selected' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+                                  bid.status === 'under_review' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                                  bid.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+                                  'bg-gray-100 text-gray-600 border-gray-200'
+                                }>
+                                  {bid.status === 'under_review' ? 'Under Review' : bid.status}
+                                </Badge>
+                              </div>
+
+                              {bid.lead_time_weeks && (
+                                <p className="text-sm text-muted-foreground mb-4">
+                                  <Clock className="h-3.5 w-3.5 inline mr-1" />
+                                  {bid.lead_time_weeks} week{bid.lead_time_weeks !== 1 ? 's' : ''} lead time
+                                </p>
+                              )}
+
+                              {isSelected ? (
+                                <div className="flex items-center gap-2">
+                                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-100 gap-1">
+                                    <CheckCircle2 className="h-3 w-3" />
+                                    Selected
+                                  </Badge>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      // "Swap" means re-render the category so the user can pick another
+                                      setVendorCategory(null)
+                                      setTimeout(() => setVendorCategory(cat.category), 0)
+                                    }}
+                                    className="gap-1 text-xs"
+                                  >
+                                    <ArrowLeftRight className="h-3.5 w-3.5" />
+                                    Swap
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSelectVendor(bid.bid_id)}
+                                  disabled={isSelecting}
+                                  className="gap-1.5"
+                                >
+                                  {isSelecting ? (
+                                    <>
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                      Selecting...
+                                    </>
+                                  ) : (
+                                    'Select This Vendor'
+                                  )}
+                                </Button>
+                              )}
+                            </CardContent>
+                          </Card>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()
+            )}
+          </div>
         )}
       </div>
     </div>

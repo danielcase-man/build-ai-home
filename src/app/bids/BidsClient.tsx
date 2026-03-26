@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
@@ -8,6 +9,15 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 import { Progress } from '@/components/ui/progress'
 import { CONSTRUCTION_PHASES, type ConstructionPhase, type Trade } from '@/lib/construction-phases'
 import type { Bid } from '@/types'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import {
   FileText,
@@ -22,6 +32,8 @@ import {
   User,
   ChevronDown,
   Download,
+  Upload,
+  Loader2,
 } from 'lucide-react'
 
 interface BidsClientProps {
@@ -269,6 +281,234 @@ function PhaseSection({
   )
 }
 
+const ACCEPTED_FILE_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]
+
+const ACCEPTED_EXTENSIONS = '.pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx'
+const MAX_FILE_SIZE = 20 * 1024 * 1024 // 20MB
+
+type UploadState = 'idle' | 'uploading' | 'extracting' | 'done' | 'error'
+
+function BidUploadDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const router = useRouter()
+  const [file, setFile] = useState<File | null>(null)
+  const [vendorName, setVendorName] = useState('')
+  const [uploadState, setUploadState] = useState<UploadState>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
+  const [lineItemCount, setLineItemCount] = useState(0)
+  const [dragActive, setDragActive] = useState(false)
+
+  const resetForm = useCallback(() => {
+    setFile(null)
+    setVendorName('')
+    setUploadState('idle')
+    setErrorMessage('')
+    setLineItemCount(0)
+  }, [])
+
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (!nextOpen) resetForm()
+    onOpenChange(nextOpen)
+  }, [onOpenChange, resetForm])
+
+  const handleFile = useCallback((f: File) => {
+    if (f.size > MAX_FILE_SIZE) {
+      setErrorMessage('File exceeds the 20MB size limit.')
+      return
+    }
+    if (!ACCEPTED_FILE_TYPES.includes(f.type)) {
+      setErrorMessage('Unsupported file type. Use PDF, JPG, PNG, DOC, DOCX, XLS, or XLSX.')
+      return
+    }
+    setErrorMessage('')
+    setFile(f)
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setDragActive(false)
+    const dropped = e.dataTransfer.files[0]
+    if (dropped) handleFile(dropped)
+  }, [handleFile])
+
+  const handleSubmit = useCallback(async () => {
+    if (!file) return
+    setUploadState('uploading')
+    setErrorMessage('')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      if (vendorName.trim()) {
+        formData.append('vendor_name', vendorName.trim())
+      }
+
+      setUploadState('extracting')
+      const res = await fetch('/api/bids/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await res.json()
+
+      if (!res.ok) {
+        setUploadState('error')
+        setErrorMessage(result.error || 'Upload failed. Please try again.')
+        return
+      }
+
+      setLineItemCount(result.data?.line_items_count ?? result.data?.bids?.length ?? 0)
+      setUploadState('done')
+
+      // Reload after a short delay so the user sees the success state
+      setTimeout(() => {
+        handleOpenChange(false)
+        router.refresh()
+      }, 1500)
+    } catch {
+      setUploadState('error')
+      setErrorMessage('Network error. Check your connection and try again.')
+    }
+  }, [file, vendorName, handleOpenChange, router])
+
+  const isProcessing = uploadState === 'uploading' || uploadState === 'extracting'
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Upload Bid Document</DialogTitle>
+          <DialogDescription>
+            Upload a bid document and we&apos;ll extract line items automatically.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          {/* File Dropzone */}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
+            onDragLeave={() => setDragActive(false)}
+            onDrop={handleDrop}
+            onClick={() => {
+              if (!isProcessing) {
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = ACCEPTED_EXTENSIONS
+                input.onchange = (e) => {
+                  const f = (e.target as HTMLInputElement).files?.[0]
+                  if (f) handleFile(f)
+                }
+                input.click()
+              }
+            }}
+            className={`relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors cursor-pointer ${
+              dragActive
+                ? 'border-primary bg-primary/5'
+                : file
+                  ? 'border-emerald-300 bg-emerald-50'
+                  : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+            } ${isProcessing ? 'pointer-events-none opacity-60' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-label="Drop a file here or click to browse"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                e.currentTarget.click()
+              }
+            }}
+          >
+            {file ? (
+              <>
+                <FileText className="h-8 w-8 text-emerald-600 mb-2" />
+                <p className="text-sm font-medium text-emerald-700">{file.name}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {(file.size / 1024 / 1024).toFixed(1)} MB
+                </p>
+              </>
+            ) : (
+              <>
+                <Upload className="h-8 w-8 text-muted-foreground/60 mb-2" />
+                <p className="text-sm font-medium text-muted-foreground">
+                  Drop your bid document here
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  PDF, JPG, PNG, DOC, DOCX, XLS, XLSX &middot; Max 20MB
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Vendor Name (optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="upload-vendor-name">Vendor Name (optional)</Label>
+            <Input
+              id="upload-vendor-name"
+              value={vendorName}
+              onChange={(e) => setVendorName(e.target.value)}
+              placeholder="e.g., ABC Plumbing"
+              disabled={isProcessing}
+            />
+          </div>
+
+          {/* Status Messages */}
+          {uploadState === 'extracting' && (
+            <div className="flex items-center gap-2 text-sm text-blue-600">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Extracting line items from document...
+            </div>
+          )}
+          {uploadState === 'done' && (
+            <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
+              <CheckCircle2 className="h-4 w-4" />
+              Extracted {lineItemCount} line item{lineItemCount !== 1 ? 's' : ''} successfully
+            </div>
+          )}
+          {uploadState === 'error' && errorMessage && (
+            <div className="flex items-start gap-2 text-sm text-red-600">
+              <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              {errorMessage}
+            </div>
+          )}
+          {uploadState === 'idle' && errorMessage && (
+            <div className="flex items-start gap-2 text-sm text-red-600">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              {errorMessage}
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isProcessing}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={!file || isProcessing || uploadState === 'done'}>
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                {uploadState === 'uploading' ? 'Uploading...' : 'Extracting...'}
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-1.5" />
+                Upload & Extract
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function BidsClient({ bids }: BidsClientProps) {
   const bidsByCategory = useMemo(() => {
     const map = new Map<string, Bid[]>()
@@ -292,6 +532,8 @@ export default function BidsClient({ bids }: BidsClientProps) {
 
   const coveragePercent = Math.round((coveredTrades / totalTrades) * 100)
 
+  const [uploadOpen, setUploadOpen] = useState(false)
+
   return (
     <div className="container max-w-6xl py-8 space-y-6">
       {/* Header */}
@@ -302,11 +544,19 @@ export default function BidsClient({ bids }: BidsClientProps) {
             Track vendor bids across all construction trades
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => window.open('/api/export/bid-comparison', '_blank')} className="flex items-center gap-1.5">
-          <Download className="h-3.5 w-3.5" />
-          Export Comparison
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)} className="flex items-center gap-1.5">
+            <Upload className="h-3.5 w-3.5" />
+            Upload Bid
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.open('/api/export/bid-comparison', '_blank')} className="flex items-center gap-1.5">
+            <Download className="h-3.5 w-3.5" />
+            Export Comparison
+          </Button>
+        </div>
       </div>
+
+      <BidUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} />
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
