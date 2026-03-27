@@ -106,11 +106,11 @@ export class JobTreadService {
 
   async getCostItems(): Promise<JTCostItem[]> {
     return this.client.queryAllPages<JTCostItem>(
-      (page) => ({
+      () => ({
         job: {
           $: { id: this.jobId },
           costItems: {
-            $: { size: 100, page },
+            $: { size: 100 },
             nodes: {
               id: {}, name: {}, description: {},
               quantity: {}, unitCost: {}, unitPrice: {}, cost: {}, price: {},
@@ -125,11 +125,11 @@ export class JobTreadService {
 
   async getTasks(): Promise<JTTask[]> {
     return this.client.queryAllPages<JTTask>(
-      (page) => ({
+      () => ({
         job: {
           $: { id: this.jobId },
           tasks: {
-            $: { size: 100, page },
+            $: { size: 100 },
             nodes: {
               id: {}, name: {}, description: {},
               progress: {}, startDate: {}, endDate: {},
@@ -145,11 +145,11 @@ export class JobTreadService {
 
   async getDailyLogs(): Promise<JTDailyLog[]> {
     return this.client.queryAllPages<JTDailyLog>(
-      (page) => ({
+      () => ({
         job: {
           $: { id: this.jobId },
           dailyLogs: {
-            $: { size: 100, page },
+            $: { size: 100 },
             nodes: { id: {}, date: {}, notes: {}, createdAt: {} },
           },
         },
@@ -160,11 +160,11 @@ export class JobTreadService {
 
   async getComments(): Promise<JTComment[]> {
     return this.client.queryAllPages<JTComment>(
-      (page) => ({
+      () => ({
         job: {
           $: { id: this.jobId },
           comments: {
-            $: { size: 100, page },
+            $: { size: 100 },
             nodes: { id: {}, message: {}, createdAt: {} },
           },
         },
@@ -175,11 +175,11 @@ export class JobTreadService {
 
   async getFiles(): Promise<JTFile[]> {
     return this.client.queryAllPages<JTFile>(
-      (page) => ({
+      () => ({
         job: {
           $: { id: this.jobId },
           files: {
-            $: { size: 100, page },
+            $: { size: 100 },
             nodes: { id: {}, name: {}, url: {}, size: {}, folder: {}, createdAt: {} },
           },
         },

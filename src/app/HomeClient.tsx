@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Calendar, CheckCircle2, DollarSign, Mail, FileText,
   Users, RefreshCw, AlertTriangle, Landmark, Clock,
@@ -171,6 +171,18 @@ export default function HomeClient({
   const [uploadOpen, setUploadOpen] = useState(false)
   const [emails, setEmails] = useState<EmailPreview[]>(initialEmails)
   const [loading, setLoading] = useState(false)
+  const [healthIssues, setHealthIssues] = useState<Array<{ source: string; message: string }>>([])
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then(r => r.json())
+      .then(res => {
+        if (res.success && !res.data.healthy) {
+          setHealthIssues(res.data.checks.filter((c: { status: string }) => c.status !== 'ok'))
+        }
+      })
+      .catch(() => {})
+  }, [])
 
   // ── Derived: unified attention feed ──
 
@@ -364,6 +376,23 @@ export default function HomeClient({
           </p>
         )}
       </div>
+
+      {/* ── Health Issues Banner ── */}
+      {healthIssues.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm animate-fade-in">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-medium text-amber-800">Data sync issues detected</p>
+              <ul className="mt-1 space-y-0.5 text-amber-700">
+                {healthIssues.map((issue, i) => (
+                  <li key={i}>{issue.source}: {issue.message}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Hero: Needs Your Attention ── */}
       {attentionItems.length > 0 ? (
