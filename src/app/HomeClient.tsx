@@ -380,16 +380,26 @@ export default function HomeClient({
       {/* ── Health Issues Banner ── */}
       {healthIssues.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm animate-fade-in">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-medium text-amber-800">Data sync issues detected</p>
-              <ul className="mt-1 space-y-0.5 text-amber-700">
-                {healthIssues.map((issue, i) => (
-                  <li key={i}>{issue.source}: {issue.message}</li>
-                ))}
-              </ul>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-medium text-amber-800">Data sync issues detected</p>
+                <ul className="mt-1 space-y-0.5 text-amber-700">
+                  {healthIssues.map((issue, i) => (
+                    <li key={i}>{issue.source}: {issue.message}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
+            {healthIssues.some(i => i.source === 'Gmail') && (
+              <Link
+                href="/emails?reconnect=true"
+                className="shrink-0 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700 transition-colors"
+              >
+                Reconnect Gmail
+              </Link>
+            )}
           </div>
         </div>
       )}

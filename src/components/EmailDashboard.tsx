@@ -258,10 +258,16 @@ export default function EmailDashboard({ initialEmails, initialStatus }: EmailDa
     return <ErrorCard message={error} onRetry={refreshEmails} />
   }
 
+  // Detect stale data — if newest email is >3 days old, Gmail sync is probably broken
+  const newestEmailDate = emails.length > 0 ? new Date(emails[0].date) : null
+  const emailsAreStale = newestEmailDate
+    ? (Date.now() - newestEmailDate.getTime()) > 3 * 24 * 60 * 60 * 1000
+    : false
+
   return (
     <div className="space-y-6">
-      {/* Auth failure with cached data — show reconnect banner */}
-      {authFailed && emails.length > 0 && (
+      {/* Auth failure or stale data — show reconnect banner */}
+      {(authFailed || emailsAreStale) && emails.length > 0 && (
         <GmailReconnect />
       )}
 
