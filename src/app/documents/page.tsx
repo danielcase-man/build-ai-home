@@ -38,11 +38,16 @@ async function DocumentsData() {
     return <ErrorCard message="No project found. Create a project first." />
   }
 
-  const { data: documents } = await supabase
+  const { data: documents, error } = await supabase
     .from('documents')
     .select('*')
     .eq('project_id', project.id)
-    .order('upload_date', { ascending: false })
+    .order('created_at', { ascending: false })
+    .limit(500)
+
+  if (error) {
+    return <ErrorCard message={`Failed to load documents: ${error.message}`} />
+  }
 
   return <DocumentsClient documents={(documents || []) as Document[]} projectId={project.id} />
 }

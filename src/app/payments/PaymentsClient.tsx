@@ -90,6 +90,7 @@ export default function PaymentsClient() {
   const [activeTab, setActiveTab] = useState('transactions')
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Data
   const [overview, setOverview] = useState<FinancialOverview | null>(null)
@@ -171,17 +172,24 @@ export default function PaymentsClient() {
 
   const loadAllData = useCallback(async () => {
     setLoading(true)
-    await Promise.all([
-      fetchOverview(),
-      fetchTransactions(),
-      fetchContracts(),
-      fetchInvoices(),
-      fetchConnections(),
-    ])
-    setLoading(false)
+    setError(null)
+    try {
+      await Promise.all([
+        fetchOverview(),
+        fetchTransactions(),
+        fetchContracts(),
+        fetchInvoices(),
+        fetchConnections(),
+      ])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load financial data')
+    } finally {
+      setLoading(false)
+    }
   }, [fetchOverview, fetchTransactions, fetchContracts, fetchInvoices, fetchConnections])
 
-  useEffect(() => { loadAllData() }, [loadAllData])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadAllData() }, [])
   useEffect(() => { fetchTransactions() }, [matchFilter, searchQuery, fetchTransactions])
 
   const handleSync = async () => {
@@ -264,6 +272,16 @@ export default function PaymentsClient() {
         <div className="flex items-center gap-2">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="text-muted-foreground">Loading financial data...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container py-8">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
         </div>
       </div>
     )
