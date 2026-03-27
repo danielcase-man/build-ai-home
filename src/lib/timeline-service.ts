@@ -90,12 +90,12 @@ export async function getTimelineData(projectId: string): Promise<TimelineTask[]
     })
   }
 
-  // Map tasks to timeline tasks, grouped by milestone or standalone
+  // Map tasks to timeline tasks — only include tasks with real due dates
+  // (tasks without due_date are AI-generated action items, not scheduled work)
   for (const t of (tasks || []) as TaskRecord[]) {
-    const dueDate = t.due_date || t.created_at
-    if (!dueDate) continue
+    if (!t.due_date) continue // Skip tasks without a real scheduled date
 
-    const end = new Date(dueDate)
+    const end = new Date(t.due_date)
     const start = new Date(end)
     start.setDate(start.getDate() - 7)
 

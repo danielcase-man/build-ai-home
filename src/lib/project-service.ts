@@ -242,7 +242,8 @@ export async function getProjectDashboard(): Promise<DashboardData> {
       .from('tasks')
       .select('*', { count: 'exact', head: true })
       .eq('project_id', project.id)
-      .in('status', ['pending', 'in_progress']),
+      .in('status', ['pending', 'in_progress'])
+      .not('due_date', 'is', null),
     supabase
       .from('milestones')
       .select('name, target_date')

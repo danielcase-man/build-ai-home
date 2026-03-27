@@ -12,7 +12,7 @@ const { mockChain, CHAIN_METHODS, mockResult } = vi.hoisted(() => {
   const chain: Record<string, any> = {}
   const methods = [
     'from', 'select', 'insert', 'update', 'upsert', 'delete',
-    'eq', 'neq', 'in', 'gte', 'lte', 'order', 'limit', 'single', 'maybeSingle',
+    'eq', 'neq', 'not', 'in', 'gte', 'lte', 'order', 'limit', 'single', 'maybeSingle',
   ] as const
   return { mockChain: chain, CHAIN_METHODS: methods, mockResult }
 })

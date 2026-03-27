@@ -54,8 +54,11 @@ export default function TimelineClient({ tasks }: TimelineClientProps) {
         />
       ) : (
         <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-          <p className="text-lg font-medium">No timeline data yet</p>
-          <p className="text-sm mt-1">Add milestones and tasks with dates to see them here.</p>
+          <p className="text-lg font-medium">No scheduled items yet</p>
+          <p className="text-sm mt-1 max-w-md mx-auto">
+            The timeline shows milestones and tasks that have scheduled dates.
+            As you finalize your construction schedule with Aaron, dates will populate here automatically.
+          </p>
         </div>
       )}
     </div>

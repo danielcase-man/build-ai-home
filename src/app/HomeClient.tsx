@@ -279,7 +279,7 @@ export default function HomeClient({
           budgetUsed: status.budgetUsed || 0,
           budgetTotal: status.budgetTotal || 450000,
           unreadEmails: 0,
-          pendingTasks: status.actionItems?.filter((i: { status: string }) => i.status !== 'completed').length || 0,
+          pendingTasks: status.actionItems?.filter((i: { status: string; action_type?: string }) => i.status !== 'completed' && i.action_type === 'draft_email').length || 0,
           upcomingMilestone: status.nextMilestone || '',
           milestoneDate: status.milestoneDate || '',
         }))
@@ -452,9 +452,9 @@ export default function HomeClient({
             <Link href="/project-status" className="flex items-center gap-2.5 rounded-lg p-2.5 hover:bg-accent/50 transition-colors">
               <CheckCircle2 className="h-4 w-4 text-construction-orange" />
               <div>
-                <p className="text-[11px] text-muted-foreground leading-none mb-1">Tasks</p>
+                <p className="text-[11px] text-muted-foreground leading-none mb-1">Action Items</p>
                 <p className="text-sm font-semibold tabular-nums leading-none">
-                  {projectData.pendingTasks}<span className="font-normal text-muted-foreground"> pending</span>
+                  {projectData.pendingTasks}<span className="font-normal text-muted-foreground"> to do</span>
                 </p>
               </div>
             </Link>
