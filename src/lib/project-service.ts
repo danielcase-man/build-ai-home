@@ -76,7 +76,7 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
     getConstructionLoan(projectId),
     supabase
       .from('planning_phase_steps')
-      .select('step_number, name, status, notes')
+      .select('step_number, step_name, status, notes')
       .eq('project_id', projectId)
       .order('step_number', { ascending: true }),
     supabase
@@ -136,7 +136,7 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
     },
     planningSteps: (planningSteps || []).map(s => ({
       step_number: s.step_number,
-      name: s.name || '',
+      name: s.step_name || '',
       status: s.status || 'pending',
       notes: s.notes || null,
     })),
@@ -226,7 +226,7 @@ export async function getProjectDashboard(): Promise<DashboardData> {
   ] = await Promise.all([
     supabase
       .from('planning_phase_steps')
-      .select('step_number, name, status')
+      .select('step_number, step_name, status')
       .eq('project_id', project.id)
       .order('step_number', { ascending: true }),
     supabase
@@ -274,7 +274,7 @@ export async function getProjectDashboard(): Promise<DashboardData> {
     milestoneDate: nextMilestone?.[0]?.target_date || '',
     planningSteps: (planningSteps || []).map(s => ({
       step_number: s.step_number,
-      name: s.name || '',
+      name: s.step_name || '',
       status: s.status || 'pending',
     })),
   }
@@ -320,7 +320,7 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
       .eq('project_id', project.id),
     supabase
       .from('planning_phase_steps')
-      .select('step_number, name, status')
+      .select('step_number, step_name, status')
       .eq('project_id', project.id)
       .order('step_number', { ascending: true }),
     supabase

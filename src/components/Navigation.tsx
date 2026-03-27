@@ -80,11 +80,10 @@ const navSections: NavSection[] = [
   {
     title: 'Project',
     items: [
-      { href: '/emails', label: 'Emails', icon: Mail, roles: ['owner', 'consultant'] },
       { href: '/project-status', label: 'Project Status', icon: BarChart3, roles: ['owner', 'consultant'] },
       { href: '/assistant', label: 'Assistant', icon: MessageSquare, roles: ['owner', 'consultant'] },
       { href: '/timeline', label: 'Timeline', icon: Calendar, roles: ['owner', 'consultant'] },
-      { href: '/workflow', label: 'Workflow', icon: ListChecks, roles: ['owner', 'consultant'] },
+      { href: '/emails', label: 'Emails', icon: Mail, roles: ['owner', 'consultant'] },
     ],
   },
   {
@@ -95,18 +94,14 @@ const navSections: NavSection[] = [
       { href: '/selections', label: 'Selections', icon: ClipboardList, roles: ['owner', 'consultant'] },
       { href: '/coverage', label: 'Coverage', icon: Grid3X3, roles: ['owner', 'consultant'] },
       { href: '/financing', label: 'Financing', icon: Landmark, roles: ['owner'] },
-      { href: '/payments', label: 'Payments', icon: Receipt, roles: ['owner'] },
     ],
   },
   {
     title: 'Construction',
     items: [
-      { href: '/change-orders', label: 'Change Orders', icon: FileText },
       { href: '/vendors', label: 'Vendors', icon: Users, roles: ['owner', 'consultant'] },
       { href: '/documents', label: 'Documents', icon: FolderOpen },
-      { href: '/punch-list', label: 'Punch List', icon: ClipboardCheck },
-      { href: '/warranties', label: 'Warranties', icon: Shield, roles: ['owner', 'consultant'] },
-      { href: '/audit', label: 'Audit Trail', icon: History, roles: ['owner'] },
+      { href: '/change-orders', label: 'Change Orders', icon: FileText },
     ],
   },
 ]

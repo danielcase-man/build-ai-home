@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import Link from 'next/link'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -74,7 +74,8 @@ export default function LoginClient() {
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@company.com"
+              placeholder="your email address"
+            autoComplete="email"
               required
               autoFocus
               className="mt-1"
@@ -89,6 +90,7 @@ export default function LoginClient() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               placeholder="Your password"
+            autoComplete="current-password"
               required
               className="mt-1"
             />
@@ -104,8 +106,7 @@ export default function LoginClient() {
         </form>
 
         <p className="text-xs text-center text-muted-foreground mt-4">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-primary hover:underline">Create one</Link>
+          Need access? Contact the project owner for an invitation.
         </p>
       </CardContent>
     </Card>

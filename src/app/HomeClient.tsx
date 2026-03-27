@@ -425,7 +425,7 @@ export default function HomeClient({
         <CardContent className="pt-6">
           <div className="flex items-center justify-between text-sm mb-2">
             <span className="font-medium">
-              {projectData.phase} Phase &mdash; Step {projectData.currentStep} of {projectData.totalSteps}
+              {projectData.phase.charAt(0).toUpperCase() + projectData.phase.slice(1)} Phase &mdash; Step {projectData.currentStep} of {projectData.totalSteps}
             </span>
             <span className="tabular-nums font-medium">{progressPercent}%</span>
           </div>

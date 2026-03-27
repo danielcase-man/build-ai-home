@@ -267,7 +267,7 @@ describe('getProjectDashboard', () => {
     let thenCallCount = 0
     const thenResults = [
       // planningSteps
-      { data: [{ step_number: 1, name: 'Consultation', status: 'completed' }, { step_number: 2, name: 'Lot Analysis', status: 'in_progress' }], error: null },
+      { data: [{ step_number: 1, step_name: 'Consultation', status: 'completed' }, { step_number: 2, step_name: 'Lot Analysis', status: 'in_progress' }], error: null },
       // budgetItems
       { data: [{ estimated_cost: '100000', actual_cost: '95000' }, { estimated_cost: '50000', actual_cost: '48000' }], error: null },
       // unreadEmails (count query)
@@ -349,7 +349,7 @@ describe('getProjectStatus', () => {
       // budgetItems
       { data: [{ estimated_cost: '200000', actual_cost: '180000' }], error: null },
       // planningSteps
-      { data: [{ step_number: 1, name: 'Consultation', status: 'completed' }, { step_number: 2, name: 'Lot Analysis', status: 'in_progress' }], error: null },
+      { data: [{ step_number: 1, step_name: 'Consultation', status: 'completed' }, { step_number: 2, step_name: 'Lot Analysis', status: 'in_progress' }], error: null },
       // nextMilestone
       { data: [{ name: 'Plans Approved', target_date: '2026-04-01' }], error: null },
     ]
@@ -603,7 +603,7 @@ describe('getFullProjectContext', () => {
     let thenCallCount = 0
     const thenResults = [
       // planningSteps
-      { data: [{ step_number: 1, name: 'Consultation', status: 'completed', notes: 'Done' }], error: null },
+      { data: [{ step_number: 1, step_name: 'Consultation', status: 'completed', notes: 'Done' }], error: null },
       // milestones
       { data: [{ name: 'Foundation', description: 'Pour slab', target_date: '2026-03-01', completed_date: null, status: 'pending', notes: null }], error: null },
       // tasks
