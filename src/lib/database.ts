@@ -120,6 +120,7 @@ export class DatabaseService {
         .upsert(
           emails.map(email => ({
             ...email,
+            category: email.category || categorizeEmailBySender(email.sender_email, email.subject),
             updated_at: new Date().toISOString()
           })),
           { onConflict: 'message_id' }
@@ -152,17 +153,22 @@ export class DatabaseService {
     }
   }
 
-  async getRecentEmails(days: number = 7): Promise<EmailRecord[]> {
+  async getRecentEmails(days: number = 7, category?: 'construction' | 'all'): Promise<EmailRecord[]> {
     try {
       const cutoffDate = new Date()
       cutoffDate.setDate(cutoffDate.getDate() - days)
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('emails')
         .select('*')
         .gte('received_date', cutoffDate.toISOString())
         .order('received_date', { ascending: false })
 
+      if (category === 'construction') {
+        query = query.in('category', ['construction', 'unknown'])
+      }
+
+      const { data, error } = await query
       if (error) return []
 
       return data || []
@@ -667,6 +673,53 @@ export class DatabaseService {
       return false
     }
   }
+}
+
+/**
+ * Classify an email as construction-related or other based on sender domain.
+ * Simple pattern matching — no AI needed for this.
+ */
+function categorizeEmailBySender(senderEmail: string | undefined, subject: string | undefined): string {
+  if (!senderEmail) return 'unknown'
+  const email = senderEmail.toLowerCase()
+  const subj = (subject || '').toLowerCase()
+
+  // Known noise domains
+  const noiseDomains = [
+    'github.com', 'lovesac.com', 'prageru.com', 'epochtimes.com',
+    'stripe.com', 'alpaca.markets', 'vercel.com', 'google.com',
+    'youtube.com', 'facebook.com', 'twitter.com', 'linkedin.com',
+    'amazon.com', 'apple.com', 'netflix.com', 'spotify.com',
+    'doordash.com', 'uber.com', 'lyft.com', 'grubhub.com',
+  ]
+  for (const domain of noiseDomains) {
+    if (email.includes(domain)) return 'other'
+  }
+
+  // Known construction domains
+  const constructionDomains = [
+    'ubuildit.com', 'asiri-designs.com', 'riverbearfinancial.com',
+    'fouraengineering.com', 'copeland-eng.com', '3daydesign.com',
+    'trisupply.net', 'byop.net', 'cobrastone.com', 'lentzengineering.com',
+    'bldr.com', 'kristynik', 'thefederalsavingsbank.com', 'kippflores.com',
+    'swengineers.com', 'triplecseptic', 'prosource',
+  ]
+  for (const domain of constructionDomains) {
+    if (email.includes(domain)) return 'construction'
+  }
+
+  // Subject-based classification
+  const constructionKeywords = [
+    'bid', 'quote', 'estimate', 'proposal', 'invoice', 'contract',
+    'foundation', 'framing', 'plumbing', 'electrical', 'hvac',
+    'septic', 'grading', 'permit', 'inspection', 'urla', 'loan',
+    'purple salvia', 'ubuildit', 'construction', 'build',
+  ]
+  for (const kw of constructionKeywords) {
+    if (subj.includes(kw)) return 'construction'
+  }
+
+  return 'unknown'
 }
 
 export const db = new DatabaseService()

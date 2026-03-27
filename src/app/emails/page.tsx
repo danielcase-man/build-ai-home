@@ -6,7 +6,7 @@ import type { EmailRecord } from '@/types'
 export default async function EmailsPage() {
   // Pre-fetch emails + status + auth state from DB server-side (fast, no Gmail API)
   const [recentEmails, project, gmailConfigured] = await Promise.all([
-    db.getRecentEmails(7),
+    db.getRecentEmails(7, 'construction'),
     getProject(),
     db.hasEmailAccountConfigured(),
   ])

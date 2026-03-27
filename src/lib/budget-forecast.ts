@@ -1,12 +1,28 @@
 import type { BudgetForecast } from '@/types'
 import type { BudgetItemRecord } from './budget-service'
 
+// Categories that are one-time / non-recurring and should not factor into burn rate
+const NON_RECURRING_CATEGORIES = new Set([
+  'land acquisition', 'land', 'hoa & property tax', 'hoa',
+  'software & tools', 'software', 'pool design',
+])
+
+function isRecurringConstruction(category: string | null | undefined): boolean {
+  if (!category) return true
+  return !NON_RECURRING_CATEGORIES.has(category.toLowerCase())
+}
+
 export function calculateForecast(
   budgetItems: BudgetItemRecord[],
   budgetTotal: number,
   startDate: string
 ): BudgetForecast {
   const spent = budgetItems.reduce((sum, item) => sum + (item.actual_cost ?? 0), 0)
+
+  // Construction-only spending (exclude land, HOA, software for burn rate)
+  const constructionSpent = budgetItems
+    .filter(item => isRecurringConstruction(item.category))
+    .reduce((sum, item) => sum + (item.actual_cost ?? 0), 0)
 
   const start = new Date(startDate)
   const now = new Date()
@@ -15,8 +31,8 @@ export function calculateForecast(
     (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth())
   )
 
-  // Monthly burn rate based on actual spending
-  const burnRate = spent / monthsElapsed
+  // Burn rate based on CONSTRUCTION spending only (not land purchase)
+  const burnRate = constructionSpent / monthsElapsed
 
   // Items with estimated costs but no actual costs yet
   const remainingEstimated = budgetItems
@@ -29,7 +45,7 @@ export function calculateForecast(
   // Variance = budget - projected (positive = under budget)
   const variance = budgetTotal - projectedTotal
 
-  // Estimate months remaining based on remaining estimated / burn rate
+  // Estimate months remaining based on remaining estimated / construction burn rate
   const estimatedMonthsRemaining = burnRate > 0
     ? Math.ceil(remainingEstimated / burnRate)
     : 0
