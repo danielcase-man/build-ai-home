@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { successResponse, errorResponse, validationError } from '@/lib/api-utils'
 import { getProject } from '@/lib/project-service'
-import { getPhotoTimeline, getPhotosByRoom, getPhotoCount, uploadPhoto, analyzePhoto } from '@/lib/photo-service'
+import { getPhotoTimeline, getPhotosByRoom, getPhotoCount, uploadPhoto } from '@/lib/photo-service'
 import type { PhotoType } from '@/lib/photo-service'
 
 export async function GET(request: NextRequest) {
@@ -60,14 +60,8 @@ export async function POST(request: NextRequest) {
 
     if (!photo) return errorResponse(new Error('Upload failed'), 'Failed to upload photo')
 
-    // Optionally analyze with AI
-    if (formData.get('analyze') === 'true') {
-      const base64 = buffer.toString('base64')
-      const mediaType = file.type as 'image/jpeg' | 'image/png' | 'image/webp'
-      const description = await analyzePhoto(photo.id!, base64, mediaType)
-      return successResponse({ photo: { ...photo, ai_description: description } })
-    }
-
+    // Photo analysis deferred to Claude Code scheduled agent (Phase 2)
+    // Photos are stored immediately; ai_description populated later
     return successResponse({ photo })
   } catch (error) {
     return errorResponse(error, 'Failed to upload photo')

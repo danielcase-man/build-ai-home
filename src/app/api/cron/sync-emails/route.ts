@@ -8,7 +8,7 @@ import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { AuthenticationError } from '@/lib/errors'
 import { env } from '@/lib/env'
 import { createEmailSyncNotification } from '@/lib/notification-service'
-import { detectAndUpdateLoanStatus } from '@/lib/loan-status-detection'
+import { detectAndUpdateLoanStatusRuleBased } from '@/lib/loan-status-rules'
 import type { EmailRecord } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     if (emailsToStore.length > 0) {
       try {
         console.log('Checking for loan status updates...')
-        const loanUpdate = await detectAndUpdateLoanStatus(
+        const loanUpdate = await detectAndUpdateLoanStatusRuleBased(
           projectId,
           emailsToStore.map(e => ({
             from: `${e.sender_name || ''} <${e.sender_email || ''}>`,

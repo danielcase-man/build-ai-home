@@ -141,14 +141,13 @@ describe('POST /api/photos', () => {
     expect(json.code).toBe('VALIDATION_ERROR')
   })
 
-  it('uploads and analyzes photo when analyze=true', async () => {
+  it('uploads photo without AI analysis (Phase 2: deferred to Claude Code)', async () => {
     const photo = { id: 'p-new', filename: 'test.jpg' }
     mockUploadPhoto.mockResolvedValueOnce(photo)
-    mockAnalyzePhoto.mockResolvedValueOnce('Foundation looks solid, no cracks observed')
 
     const formData = new FormData()
     formData.append('photo', new File(['fake-image'], 'test.jpg', { type: 'image/jpeg' }))
-    formData.append('analyze', 'true')
+    formData.append('analyze', 'true') // analyze flag is now ignored
 
     const req = new NextRequest('http://localhost/api/photos', {
       method: 'POST',
@@ -158,7 +157,8 @@ describe('POST /api/photos', () => {
     expect(res.status).toBe(200)
     const json = await res.json()
     expect(json.success).toBe(true)
-    expect(json.data.photo.ai_description).toBe('Foundation looks solid, no cracks observed')
+    expect(json.data.photo).toEqual(photo) // no ai_description added inline
+    expect(mockAnalyzePhoto).not.toHaveBeenCalled()
   })
 
   it('returns error when no project', async () => {
