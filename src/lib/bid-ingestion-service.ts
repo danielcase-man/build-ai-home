@@ -121,7 +121,7 @@ export async function extractBidV2FromText(
   try {
     const response = await getAnthropicClient().messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8192,
+      max_tokens: 16384,
       temperature: 0.1,
       messages: [{
         role: 'user',
@@ -157,7 +157,7 @@ export async function extractBidV2FromImage(
   try {
     const response = await getAnthropicClient().messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8192,
+      max_tokens: 16384,
       temperature: 0.1,
       messages: [{
         role: 'user',

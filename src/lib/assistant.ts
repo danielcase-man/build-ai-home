@@ -759,31 +759,65 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [...READ_TOOLS, ...WRITE_TOOLS]
 // ---------------------------------------------------------------------------
 
 export async function buildSystemPrompt(projectId: string): Promise<string> {
-  const [project, budget] = await Promise.all([
+  const [project, budget, bids, latestStatus] = await Promise.all([
     getProject(),
     getBudgetSummary(projectId),
+    getBids(projectId),
+    db.getLatestProjectStatus(projectId),
   ])
 
   const budgetTotal = budget.total || parseFloat(project?.budget_total || '450000')
   const budgetSpent = budget.spent || 0
 
+  // Build bid summary by category
+  const bidsByCategory = new Map<string, Array<{ vendor: string; amount: number; status: string }>>()
+  for (const bid of bids) {
+    const list = bidsByCategory.get(bid.category) || []
+    list.push({ vendor: bid.vendor_name, amount: bid.total_amount, status: bid.status })
+    bidsByCategory.set(bid.category, list)
+  }
+  const bidSummary = Array.from(bidsByCategory.entries())
+    .map(([cat, vendors]) => {
+      const selected = vendors.find(v => v.status === 'selected')
+      const range = vendors.length > 1
+        ? `$${Math.min(...vendors.map(v => v.amount)).toLocaleString()}-$${Math.max(...vendors.map(v => v.amount)).toLocaleString()}`
+        : `$${vendors[0].amount.toLocaleString()}`
+      return `  ${cat}: ${vendors.length} bids (${range})${selected ? ` — SELECTED: ${selected.vendor}` : ''}`
+    })
+    .join('\n')
+
+  const aiSummary = latestStatus?.ai_summary && !latestStatus.ai_summary.includes('Unable to generate')
+    ? latestStatus.ai_summary
+    : ''
+
   const expertise = getAssistantExpertise()
 
-  return `You are the Project Assistant for a custom home construction project. You have deep construction expertise and think like a master builder.
-TODAY: ${new Date().toISOString().split('T')[0]}
-PROJECT: ${project?.address || 'Not set'} | Phase: ${project?.phase || 'planning'} | Budget: $${budgetTotal.toLocaleString()} ($${budgetSpent.toLocaleString()} spent)
+  return `You are the Project Assistant for Daniel Case's custom home build. You have deep construction expertise and think like a master builder who personally knows every detail of this project.
 
+TODAY: ${new Date().toISOString().split('T')[0]}
+OWNER: Daniel Case (danielcase.info@gmail.com)
+PROJECT: 708 Purple Salvia Cove, Liberty Hill, TX 78642
+STYLE: French Country custom, 7,526 sq ft under roof
+PHASE: ${project?.phase || 'planning'} — Step 4 of 6 (Procurement)
+CONSULTANT: Aaron Mischenko, Texas Home Consulting (UBuildIt)
+BUDGET: $${budgetTotal.toLocaleString()} total | $${budgetSpent.toLocaleString()} spent | $${(budgetTotal - budgetSpent).toLocaleString()} remaining
+
+ACTIVE BIDS (${bids.length} across ${bidsByCategory.size} categories):
+${bidSummary}
+
+${aiSummary ? `LATEST AI STATUS:\n${aiSummary}\n` : ''}
 ${expertise}
 
 INSTRUCTIONS:
-- Use READ tools to look up data before answering. Use WRITE tools to propose changes (user must confirm).
-- Be specific with amounts, dates, and names. Call multiple tools if needed.
+- Use READ tools to look up detailed data before answering. Use WRITE tools to propose changes (user must confirm).
+- Be specific with amounts, dates, vendor names, and contact info. Call multiple tools if needed.
 - When comparing bids, use the bid evaluation rules above. Flag red flags.
 - When discussing schedule, reference the critical path and parallel work opportunities.
 - When a vendor is unresponsive, recommend the escalation protocol (text→email→escalation→replace).
 - When discussing selections, flag lead time risks and order-by deadlines.
 - Think about trade intersections — 80% of construction failures happen where trades meet.
-- Apply the rule: Structure > Envelope > Mechanical > Surfaces > Finishes (spend money in the right order).`
+- Apply the rule: Structure > Envelope > Mechanical > Surfaces > Finishes (spend money in the right order).
+- Be conversational and direct. Daniel is a sophisticated owner-builder, not a first-time homebuyer. Skip the disclaimers.`
 }
 
 // ---------------------------------------------------------------------------
