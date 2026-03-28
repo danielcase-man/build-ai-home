@@ -996,6 +996,51 @@ export interface TakeoffRunWithItems extends TakeoffRun {
   items: TakeoffItem[]
 }
 
+// --- Selection Decision Queue Types ---
+
+export type DecisionUrgency = 'urgent' | 'high' | 'medium' | 'low' | 'none'
+
+/** A competing bid summary shown in the Decision Queue */
+export interface DecisionQueueBid {
+  bidId: string
+  vendorName: string
+  totalAmount: number
+  leadTimeWeeks?: number
+  status: Bid['status']
+  pros?: string
+  cons?: string
+}
+
+/** A single category in the decision queue with its zone, urgency, and competing bids */
+export interface DecisionQueueCategory {
+  category: string
+  bidCategory: string
+  phase: number
+  phaseName: string
+  zone: 'decision' | 'locked' | 'future'
+  urgency: DecisionUrgency
+  urgencyReason?: string
+  bids: DecisionQueueBid[]
+  selectedBid?: DecisionQueueBid
+  selectionCount: number
+  statusSummary: Partial<Record<SelectionStatus, number>>
+  leadTimeAlert?: {
+    priority: 'low' | 'medium' | 'high' | 'urgent'
+    title: string
+    message: string
+    order_by_date?: string
+  }
+}
+
+/** Full result from getSelectionDecisionQueue() */
+export interface DecisionQueueResult {
+  decisionQueue: DecisionQueueCategory[]  // Zone 1: has bids, no selected vendor
+  lockedIn: DecisionQueueCategory[]       // Zone 2: vendor selected
+  future: DecisionQueueCategory[]         // Zone 3: no bids, future phase
+  activePhase: number | null
+  activePhaseName: string | null
+}
+
 // --- API Response Types ---
 
 export interface ApiResponse<T> {
