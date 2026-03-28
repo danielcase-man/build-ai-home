@@ -341,6 +341,8 @@ export async function generateProjectStatusSnapshot(
     hot_topics: unknown[]
     action_items: unknown[]
     recent_decisions: unknown[]
+    next_steps: unknown[]
+    open_questions: unknown[]
     ai_summary: string
     date: string
   } | null
@@ -356,6 +358,8 @@ export async function generateProjectStatusSnapshot(
     ? `PREVIOUS STATUS REPORT (${previousStatus.date}):
 Hot Topics: ${JSON.stringify(previousStatus.hot_topics)}
 Action Items: ${JSON.stringify(previousStatus.action_items)}
+Next Steps: ${JSON.stringify(previousStatus.next_steps)}
+Open Questions: ${JSON.stringify(previousStatus.open_questions)}
 Recent Decisions: ${JSON.stringify(previousStatus.recent_decisions)}
 Summary: ${previousStatus.ai_summary}`
     : 'PREVIOUS STATUS REPORT: This is the first report — no previous status exists.'
@@ -393,9 +397,23 @@ ${emailSection}
 INSTRUCTIONS:
 - KEEP relevant hot topics from the previous report, REMOVE any that are clearly resolved, ADD new ones from emails
 - UPDATE action item statuses based on email content, ADD new action items, KEEP unresolved items from previous report
+- Mark action items as "completed" when emails show the action was taken (e.g., email was sent, response received, document signed, bid submitted, meeting confirmed)
 - KEEP all previous decisions, ADD any new decisions found in emails
 - REWRITE the summary to incorporate both previous context and new information into a coherent 2-3 paragraph narrative
 - Reference actual vendor names, bid amounts, milestones, and budget items from the PROJECT DATA above — do NOT make up names or numbers
+
+CRITICAL — NEXT STEPS FRESHNESS:
+- Review each previous Next Step against the NEW EMAILS above
+- If an email shows a next step was COMPLETED (action taken, response received, document signed, meeting held, bid received, follow-up sent), DROP that step entirely — do NOT carry it forward
+- If a next step is clearly outdated (references a date that has passed, references a task that project data shows is done), DROP it
+- Only carry forward next steps that are STILL PENDING with no evidence of completion
+- Add NEW next steps based on what the current emails and project state require RIGHT NOW
+- Each next step must be actionable and current as of today
+
+OPEN QUESTIONS FRESHNESS:
+- Drop open questions that have been answered in subsequent emails
+- Drop questions that are no longer relevant to the current project state
+- Only carry forward questions that remain genuinely unanswered
 
 Return a JSON object with exactly these keys:
 - "hot_topics": array of {"priority": "high"|"medium"|"low", "text": "description"}

@@ -173,12 +173,33 @@ describe('generateProjectStatusSnapshot', () => {
     await generateProjectStatusSnapshot(
       [makeEmail()],
       makeFullContext(),
-      { hot_topics: [{ priority: 'high', text: 'Old topic' }], action_items: [], recent_decisions: [], ai_summary: 'Previous', date: '2026-01-14' }
+      { hot_topics: [{ priority: 'high', text: 'Old topic' }], action_items: [], recent_decisions: [], next_steps: ['Sign the DocuSign URLA'], open_questions: [{ question: 'When is permit ready?' }], ai_summary: 'Previous', date: '2026-01-14' }
     )
 
     const prompt = mockCreate.mock.calls[0][0].messages[0].content
     expect(prompt).toContain('Old topic')
     expect(prompt).toContain('2026-01-14')
+  })
+
+  it('includes previous next_steps and completion instructions in prompt', async () => {
+    mockCreate.mockResolvedValueOnce({
+      content: [{ type: 'text', text: JSON.stringify({ hot_topics: [], action_items: [], recent_decisions: [], next_steps: [], open_questions: [], key_data_points: [], ai_summary: 'updated' }) }],
+    })
+
+    await generateProjectStatusSnapshot(
+      [makeEmail()],
+      makeFullContext(),
+      { hot_topics: [], action_items: [], recent_decisions: [], next_steps: ['Follow up with David Wilson'], open_questions: [{ question: 'Is WCG approved?' }], ai_summary: 'Previous', date: '2026-03-25' }
+    )
+
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content
+    // Previous next steps are passed through
+    expect(prompt).toContain('Follow up with David Wilson')
+    expect(prompt).toContain('Is WCG approved?')
+    // Completion detection instructions are present
+    expect(prompt).toContain('NEXT STEPS FRESHNESS')
+    expect(prompt).toContain('DROP that step entirely')
+    expect(prompt).toContain('OPEN QUESTIONS FRESHNESS')
   })
 
   it('parses draft_email action items with context', async () => {

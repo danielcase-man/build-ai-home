@@ -140,6 +140,12 @@ export async function POST(request: NextRequest) {
       console.log(`Classifying: ${email.subject}`)
       const { summary: aiSummary, category } = await classifyAndSummarizeEmailRuleBased(emailData, projectId)
 
+      // Skip noise emails — don't store USPS, GitHub, marketing, etc.
+      if (category === 'other') {
+        console.log(`Skipping noise email: ${email.subject}`)
+        continue
+      }
+
       const emailRecord: EmailRecord = {
         project_id: projectId,
         email_account_id: emailAccount.id,

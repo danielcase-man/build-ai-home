@@ -165,7 +165,7 @@ export class DatabaseService {
         .order('received_date', { ascending: false })
 
       if (category === 'construction') {
-        query = query.in('category', ['construction', 'legal', 'financial', 'unknown'])
+        query = query.in('category', ['construction', 'legal', 'financial'])
       }
 
       const { data, error } = await query

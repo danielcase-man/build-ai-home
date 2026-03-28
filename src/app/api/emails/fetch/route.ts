@@ -90,6 +90,9 @@ export async function GET(request: NextRequest) {
       const emailsToStore: EmailRecord[] = []
 
       for (const email of emailsWithInsights) {
+        // Skip noise emails — don't store USPS, GitHub, marketing, etc.
+        if (email.classification.category === 'other') continue
+
         const exists = await db.emailExists(email.id)
         if (exists) continue
 
