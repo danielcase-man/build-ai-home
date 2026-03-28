@@ -1,4 +1,18 @@
 {
+  "functions": {
+    "src/app/api/cron/**/*.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/project-status/**/*.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/bids/upload/**/*.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/assistant/**/*.ts": {
+      "maxDuration": 60
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/sync-jobtread",
