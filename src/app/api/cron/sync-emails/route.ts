@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { summarizeIndividualEmail, classifyAndSummarizeEmail } from '@/lib/ai-summarization'
+import { classifyAndSummarizeEmailRuleBased } from '@/lib/email-classifier'
 import { db } from '@/lib/database'
 import { extractEmailAddress, extractSenderName } from '@/lib/ui-helpers'
 import { successResponse, errorResponse } from '@/lib/api-utils'
@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
         date: email.date
       }
 
-      console.log(`Classifying and summarizing: ${email.subject}`)
-      const { summary: aiSummary, category } = await classifyAndSummarizeEmail(emailData)
+      console.log(`Classifying: ${email.subject}`)
+      const { summary: aiSummary, category } = await classifyAndSummarizeEmailRuleBased(emailData, projectId)
 
       const emailRecord: EmailRecord = {
         project_id: projectId,
