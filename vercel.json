@@ -15,6 +15,10 @@
   },
   "crons": [
     {
+      "path": "/api/cron/orchestrator",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/cron/sync-jobtread",
       "schedule": "55 7 * * *"
     },

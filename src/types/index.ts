@@ -1041,6 +1041,105 @@ export interface DecisionQueueResult {
   activePhaseName: string | null
 }
 
+// --- Vendor Follow-Up Types ---
+
+export type FollowUpStatus = 'pending' | 'sent' | 'awaiting_response' | 'responded' | 'follow_up_sent' | 'escalated' | 'completed' | 'cancelled' | 'stale'
+export type FollowUpCategory = 'bid_request' | 'bid_follow_up' | 'contract' | 'scheduling' | 'payment' | 'general'
+
+export interface VendorFollowUp {
+  id: string
+  project_id: string
+  vendor_id?: string
+  vendor_name: string
+  contact_name?: string
+  contact_email?: string
+  contact_phone?: string
+  category: FollowUpCategory
+  subject: string
+  context?: string
+  related_bid_id?: string
+  related_bid_package_id?: string
+  created_date: string
+  initial_outreach_date?: string
+  next_follow_up_date: string
+  deadline?: string
+  escalation_date?: string
+  status: FollowUpStatus
+  follow_up_count: number
+  max_follow_ups: number
+  escalation_action?: string
+  auto_send: boolean
+  last_contact_date?: string
+  last_contact_method?: string
+  response_summary?: string
+  notes?: string
+  created_at?: string
+  updated_at?: string
+}
+
+// --- Decision Log Types ---
+
+export type DecisionType = 'vendor_selection' | 'material_choice' | 'design_change' | 'budget_adjustment' | 'schedule_change'
+export type OutcomeStatus = 'pending' | 'successful' | 'problematic' | 'reversed'
+
+export interface DecisionLogEntry {
+  id: string
+  project_id: string
+  decision_type: DecisionType
+  category?: string
+  title: string
+  description?: string
+  chosen_option: string
+  alternatives?: Array<{ name: string; amount?: number; reason_rejected?: string }>
+  reasoning?: string
+  cost_impact?: number
+  schedule_impact_days?: number
+  risk_notes?: string
+  decided_by: string
+  decided_date: string
+  related_bid_id?: string
+  related_vendor_id?: string
+  outcome_status: OutcomeStatus
+  outcome_notes?: string
+  outcome_date?: string
+  confidence_score?: number
+  created_at?: string
+  updated_at?: string
+}
+
+// --- Orchestrator Types ---
+
+export interface OrchestratorAction {
+  type: string
+  vendor?: string
+  detail: string
+  timestamp?: string
+}
+
+export interface OrchestratorAlert {
+  priority: 'high' | 'medium' | 'low'
+  message: string
+}
+
+export interface OrchestratorRun {
+  id: string
+  project_id: string
+  run_date: string
+  started_at: string
+  completed_at?: string
+  status: 'running' | 'completed' | 'failed' | 'partial'
+  actions_taken: OrchestratorAction[]
+  alerts_generated: OrchestratorAlert[]
+  decisions_recommended: Array<{ title: string; reasoning: string }>
+  emails_processed: number
+  follow_ups_sent: number
+  bids_extracted: number
+  statuses_updated: number
+  errors: Array<{ message: string; context?: string }>
+  notes?: string
+  created_at?: string
+}
+
 // --- API Response Types ---
 
 export interface ApiResponse<T> {
