@@ -13,6 +13,22 @@ export interface Email {
   date: string
 }
 
+/** Email with thread and direction metadata for draft generation */
+export interface ThreadedEmail extends Email {
+  threadId: string
+  direction: 'sent' | 'received'
+}
+
+/** A conversation thread grouped by thread_id */
+export interface EmailThread {
+  threadId: string
+  subject: string
+  participants: string[]
+  messages: ThreadedEmail[]
+  lastMessageDate: string
+  danielReplied: boolean
+}
+
 /** Full email record as stored in the database */
 export interface EmailRecord {
   id?: string
@@ -871,6 +887,113 @@ export interface PlaidSyncResult {
   removed: number
   autoMatched: number
   errors: string[]
+}
+
+// --- Takeoff & Bid Package Types ---
+
+export type TakeoffStatus = 'draft' | 'review' | 'final' | 'superseded'
+export type TakeoffItemConfidence = 'verified' | 'calculated' | 'estimated' | 'gap'
+export type TakeoffItemSource = 'calculated' | 'structural_plan' | 'estimated' | 'vendor_spec'
+export type BidPackageStatus = 'draft' | 'ready' | 'sent' | 'responses_received' | 'evaluating' | 'awarded' | 'cancelled'
+
+export interface PlanSource {
+  name: string
+  type: 'architectural' | 'structural' | 'foundation' | 'detail' | 'site' | 'electrical' | 'mechanical' | 'plumbing'
+  confidence: 'text_extractable' | 'image_ocr' | 'estimated'
+  version?: string
+}
+
+export interface TakeoffRun {
+  id: string
+  project_id: string
+  trade: string
+  name: string
+  description?: string
+  plan_sources?: PlanSource[]
+  confidence_pct?: number
+  gaps?: string[]
+  notes?: string
+  status: TakeoffStatus
+  superseded_by?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface TakeoffItem {
+  id: string
+  takeoff_run_id: string
+  project_id: string
+  category: string
+  subcategory?: string
+  trade: string
+  item_name: string
+  description?: string
+  material_spec?: string
+  species_grade?: string
+  quantity: number
+  unit: string
+  waste_factor?: number
+  quantity_with_waste?: number
+  nominal_width?: string
+  length_inches?: number
+  length_feet?: number
+  unit_cost?: number
+  total_cost?: number
+  source: TakeoffItemSource
+  confidence: TakeoffItemConfidence
+  source_detail?: string
+  knowledge_id?: string
+  budget_item_id?: string
+  sort_order?: number
+  notes?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BidPackage {
+  id: string
+  project_id: string
+  takeoff_run_id?: string
+  trade: string
+  title: string
+  scope_of_work?: string
+  special_requirements?: string
+  item_count?: number
+  estimated_total?: number
+  status: BidPackageStatus
+  deadline?: string
+  sent_date?: string
+  awarded_date?: string
+  awarded_bid_id?: string
+  vendors_contacted?: Array<{
+    vendor_id?: string
+    vendor_name: string
+    contact_email: string
+    sent_date?: string
+    status: string
+    bid_id?: string
+  }>
+  notes?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface BidPackageItem {
+  id: string
+  bid_package_id: string
+  takeoff_item_id?: string
+  item_name: string
+  description?: string
+  material_spec?: string
+  quantity: number
+  unit: string
+  notes?: string
+  sort_order?: number
+  created_at?: string
+}
+
+export interface TakeoffRunWithItems extends TakeoffRun {
+  items: TakeoffItem[]
 }
 
 // --- API Response Types ---

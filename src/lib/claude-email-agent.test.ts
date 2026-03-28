@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { makeEmail } from '@/test/helpers'
+import { makeEmail, makeEmailThread, makeThreadedEmail } from '@/test/helpers'
 
 const mockCreate = vi.fn()
 
@@ -114,7 +114,7 @@ describe('triageEmail', () => {
 describe('generateDraftEmails', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('returns empty array for no emails', async () => {
+  it('returns empty array for no threads', async () => {
     const insights: ProjectInsights = {
       actionItems: [],
       nextSteps: [],
@@ -128,7 +128,7 @@ describe('generateDraftEmails', () => {
     expect(mockCreate).not.toHaveBeenCalled()
   })
 
-  it('generates drafts with IDs and status', async () => {
+  it('generates drafts with IDs and status from threads', async () => {
     const drafts = [
       { to: 'vendor@test.com', toName: 'Vendor', subject: 'Follow up', body: '<p>Hi</p>', reason: 'Need update', priority: 'high', relatedActionItem: 'Get bid' },
     ]
@@ -142,11 +142,38 @@ describe('generateDraftEmails', () => {
       overallStatus: '',
       urgentMatters: [],
     }
-    const result = await generateDraftEmails(insights, [makeEmail()])
+    const result = await generateDraftEmails(insights, [makeEmailThread()])
     expect(result).toHaveLength(1)
     expect(result[0].id).toMatch(/^draft-/)
     expect(result[0].status).toBe('draft')
     expect(result[0].to).toBe('vendor@test.com')
+  })
+
+  it('includes thread context with danielReplied flag in prompt', async () => {
+    mockCreate.mockResolvedValueOnce({ content: [{ type: 'text', text: '[]' }] })
+
+    const insights: ProjectInsights = {
+      actionItems: [],
+      nextSteps: [],
+      openQuestions: [],
+      keyDataPoints: [],
+      overallStatus: '',
+      urgentMatters: [],
+    }
+
+    const thread = makeEmailThread({
+      messages: [
+        makeThreadedEmail({ from: 'aaron@ubuildit.com', direction: 'received', date: '2026-03-20' }),
+        makeThreadedEmail({ from: 'danielcase.info@gmail.com', direction: 'sent', date: '2026-03-22' }),
+      ],
+    })
+    await generateDraftEmails(insights, [thread])
+
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content
+    expect(prompt).toContain("TODAY'S DATE:")
+    expect(prompt).toContain('DANIEL SENT')
+    expect(prompt).toContain('Daniel has replied in this thread: YES')
+    expect(prompt).toContain('Staleness check')
   })
 
   it('returns empty array on error', async () => {
@@ -159,7 +186,7 @@ describe('generateDraftEmails', () => {
       overallStatus: '',
       urgentMatters: [],
     }
-    const result = await generateDraftEmails(insights, [makeEmail()])
+    const result = await generateDraftEmails(insights, [makeEmailThread()])
     expect(result).toEqual([])
   })
 
@@ -184,7 +211,7 @@ describe('generateDraftEmails', () => {
       overallStatus: '',
       urgentMatters: [],
     }
-    const result = await generateDraftEmails(insights, [makeEmail()])
+    const result = await generateDraftEmails(insights, [makeEmailThread()])
     expect(result[0].body).not.toContain('<script>')
     expect(result[0].body).not.toContain('onerror')
     expect(result[0].body).not.toContain('javascript:')

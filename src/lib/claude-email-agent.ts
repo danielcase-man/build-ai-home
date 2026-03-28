@@ -1,5 +1,5 @@
 import { getAnthropicClient, parseAIJsonResponse } from './ai-clients'
-import type { Email, EmailInsights, ProjectInsights, DraftEmail } from '@/types'
+import type { Email, EmailInsights, ProjectInsights, DraftEmail, EmailThread } from '@/types'
 
 /**
  * Email summarization agent using Claude Sonnet 4.6
@@ -192,24 +192,33 @@ Return valid JSON only.`
 }
 
 /**
- * Generates recommended email drafts based on project insights and recent emails.
- * Identifies action items and questions that warrant a response from the homeowner.
+ * Generates recommended email drafts based on project insights and threaded email conversations.
+ * Thread-aware: skips conversations where Daniel already replied or where the topic is stale.
  * Uses Claude Sonnet for reasoning about what emails should be sent.
  */
 export async function generateDraftEmails(
   projectInsights: ProjectInsights,
-  emails: Email[]
+  threads: EmailThread[]
 ): Promise<DraftEmail[]> {
-  if (emails.length === 0) return []
+  if (threads.length === 0) return []
 
-  const emailContext = emails.slice(0, 15).map((e, i) =>
-    `EMAIL ${i + 1}:
-From: ${e.from}
-Date: ${e.date}
-Subject: ${e.subject}
-Body: ${e.body.substring(0, 600)}
+  const today = new Date().toISOString().split('T')[0]
+
+  // Build thread-structured context so AI sees full conversation chains
+  const threadContext = threads.slice(0, 12).map((thread, ti) => {
+    const msgs = thread.messages.map((m, mi) =>
+      `  [${mi + 1}] ${m.direction === 'sent' ? 'DANIEL SENT' : 'RECEIVED'} | From: ${m.from} | Date: ${m.date}
+  Body: ${m.body.substring(0, 500)}`
+    ).join('\n')
+
+    return `THREAD ${ti + 1}: "${thread.subject}"
+Participants: ${thread.participants.join(', ')}
+Last activity: ${thread.lastMessageDate}
+Daniel has replied in this thread: ${thread.danielReplied ? 'YES' : 'NO'}
+Messages (chronological):
+${msgs}
 ---`
-  ).join('\n\n')
+  }).join('\n\n')
 
   const insightsContext = JSON.stringify({
     actionItems: projectInsights.actionItems,
@@ -217,21 +226,26 @@ Body: ${e.body.substring(0, 600)}
     urgentMatters: projectInsights.urgentMatters
   }, null, 2)
 
-  const prompt = `You are an AI assistant helping a homeowner (Daniel Case, danielcase.info@gmail.com) manage a home construction project with UBuildIt.
+  const prompt = `You are an AI assistant helping a homeowner (Daniel Case, danielcase.info@gmail.com) manage a home construction project.
 
-Analyze the project insights and recent emails below. Generate recommended email drafts that Daniel should send. Focus on:
-- Action items where Daniel is the owner or where no owner is specified
-- Open questions that need a response from the homeowner
-- Urgent matters requiring immediate communication
-- Follow-ups on decisions or information requests
+TODAY'S DATE: ${today}
+
+Analyze the conversation threads and project insights below. Generate recommended email drafts that Daniel should send RIGHT NOW.
+
+CRITICAL RULES — read these before generating ANY drafts:
+1. **Thread awareness:** Each thread shows the FULL conversation chain. Messages marked "DANIEL SENT" are emails Daniel already sent. Do NOT recommend follow-ups on topics Daniel has already addressed in a later message within the same thread.
+2. **Staleness check:** If Daniel already replied to a thread and the other party has NOT responded since Daniel's last message, a follow-up MAY be warranted ONLY if enough time has passed (3+ business days) AND the matter is still unresolved. Otherwise skip it.
+3. **Current state only:** Only recommend emails that reflect the CURRENT state of each conversation as of ${today}. Do not recommend emails about topics that have already been discussed and moved past.
+4. **No redundant follow-ups:** If Daniel sent a detailed email and is simply waiting for a reply (less than 3 business days), do NOT generate a follow-up. Patience is appropriate.
+5. **Recency matters:** Prioritize threads with recent activity from others that Daniel has NOT yet responded to.
 
 PROJECT INSIGHTS:
 ${insightsContext}
 
-RECENT EMAILS:
-${emailContext}
+CONVERSATION THREADS:
+${threadContext}
 
-Generate up to 5 email drafts. For each, determine the correct recipient from the email context (use actual email addresses from the emails above).
+Generate up to 5 email drafts. For each, determine the correct recipient from the thread context (use actual email addresses).
 
 Return a JSON array of draft objects:
 [
@@ -240,7 +254,7 @@ Return a JSON array of draft objects:
     "toName": "Recipient Name",
     "subject": "Clear subject line",
     "body": "<p>HTML formatted email body</p>",
-    "reason": "Why this email should be sent",
+    "reason": "Why this email should be sent NOW (reference the thread state)",
     "priority": "high/medium/low",
     "relatedActionItem": "The action item or question this addresses"
   }
@@ -250,10 +264,11 @@ Rules for the email body:
 - Use HTML: <p> for paragraphs, <br> for line breaks, <b> for bold, <ul>/<li> for lists
 - Professional but friendly tone
 - Sign off as "Daniel Case" or "Daniel"
-- Be specific and reference project details from the emails
+- Be specific and reference project details from the threads
 - Keep emails concise and action-oriented
+- Reference the current date context — do not write emails that sound like they were written days ago
 
-If no drafts are warranted, return an empty array [].
+If no drafts are warranted based on the current thread states, return an empty array [].
 Return valid JSON only, no markdown fences or explanation.`
 
   try {

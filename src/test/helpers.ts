@@ -2,7 +2,7 @@
  * Shared test helpers — mock factories and data builders
  */
 import { vi } from 'vitest'
-import type { Email, EmailRecord, Bid, Selection, ExtractedBid } from '@/types'
+import type { Email, EmailRecord, EmailThread, ThreadedEmail, Bid, Selection, ExtractedBid } from '@/types'
 
 // ─── Chainable Supabase Mock ────────────────────────────────────────────────
 
@@ -71,6 +71,31 @@ export function makeEmail(overrides: Partial<Email> = {}): Email {
     from: 'vendor@example.com',
     body: 'Please find the updated bid attached.',
     date: '2026-01-15',
+    ...overrides,
+  }
+}
+
+export function makeThreadedEmail(overrides: Partial<ThreadedEmail> = {}): ThreadedEmail {
+  return {
+    subject: 'Foundation bid update',
+    from: 'vendor@example.com',
+    body: 'Please find the updated bid attached.',
+    date: '2026-01-15',
+    threadId: 'thread-001',
+    direction: 'received',
+    ...overrides,
+  }
+}
+
+export function makeEmailThread(overrides: Partial<EmailThread> = {}): EmailThread {
+  const messages = overrides.messages || [makeThreadedEmail()]
+  return {
+    threadId: 'thread-001',
+    subject: messages[0].subject,
+    participants: [...new Set(messages.map(m => m.from))],
+    messages,
+    lastMessageDate: messages[messages.length - 1].date,
+    danielReplied: messages.some(m => m.direction === 'sent'),
     ...overrides,
   }
 }
