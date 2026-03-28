@@ -91,6 +91,9 @@ export interface ClassificationResult {
   rule: string        // Which rule triggered (for debugging)
 }
 
+/** Daniel's own email — sent emails should inherit classification from content, not sender */
+const OWNER_EMAIL = 'danielcase.info@gmail.com'
+
 /** Classify an email by sender and subject — no AI needed */
 export function classifyEmail(
   senderEmail: string,
@@ -101,6 +104,21 @@ export function classifyEmail(
   const email = senderEmail.toLowerCase()
   const domain = email.split('@')[1] || ''
   const text = `${subject} ${bodyPreview}`.toLowerCase()
+
+  // 0. Daniel's own sent emails — classify by content, not sender domain
+  if (email === OWNER_EMAIL) {
+    if (CONSTRUCTION_KEYWORDS.test(subject) || CONSTRUCTION_KEYWORDS.test(text)) {
+      return { category: 'construction', confidence: 0.90, rule: 'owner_sent_construction' }
+    }
+    if (FINANCIAL_KEYWORDS.test(subject) || FINANCIAL_KEYWORDS.test(text)) {
+      return { category: 'financial', confidence: 0.90, rule: 'owner_sent_financial' }
+    }
+    if (LEGAL_KEYWORDS.test(subject) || LEGAL_KEYWORDS.test(text)) {
+      return { category: 'legal', confidence: 0.90, rule: 'owner_sent_legal' }
+    }
+    // Daniel's sent email with no matching keywords — still likely project-related
+    return { category: 'construction', confidence: 0.60, rule: 'owner_sent_default' }
+  }
 
   // 1. Check noise domains first (highest confidence reject)
   for (const noise of NOISE_DOMAINS) {

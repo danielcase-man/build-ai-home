@@ -114,6 +114,26 @@ describe('email-classifier', () => {
     })
   })
 
+  describe('owner sent emails', () => {
+    it('classifies Daniel sent emails with construction keywords as construction', () => {
+      const r = classifyEmail('danielcase.info@gmail.com', 'Case Residence — Detail Set Review & Payment', '')
+      expect(r.category).toBe('construction')
+      expect(r.rule).toBe('owner_sent_construction')
+    })
+
+    it('classifies Daniel sent emails with financial keywords as financial', () => {
+      const r = classifyEmail('danielcase.info@gmail.com', 'Re: Construction loan update', '')
+      expect(r.category).toBe('financial')
+      expect(r.rule).toBe('owner_sent_financial')
+    })
+
+    it('classifies Daniel sent emails with no keywords as construction by default', () => {
+      const r = classifyEmail('danielcase.info@gmail.com', '', '')
+      expect(r.category).toBe('construction')
+      expect(r.rule).toBe('owner_sent_default')
+    })
+  })
+
   describe('edge cases', () => {
     it('handles empty sender', () => {
       const r = classifyEmail('', 'Test', '')
