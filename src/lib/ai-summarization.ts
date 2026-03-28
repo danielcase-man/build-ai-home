@@ -208,31 +208,65 @@ Decisions Pending: ${ks.decisionsPending}`)
   return sections.join('\n\n')
 }
 
-export async function summarizeIndividualEmail(email: Email): Promise<string> {
-  const prompt = `Provide a brief 2-3 sentence summary of this construction project email.
-Focus on the key points, action items, or decisions mentioned.
+/**
+ * Classify AND summarize an email in a single Claude call.
+ * Returns { summary, category } where category is 'construction', 'legal', or 'other'.
+ * Non-construction emails get a minimal summary to save tokens.
+ */
+export async function classifyAndSummarizeEmail(email: Email): Promise<{ summary: string; category: string }> {
+  const prompt = `Classify and summarize this email. The owner is building a custom home at 708 Purple Salvia Cove, Liberty Hill TX.
 
 From: ${email.from}
 Date: ${email.date}
 Subject: ${email.subject}
-Body: ${email.body}`
+Body: ${email.body.substring(0, 2000)}
+
+Return ONLY valid JSON:
+{
+  "category": "construction" | "legal" | "financial" | "other",
+  "summary": "1-2 sentence summary if construction/legal/financial, or empty string if other"
+}
+
+CATEGORY RULES:
+- "construction": Anything related to the home build — vendors, bids, materials, engineering, architects, contractors, permits, inspections, selections, design, UBuildIt, JobTread
+- "legal": Insurance claims, demand letters, USAA, attorneys, credit disputes, debt collectors
+- "financial": Loan, mortgage, bank, appraisal, title company, River Bear Financial
+- "other": Marketing emails, newsletters, social media, shipping notifications (USPS/FedEx/UPS unless construction materials), software notifications (GitHub, Stripe, Alpaca), promotions, subscriptions, spam
+
+If in doubt between construction and other, choose "other". Be strict — only true build-related communications should be "construction".`
 
   try {
     const response = await getAnthropicClient().messages.create({
       model: MODEL,
       max_tokens: 200,
-      temperature: 0.3,
-      system: getEmailTriageExpertise(),
+      temperature: 0.1,
       messages: [{ role: 'user', content: prompt }]
     })
 
     const content = response.content[0]
-    if (content.type === 'text') return content.text
-    return 'Unable to generate summary'
+    if (content.type === 'text') {
+      try {
+        const parsed = parseAIJsonResponse(content.text) as { category: string; summary: string }
+        return {
+          category: parsed.category || 'other',
+          summary: parsed.summary || '',
+        }
+      } catch {
+        // If JSON parsing fails, treat as construction and use raw text as summary
+        return { category: 'unknown', summary: content.text.substring(0, 200) }
+      }
+    }
+    return { category: 'unknown', summary: '' }
   } catch (error) {
-    console.error('Error summarizing individual email:', error)
-    return 'Unable to generate summary'
+    console.error('Error classifying email:', error)
+    return { category: 'unknown', summary: '' }
   }
+}
+
+/** Backward-compatible wrapper — returns just the summary string */
+export async function summarizeIndividualEmail(email: Email): Promise<string> {
+  const { summary } = await classifyAndSummarizeEmail(email)
+  return summary || 'Unable to generate summary'
 }
 
 export async function generateDailyProjectSummary(

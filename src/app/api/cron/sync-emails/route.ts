@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server'
-import { summarizeIndividualEmail } from '@/lib/ai-summarization'
+import { summarizeIndividualEmail, classifyAndSummarizeEmail } from '@/lib/ai-summarization'
 import { db } from '@/lib/database'
 import { extractEmailAddress, extractSenderName } from '@/lib/ui-helpers'
 import { successResponse, errorResponse } from '@/lib/api-utils'
@@ -137,8 +137,8 @@ export async function POST(request: NextRequest) {
         date: email.date
       }
 
-      console.log(`Generating AI summary for: ${email.subject}`)
-      const aiSummary = await summarizeIndividualEmail(emailData)
+      console.log(`Classifying and summarizing: ${email.subject}`)
+      const { summary: aiSummary, category } = await classifyAndSummarizeEmail(emailData)
 
       const emailRecord: EmailRecord = {
         project_id: projectId,
@@ -150,7 +150,8 @@ export async function POST(request: NextRequest) {
         subject: email.subject,
         body_text: email.body,
         received_date: email.date,
-        ai_summary: aiSummary,
+        ai_summary: aiSummary || 'Unable to generate summary',
+        category: category,
         has_attachments: false,
         urgency_level: 'medium'
       }

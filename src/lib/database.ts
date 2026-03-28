@@ -165,7 +165,7 @@ export class DatabaseService {
         .order('received_date', { ascending: false })
 
       if (category === 'construction') {
-        query = query.in('category', ['construction', 'unknown'])
+        query = query.in('category', ['construction', 'legal', 'financial', 'unknown'])
       }
 
       const { data, error } = await query
@@ -679,24 +679,17 @@ export class DatabaseService {
  * Classify an email as construction-related or other based on sender domain.
  * Simple pattern matching — no AI needed for this.
  */
+/**
+ * Fallback email categorization by sender domain.
+ * Used when AI classification hasn't run yet (e.g., manual fetch).
+ * AI classification in classifyAndSummarizeEmail() is more accurate.
+ */
 function categorizeEmailBySender(senderEmail: string | undefined, subject: string | undefined): string {
   if (!senderEmail) return 'unknown'
   const email = senderEmail.toLowerCase()
   const subj = (subject || '').toLowerCase()
 
-  // Known noise domains
-  const noiseDomains = [
-    'github.com', 'lovesac.com', 'prageru.com', 'epochtimes.com',
-    'stripe.com', 'alpaca.markets', 'vercel.com', 'google.com',
-    'youtube.com', 'facebook.com', 'twitter.com', 'linkedin.com',
-    'amazon.com', 'apple.com', 'netflix.com', 'spotify.com',
-    'doordash.com', 'uber.com', 'lyft.com', 'grubhub.com',
-  ]
-  for (const domain of noiseDomains) {
-    if (email.includes(domain)) return 'other'
-  }
-
-  // Known construction domains
+  // Known construction vendor/partner domains — be specific
   const constructionDomains = [
     'ubuildit.com', 'asiri-designs.com', 'riverbearfinancial.com',
     'fouraengineering.com', 'copeland-eng.com', '3daydesign.com',
@@ -708,17 +701,17 @@ function categorizeEmailBySender(senderEmail: string | undefined, subject: strin
     if (email.includes(domain)) return 'construction'
   }
 
-  // Subject-based classification
-  const constructionKeywords = [
-    'bid', 'quote', 'estimate', 'proposal', 'invoice', 'contract',
-    'foundation', 'framing', 'plumbing', 'electrical', 'hvac',
-    'septic', 'grading', 'permit', 'inspection', 'urla', 'loan',
-    'purple salvia', 'ubuildit', 'construction', 'build',
+  // Subject keywords strongly indicating construction
+  const constructionSubjects = [
+    'purple salvia', 'ubuildit', 'urla', 'foundation', 'structural',
+    'septic', 'grading plan', 'bid', 'quote', 'estimate',
   ]
-  for (const kw of constructionKeywords) {
+  for (const kw of constructionSubjects) {
     if (subj.includes(kw)) return 'construction'
   }
 
+  // Default to unknown — let AI classify properly
+  // DO NOT default to 'construction' — strict filtering is better than noise
   return 'unknown'
 }
 

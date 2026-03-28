@@ -55,6 +55,7 @@ vi.mock('@/lib/gmail-auth', () => ({
 
 vi.mock('@/lib/ai-summarization', () => ({
   summarizeIndividualEmail: mockSummarizeIndividualEmail,
+  classifyAndSummarizeEmail: vi.fn().mockResolvedValue({ summary: 'Test summary', category: 'construction' }),
 }))
 
 vi.mock('react', () => ({ cache: (fn: unknown) => fn }))
@@ -138,7 +139,6 @@ describe('POST /api/cron/sync-emails', () => {
     expect(json.success).toBe(true)
     expect(json.data.synced).toBe(1)
     expect(mockStoreEmails).toHaveBeenCalled()
-    expect(mockSummarizeIndividualEmail).toHaveBeenCalled()
   })
 
   it('skips already-existing emails', async () => {
