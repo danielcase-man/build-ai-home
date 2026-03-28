@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { supabase } from './supabase'
 import { db } from './database'
-import { generateProjectStatusSnapshot } from './ai-summarization'
+import { generateProjectStatusFromData } from './project-status-generator'
 import type { FullProjectContext } from './ai-summarization'
 import { getBudgetItems } from './budget-service'
 import { getBids } from './bids-service'
@@ -13,7 +13,7 @@ import { getChangeOrders } from './change-order-service'
 import { getDrawSummary } from './draw-schedule-service'
 import { getExpiringWarranties, getComplianceGaps } from './warranty-service'
 import { getPunchListStats } from './punch-list-service'
-import type { ProjectStatusData, DashboardData, Email, Question, KeyDataPoint } from '@/types'
+import type { ProjectStatusData, DashboardData, Question, KeyDataPoint } from '@/types'
 
 /** Derive the current step number from planning_phase_steps rows. */
 export function calculateCurrentStep(
@@ -313,6 +313,7 @@ export async function getProjectStatus(): Promise<ProjectStatusData | null> {
       .from('emails')
       .select('sender_name, ai_summary')
       .eq('project_id', project.id)
+      .in('category', ['construction', 'legal', 'financial'])
       .order('received_date', { ascending: false })
       .limit(5),
     supabase
@@ -428,43 +429,8 @@ export async function updateProjectStatus(projectId: string): Promise<void> {
     return
   }
 
-  // Fetch previous status report for iterative context
-  const previousStatus = await db.getLatestProjectStatus(projectId)
-
-  // Normalize legacy string formats in previous status
-  if (previousStatus) {
-    if (typeof previousStatus.hot_topics === 'string') {
-      try { previousStatus.hot_topics = JSON.parse(previousStatus.hot_topics as string) } catch { previousStatus.hot_topics = [] }
-    }
-    if (typeof previousStatus.action_items === 'string') {
-      try { previousStatus.action_items = JSON.parse(previousStatus.action_items as string) } catch { previousStatus.action_items = [] }
-    }
-    if (typeof previousStatus.recent_decisions === 'string') {
-      try { previousStatus.recent_decisions = JSON.parse(previousStatus.recent_decisions as string) } catch { previousStatus.recent_decisions = [] }
-    }
-  }
-
-  // Fetch recent emails — no project_id filter (single-user app, all emails are relevant)
-  const recentEmails = await db.getRecentEmails(14)
-
-  // Generate AI snapshot if there are emails OR a previous status to iterate on
-  let snapshot
-  if (recentEmails.length > 0 || previousStatus) {
-    const emailsForAI: Email[] = recentEmails.map(e => ({
-      subject: e.subject,
-      from: e.sender_email,
-      body: e.body_text || '',
-      date: e.received_date
-    }))
-    snapshot = await generateProjectStatusSnapshot(emailsForAI, fullContext, previousStatus)
-  } else {
-    snapshot = {
-      hot_topics: [],
-      action_items: [],
-      recent_decisions: [],
-      ai_summary: 'No recent emails to analyze.'
-    }
-  }
+  // Generate status snapshot from structured data (no AI calls)
+  const snapshot = generateProjectStatusFromData(fullContext)
 
   const { currentStep, totalSteps } = { currentStep: fullContext.project.currentStep, totalSteps: fullContext.project.totalSteps }
   const budgetUsed = fullContext.budget.spent

@@ -39,8 +39,9 @@ vi.mock('./database', () => ({
     syncAIInsightsToTasks: vi.fn().mockResolvedValue(undefined),
   },
 }))
-vi.mock('./ai-summarization', () => ({
-  generateProjectStatusSnapshot: vi.fn().mockResolvedValue({
+vi.mock('./ai-summarization', () => ({}))
+vi.mock('./project-status-generator', () => ({
+  generateProjectStatusFromData: vi.fn().mockReturnValue({
     hot_topics: [],
     action_items: [],
     recent_decisions: [],
@@ -94,7 +95,7 @@ import {
   getBudgetSummary,
 } from './project-service'
 import { db } from './database'
-import { generateProjectStatusSnapshot } from './ai-summarization'
+import { generateProjectStatusFromData } from './project-status-generator'
 import { getBudgetItems } from './budget-service'
 import { getBids } from './bids-service'
 import { getSelections } from './selections-service'
@@ -711,7 +712,7 @@ describe('updateProjectStatus', () => {
     consoleSpy.mockRestore()
   })
 
-  it('generates AI snapshot and writes to database', async () => {
+  it('generates deterministic snapshot and writes to database', async () => {
     const project = {
       id: 'proj-1',
       name: 'Test House',
@@ -725,16 +726,10 @@ describe('updateProjectStatus', () => {
     vi.mocked(getBids).mockResolvedValueOnce([])
     vi.mocked(getSelections).mockResolvedValueOnce([])
 
-    // For getFullProjectContext Promise.all
     Object.defineProperty(mockChain, 'then', {
       value: (resolve: (v: unknown) => void) => resolve({ data: null, error: null }),
       writable: true, configurable: true,
     })
-
-    // Mock recent emails to trigger AI snapshot
-    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
-      { message_id: 'm1', subject: 'Bid update', sender_email: 'vendor@test.com', body_text: 'New bid', received_date: '2026-02-28' } as any,
-    ])
 
     const mockSnapshot = {
       hot_topics: [{ priority: 'high', text: 'New bid received' }],
@@ -745,15 +740,13 @@ describe('updateProjectStatus', () => {
       key_data_points: [],
       ai_summary: 'New bid from vendor.',
     }
-    vi.mocked(generateProjectStatusSnapshot).mockResolvedValueOnce(mockSnapshot)
+    vi.mocked(generateProjectStatusFromData).mockReturnValueOnce(mockSnapshot)
 
     await updateProjectStatus('proj-1')
 
-    // Verify AI was called
-    expect(generateProjectStatusSnapshot).toHaveBeenCalledWith(
-      expect.arrayContaining([expect.objectContaining({ subject: 'Bid update' })]),
+    // Verify generator was called with context
+    expect(generateProjectStatusFromData).toHaveBeenCalledWith(
       expect.objectContaining({ project: expect.objectContaining({ name: 'Test House' }) }),
-      null,
     )
 
     // Verify database write
@@ -768,7 +761,7 @@ describe('updateProjectStatus', () => {
     expect(db.syncAIInsightsToTasks).toHaveBeenCalledWith('proj-1', mockSnapshot.action_items)
   })
 
-  it('produces fallback snapshot when no emails and no previous status', async () => {
+  it('produces snapshot even with no emails (deterministic)', async () => {
     const project = {
       id: 'proj-1',
       name: 'Test House',
@@ -787,26 +780,14 @@ describe('updateProjectStatus', () => {
       writable: true, configurable: true,
     })
 
-    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([])
-    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(null)
-
     await updateProjectStatus('proj-1')
 
-    // AI should NOT be called — fallback used
-    expect(generateProjectStatusSnapshot).not.toHaveBeenCalled()
-
-    // Database should still be written with fallback
-    expect(db.upsertProjectStatus).toHaveBeenCalledWith('proj-1', expect.objectContaining({
-      ai_summary: 'No recent emails to analyze.',
-      hot_topics: [],
-      action_items: [],
-    }))
-
-    // Task sync called with empty items
-    expect(db.syncAIInsightsToTasks).toHaveBeenCalledWith('proj-1', [])
+    // Generator always called (deterministic — no email dependency)
+    expect(generateProjectStatusFromData).toHaveBeenCalled()
+    expect(db.upsertProjectStatus).toHaveBeenCalled()
   })
 
-  it('uses previous status for iterative context', async () => {
+  it('generates from full project context (no iterative state needed)', async () => {
     const project = {
       id: 'proj-1',
       name: 'Test House',
@@ -825,30 +806,19 @@ describe('updateProjectStatus', () => {
       writable: true, configurable: true,
     })
 
-    const previousStatus = {
-      hot_topics: [{ priority: 'high', text: 'Old topic' }],
-      action_items: [{ status: 'pending', text: 'Old action' }],
-      recent_decisions: [],
-      next_steps: [],
-      open_questions: [],
-      key_data_points: [],
-      ai_summary: 'Previous summary',
-      date: '2026-02-27',
-    }
-    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(previousStatus)
-    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([])
-
     await updateProjectStatus('proj-1')
 
-    // AI should be called (previousStatus is truthy even without emails)
-    expect(generateProjectStatusSnapshot).toHaveBeenCalledWith(
-      [], // no emails
-      expect.any(Object),
-      previousStatus,
+    // Deterministic generator uses only the current context, not previous status
+    expect(generateProjectStatusFromData).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project: expect.any(Object),
+        budget: expect.any(Object),
+        bids: expect.any(Array),
+      }),
     )
   })
 
-  it('normalizes string-formatted previous status fields', async () => {
+  it('no longer needs string normalization (deterministic from structured data)', async () => {
     const project = {
       id: 'proj-1',
       name: 'Test House',
@@ -867,31 +837,12 @@ describe('updateProjectStatus', () => {
       writable: true, configurable: true,
     })
 
-    // Previous status has string-encoded JSONB (legacy format)
-    const previousStatus = {
-      hot_topics: JSON.stringify([{ priority: 'high', text: 'String topic' }]),
-      action_items: JSON.stringify([{ status: 'pending', text: 'String action' }]),
-      recent_decisions: JSON.stringify([]),
-      next_steps: [],
-      open_questions: [],
-      key_data_points: [],
-      ai_summary: 'Old summary',
-      date: '2026-02-26',
-    }
-    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(previousStatus as any)
-    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
-      { message_id: 'm1', subject: 'Test', sender_email: 'test@test.com', body_text: 'Hi', received_date: '2026-02-28' } as any,
-    ])
-
     await updateProjectStatus('proj-1')
 
-    // After normalization, AI should receive parsed arrays, not strings
-    const aiCall = vi.mocked(generateProjectStatusSnapshot).mock.calls[0]
-    const prevArg = aiCall[2]
-    expect(Array.isArray(prevArg?.hot_topics)).toBe(true)
-    expect(Array.isArray(prevArg?.action_items)).toBe(true)
-    expect(Array.isArray(prevArg?.recent_decisions)).toBe(true)
-    expect(prevArg?.hot_topics).toEqual([{ priority: 'high', text: 'String topic' }])
+    // Generator receives structured context, not parsed legacy strings
+    const call = vi.mocked(generateProjectStatusFromData).mock.calls[0]
+    expect(call[0]).toHaveProperty('project')
+    expect(call[0]).toHaveProperty('budget')
   })
 
   it('creates notifications only for draft_email action items that are not completed', async () => {
@@ -930,7 +881,7 @@ describe('updateProjectStatus', () => {
       key_data_points: [],
       ai_summary: 'Test summary.',
     }
-    vi.mocked(generateProjectStatusSnapshot).mockResolvedValueOnce(mockSnapshot)
+    vi.mocked(generateProjectStatusFromData).mockReturnValueOnce(mockSnapshot)
 
     await updateProjectStatus('proj-1')
 
