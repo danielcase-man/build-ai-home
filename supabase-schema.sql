@@ -1014,3 +1014,73 @@ CREATE POLICY "Users can manage inspections" ON inspections
 
 CREATE TRIGGER update_inspections_updated_at BEFORE UPDATE ON inspections
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================================
+-- Intelligence Engine Tables
+-- ============================================================
+
+-- Source Watermarks — track last-processed state for each data source
+CREATE TABLE IF NOT EXISTS source_watermarks (
+    source VARCHAR(50) PRIMARY KEY,
+    last_processed_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    last_processed_id VARCHAR(255),
+    items_processed INTEGER DEFAULT 0,
+    errors INTEGER DEFAULT 0,
+    metadata JSONB,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+ALTER TABLE source_watermarks ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage source_watermarks" ON source_watermarks
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+-- File Inventory — track every file in the Dropbox project directory
+CREATE TABLE IF NOT EXISTS file_inventory (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    file_path TEXT NOT NULL UNIQUE,
+    file_name VARCHAR(500) NOT NULL,
+    file_type VARCHAR(50),
+    file_size BIGINT,
+    modified_at TIMESTAMP WITH TIME ZONE,
+    folder_category VARCHAR(100),
+    processing_status VARCHAR(20) CHECK (processing_status IN ('pending', 'processing', 'completed', 'failed', 'skipped')) DEFAULT 'pending',
+    processed_at TIMESTAMP WITH TIME ZONE,
+    agent_domain VARCHAR(50),
+    result_id VARCHAR(255),
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW()),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_inventory_project ON file_inventory(project_id);
+CREATE INDEX IF NOT EXISTS idx_file_inventory_status ON file_inventory(processing_status);
+CREATE INDEX IF NOT EXISTS idx_file_inventory_path ON file_inventory(file_path);
+CREATE INDEX IF NOT EXISTS idx_file_inventory_domain ON file_inventory(agent_domain);
+
+ALTER TABLE file_inventory ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage file_inventory" ON file_inventory
+    FOR ALL USING (auth.uid() IS NOT NULL);
+
+CREATE TRIGGER update_file_inventory_updated_at BEFORE UPDATE ON file_inventory
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Intelligence Runs — log each run of the intelligence engine
+CREATE TABLE IF NOT EXISTS intelligence_runs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    started_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) CHECK (status IN ('running', 'completed', 'failed', 'partial')) DEFAULT 'running',
+    sources_checked JSONB DEFAULT '[]'::jsonb,
+    changes_detected INTEGER DEFAULT 0,
+    agents_invoked JSONB DEFAULT '[]'::jsonb,
+    results JSONB DEFAULT '[]'::jsonb,
+    errors JSONB DEFAULT '[]'::jsonb,
+    duration_ms INTEGER,
+    trigger_type VARCHAR(20) CHECK (trigger_type IN ('cron', 'manual', 'webhook')) DEFAULT 'manual',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc', NOW())
+);
+
+ALTER TABLE intelligence_runs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage intelligence_runs" ON intelligence_runs
+    FOR ALL USING (auth.uid() IS NOT NULL);

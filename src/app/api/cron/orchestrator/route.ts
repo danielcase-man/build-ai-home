@@ -299,6 +299,25 @@ export async function POST(request: NextRequest) {
       }
     } catch (e) { errors.push({ message: `Status update failed: ${e}` }) }
 
+    // ═══════════════════════════════════════════════════════════
+    // Step 9: Run intelligence engine (incremental scan)
+    // ═══════════════════════════════════════════════════════════
+    try {
+      const { runIntelligenceEngine } = await import('@/lib/intelligence-engine')
+      const intelligenceResult = await runIntelligenceEngine({
+        sources: ['dropbox'],
+        triggerType: 'cron',
+      })
+
+      if (intelligenceResult.changes_detected > 0) {
+        actions.push({
+          type: 'intelligence_scan',
+          detail: `Intelligence engine: ${intelligenceResult.changes_detected} changes, ${intelligenceResult.agents_invoked.length} agents ran`,
+          timestamp: new Date().toISOString(),
+        })
+      }
+    } catch (e) { errors.push({ message: `Intelligence engine failed: ${e}` }) }
+
     // Complete the run
     if (runId) {
       await supabase.from('orchestrator_runs').update({

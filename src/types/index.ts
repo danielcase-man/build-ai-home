@@ -1140,6 +1140,74 @@ export interface OrchestratorRun {
   created_at?: string
 }
 
+// --- Intelligence Engine Types ---
+
+export type IntelligenceSource = 'gmail' | 'dropbox' | 'jobtread' | 'manual'
+
+export interface SourceWatermark {
+  source: IntelligenceSource
+  last_processed_at: string
+  last_processed_id?: string
+  items_processed: number
+  errors: number
+  metadata?: Record<string, unknown>
+  updated_at?: string
+}
+
+export type AgentDomain = 'bid_analysis' | 'takeoff' | 'follow_up' | 'financial' | 'contract' | 'scheduling' | 'general'
+
+export interface ChangeEvent {
+  source: IntelligenceSource
+  domain: AgentDomain
+  file_path?: string
+  file_name?: string
+  file_type?: string
+  email_id?: string
+  metadata?: Record<string, unknown>
+  detected_at: string
+}
+
+export interface AgentResult {
+  domain: AgentDomain
+  source: IntelligenceSource
+  action: string
+  details: string
+  records_created: number
+  records_updated: number
+  errors: string[]
+  duration_ms: number
+}
+
+export interface IntelligenceRunResult {
+  run_id?: string
+  started_at: string
+  completed_at: string
+  sources_checked: IntelligenceSource[]
+  changes_detected: number
+  agents_invoked: AgentDomain[]
+  results: AgentResult[]
+  errors: string[]
+  duration_ms: number
+}
+
+export interface FileInventoryRecord {
+  id?: string
+  project_id: string
+  file_path: string
+  file_name: string
+  file_type: string
+  file_size: number
+  modified_at: string
+  folder_category?: string
+  processing_status: 'pending' | 'processing' | 'completed' | 'failed' | 'skipped'
+  processed_at?: string
+  agent_domain?: AgentDomain
+  result_id?: string
+  error_message?: string
+  created_at?: string
+  updated_at?: string
+}
+
 // --- API Response Types ---
 
 export interface ApiResponse<T> {

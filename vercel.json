@@ -3,6 +3,9 @@
     "src/app/api/cron/**/*.ts": {
       "maxDuration": 120
     },
+    "src/app/api/intelligence/**/*.ts": {
+      "maxDuration": 120
+    },
     "src/app/api/project-status/**/*.ts": {
       "maxDuration": 60
     },
@@ -25,6 +28,10 @@
     {
       "path": "/api/cron/sync-emails",
       "schedule": "0 8,12,16,20 * * *"
+    },
+    {
+      "path": "/api/intelligence/run?sources=dropbox&backlog=true",
+      "schedule": "30 8 * * *"
     },
     {
       "path": "/api/cron/daily-status",

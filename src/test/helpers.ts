@@ -15,6 +15,7 @@ type SupabaseChain = {
   eq: ReturnType<typeof vi.fn>
   in: ReturnType<typeof vi.fn>
   gte: ReturnType<typeof vi.fn>
+  lte: ReturnType<typeof vi.fn>
   order: ReturnType<typeof vi.fn>
   limit: ReturnType<typeof vi.fn>
   single: ReturnType<typeof vi.fn>
@@ -27,8 +28,8 @@ export function createMockSupabase(resolveWith: { data?: unknown; error?: unknow
   const chain: SupabaseChain = {} as SupabaseChain
 
   // Every chainable method returns the chain itself
-  for (const method of ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'in', 'gte', 'order', 'limit'] as const) {
-    chain[method] = vi.fn().mockReturnValue(chain)
+  for (const method of ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'in', 'gte', 'lte', 'gt', 'lt', 'order', 'limit', 'ilike', 'not', 'is', 'or', 'range', 'match', 'contains', 'containedBy', 'filter', 'textSearch'] as const) {
+    (chain as Record<string, ReturnType<typeof vi.fn>>)[method] = vi.fn().mockReturnValue(chain)
   }
 
   // Terminal method resolves the promise

@@ -78,7 +78,7 @@ async function StatusContent() {
     typeof d === 'string' ? { decision: d, impact: 'noted' } : d
   )
 
-  const aiSummary = latestStatus?.ai_summary || 'No AI summary available yet. Click "Generate AI Report" to analyze your emails.'
+  const aiSummary = latestStatus?.ai_summary || 'No data yet. Click "Run Intelligence" to scan all sources and generate insights.'
 
   // Normalize next_steps, open_questions, key_data_points
   const nextSteps = (latestStatus?.next_steps || []) as string[]
@@ -147,6 +147,36 @@ async function JobTreadPush() {
   return <JobTreadPushPanel items={pushableItems} />
 }
 
+async function IntelligenceFooter() {
+  const { data: latestRun } = await supabase
+    .from('intelligence_runs')
+    .select('completed_at, changes_detected, agents_invoked, duration_ms, status')
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  const run = latestRun?.[0]
+
+  return (
+    <div className="text-center py-4 text-xs text-muted-foreground space-y-1">
+      {run?.completed_at ? (
+        <>
+          <p>
+            Intelligence last ran: {format(new Date(run.completed_at), 'MMM d, h:mm a')}
+            {run.changes_detected > 0 && ` — ${run.changes_detected} changes processed`}
+            {run.duration_ms && ` (${(run.duration_ms / 1000).toFixed(1)}s)`}
+          </p>
+          <p>
+            {run.status === 'completed' ? 'All sources current' : 'Partial — some sources had errors'}
+            {' · '}Data updates automatically via daily cron
+          </p>
+        </>
+      ) : (
+        <p>Intelligence engine ready. Click &quot;Run Intelligence&quot; to scan all sources.</p>
+      )}
+    </div>
+  )
+}
+
 // --- Main page with streaming layout ---
 
 export default function ProjectStatusPage() {
@@ -190,10 +220,9 @@ export default function ProjectStatusPage() {
       </Suspense>
 
       {/* Instant: footer */}
-      <div className="text-center py-4 text-xs text-muted-foreground">
-        <p>Last updated: {format(new Date(), 'h:mm a')}</p>
-        <p className="mt-1">This report is automatically generated daily</p>
-      </div>
+      <Suspense fallback={null}>
+        <IntelligenceFooter />
+      </Suspense>
     </div>
   )
 }
