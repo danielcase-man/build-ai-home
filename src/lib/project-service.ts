@@ -2,7 +2,9 @@ import { cache } from 'react'
 import { supabase } from './supabase'
 import { db } from './database'
 import { generateProjectStatusFromData } from './project-status-generator'
+import { generateProjectStatusSnapshot } from './ai-summarization'
 import type { FullProjectContext } from './ai-summarization'
+import type { Email } from '@/types'
 import { getBudgetItems } from './budget-service'
 import { getBids } from './bids-service'
 import { getSelections } from './selections-service'
@@ -421,7 +423,6 @@ function getDefaultDashboard(): DashboardData {
 }
 
 export async function updateProjectStatus(projectId: string): Promise<void> {
-  // Fetch full project context for AI grounding
   const fullContext = await getFullProjectContext(projectId)
 
   if (!fullContext) {
@@ -429,33 +430,79 @@ export async function updateProjectStatus(projectId: string): Promise<void> {
     return
   }
 
-  // Generate status snapshot from structured data (no AI calls)
-  const snapshot = generateProjectStatusFromData(fullContext)
+  // Layer 1: Deterministic status from structured DB data (instant, free)
+  // Catches stale bids, overdue tasks, blocked milestones, missing trades
+  const deterministicSnapshot = generateProjectStatusFromData(fullContext)
+
+  // Layer 2: AI-powered status from emails + project context (smart, ~$0.12)
+  // Interprets email content, generates natural language summary, extracts
+  // open questions, marks completed action items from email evidence
+  let aiSnapshot = null
+  try {
+    const previousStatus = await db.getLatestProjectStatus(projectId)
+    const recentEmails = await db.getRecentEmails(14)
+
+    if (recentEmails.length > 0 || previousStatus) {
+      const emailsForAI: Email[] = recentEmails.map(e => ({
+        subject: e.subject,
+        from: e.sender_email,
+        body: e.body_text || '',
+        date: e.received_date,
+      }))
+      aiSnapshot = await generateProjectStatusSnapshot(emailsForAI, fullContext, previousStatus)
+    }
+  } catch (aiError) {
+    console.error('AI status generation failed (using deterministic only):', aiError)
+  }
+
+  // Merge: deterministic provides the structural checks, AI provides the intelligence
+  const mergedHotTopics = [
+    ...deterministicSnapshot.hot_topics,
+    ...(aiSnapshot?.hot_topics || []).filter(
+      (t: { text: string }) => !deterministicSnapshot.hot_topics.some(d => d.text.includes(t.text.substring(0, 30)))
+    ),
+  ]
+
+  const mergedActionItems = aiSnapshot?.action_items?.length
+    ? aiSnapshot.action_items // AI version has email-derived freshness
+    : deterministicSnapshot.action_items
 
   const { currentStep, totalSteps } = { currentStep: fullContext.project.currentStep, totalSteps: fullContext.project.totalSteps }
   const budgetUsed = fullContext.budget.spent
   const budgetTotal = fullContext.budget.total
 
-  // Write to database
   await db.upsertProjectStatus(projectId, {
     phase: fullContext.project.phase,
     current_step: currentStep,
     progress_percentage: Math.round((currentStep / totalSteps) * 100),
-    hot_topics: snapshot.hot_topics,
-    action_items: snapshot.action_items,
-    recent_decisions: snapshot.recent_decisions,
-    next_steps: snapshot.next_steps,
-    open_questions: snapshot.open_questions,
-    key_data_points: snapshot.key_data_points,
+    hot_topics: mergedHotTopics,
+    action_items: mergedActionItems,
+    recent_decisions: aiSnapshot?.recent_decisions?.length
+      ? aiSnapshot.recent_decisions
+      : deterministicSnapshot.recent_decisions,
+    next_steps: aiSnapshot?.next_steps?.length
+      ? aiSnapshot.next_steps
+      : deterministicSnapshot.next_steps,
+    open_questions: aiSnapshot?.open_questions || [],
+    key_data_points: deterministicSnapshot.key_data_points, // Always use deterministic (factual)
     budget_status: budgetUsed <= budgetTotal ? 'On Track' : 'Over Budget',
     budget_used: budgetUsed,
-    ai_summary: snapshot.ai_summary
+    ai_summary: aiSnapshot?.ai_summary || deterministicSnapshot.ai_summary,
   })
 
-  // Note: AI task sync removed — deterministic generator derives action items
-  // from DB state for display only. Tasks are managed manually or by orchestrator.
+  // Cascade AI action items into tasks table (restored)
+  if (aiSnapshot?.action_items) {
+    await db.syncAIInsightsToTasks(projectId, aiSnapshot.action_items)
+  }
 
-  console.log(`Project status updated for project ${projectId}`)
+  // Notify for draft_email action items
+  for (const item of mergedActionItems) {
+    if (item.action_type === 'draft_email' && item.status !== 'completed') {
+      await createActionItemNotification(projectId, item.text)
+    }
+  }
+
+  console.log(`Project status updated for project ${projectId} (AI: ${aiSnapshot ? 'yes' : 'deterministic only'})`)
 }
 
 export async function getActiveHotTopics(projectId: string): Promise<string[]> {

@@ -39,7 +39,17 @@ vi.mock('./database', () => ({
     syncAIInsightsToTasks: vi.fn().mockResolvedValue(undefined),
   },
 }))
-vi.mock('./ai-summarization', () => ({}))
+vi.mock('./ai-summarization', () => ({
+  generateProjectStatusSnapshot: vi.fn().mockResolvedValue({
+    hot_topics: [],
+    action_items: [],
+    recent_decisions: [],
+    next_steps: [],
+    open_questions: [],
+    key_data_points: [],
+    ai_summary: 'mock AI summary',
+  }),
+}))
 vi.mock('./project-status-generator', () => ({
   generateProjectStatusFromData: vi.fn().mockReturnValue({
     hot_topics: [],
@@ -96,6 +106,7 @@ import {
 } from './project-service'
 import { db } from './database'
 import { generateProjectStatusFromData } from './project-status-generator'
+import { generateProjectStatusSnapshot } from './ai-summarization'
 import { getBudgetItems } from './budget-service'
 import { getBids } from './bids-service'
 import { getSelections } from './selections-service'
@@ -844,7 +855,7 @@ describe('updateProjectStatus', () => {
     expect(call[0]).toHaveProperty('budget')
   })
 
-  it('does not sync AI tasks or create notifications (deterministic mode)', async () => {
+  it('syncs AI tasks and creates notifications for draft_email items', async () => {
     const project = {
       id: 'proj-1',
       name: 'Test House',
@@ -863,12 +874,17 @@ describe('updateProjectStatus', () => {
       writable: true, configurable: true,
     })
 
-    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([])
+    // AI snapshot will be generated from emails
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
+      { message_id: 'm1', subject: 'Test', sender_email: 'v@test.com', body_text: 'Hi', received_date: '2026-02-28' } as any,
+    ])
+    vi.mocked(db.getLatestProjectStatus).mockResolvedValueOnce(null)
 
-    const mockSnapshot = {
+    const mockAISnapshot = {
       hot_topics: [],
       action_items: [
         { status: 'pending', text: 'Draft email to vendor', action_type: 'draft_email' as const },
+        { status: 'pending', text: 'Call inspector', action_type: null },
       ],
       recent_decisions: [],
       next_steps: [],
@@ -876,13 +892,19 @@ describe('updateProjectStatus', () => {
       key_data_points: [],
       ai_summary: 'Test summary.',
     }
-    vi.mocked(generateProjectStatusFromData).mockReturnValueOnce(mockSnapshot)
+    vi.mocked(generateProjectStatusSnapshot).mockResolvedValueOnce(mockAISnapshot)
+    vi.mocked(generateProjectStatusFromData).mockReturnValueOnce({
+      hot_topics: [], action_items: [], recent_decisions: [],
+      next_steps: [], open_questions: [], key_data_points: [],
+      ai_summary: 'Deterministic fallback.',
+    })
 
     await updateProjectStatus('proj-1')
 
-    // AI task sync and notifications are disabled in deterministic mode
-    expect(db.syncAIInsightsToTasks).not.toHaveBeenCalled()
-    expect(createActionItemNotification).not.toHaveBeenCalled()
+    // AI task sync restored — syncs action items from AI snapshot
+    expect(db.syncAIInsightsToTasks).toHaveBeenCalledWith('proj-1', mockAISnapshot.action_items)
+    // Notification for draft_email action item
+    expect(createActionItemNotification).toHaveBeenCalledWith('proj-1', 'Draft email to vendor')
   })
 
   it('computes budget_status as Over Budget when spent exceeds total', async () => {

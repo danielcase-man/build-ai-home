@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { classifyAndSummarizeEmail } from '@/lib/ai-summarization'
 import { classifyAndSummarizeEmailRuleBased } from '@/lib/email-classifier'
 import { db } from '@/lib/database'
 import { extractEmailAddress, extractSenderName } from '@/lib/ui-helpers'
@@ -8,6 +9,7 @@ import { getAuthenticatedGmailService } from '@/lib/gmail-auth'
 import { AuthenticationError } from '@/lib/errors'
 import { env } from '@/lib/env'
 import { createEmailSyncNotification } from '@/lib/notification-service'
+import { detectAndUpdateLoanStatus } from '@/lib/loan-status-detection'
 import { detectAndUpdateLoanStatusRuleBased } from '@/lib/loan-status-rules'
 import type { EmailRecord } from '@/types'
 
@@ -137,14 +139,16 @@ export async function POST(request: NextRequest) {
         date: email.date
       }
 
-      console.log(`Classifying: ${email.subject}`)
-      const { summary: aiSummary, category } = await classifyAndSummarizeEmailRuleBased(emailData, projectId)
-
-      // Skip noise emails — don't store USPS, GitHub, marketing, etc.
-      if (category === 'other') {
-        console.log(`Skipping noise email: ${email.subject}`)
+      // Fast rule-based pre-filter: skip obvious noise before AI processing
+      const ruleResult = await classifyAndSummarizeEmailRuleBased(emailData, projectId)
+      if (ruleResult.category === 'other' && ruleResult.confidence >= 0.90) {
+        console.log(`Skipping noise (${ruleResult.rule}): ${email.subject}`)
         continue
       }
+
+      // AI-powered classification + summary for construction-relevant emails
+      console.log(`AI classifying: ${email.subject}`)
+      const { summary: aiSummary, category } = await classifyAndSummarizeEmail(emailData)
 
       const emailRecord: EmailRecord = {
         project_id: projectId,
@@ -157,7 +161,7 @@ export async function POST(request: NextRequest) {
         body_text: email.body,
         received_date: email.date,
         ai_summary: aiSummary || 'Unable to generate summary',
-        category: category,
+        category: category || ruleResult.category,
         has_attachments: false,
         urgency_level: 'medium'
       }
@@ -199,19 +203,25 @@ export async function POST(request: NextRequest) {
       console.error('Reconciler failed (non-fatal):', reconcileErr)
     }
 
-    // Detect loan status changes from new emails
+    // Detect loan status changes from new emails (AI first, rule-based fallback)
     if (emailsToStore.length > 0) {
       try {
         console.log('Checking for loan status updates...')
-        const loanUpdate = await detectAndUpdateLoanStatusRuleBased(
-          projectId,
-          emailsToStore.map(e => ({
-            from: `${e.sender_name || ''} <${e.sender_email || ''}>`,
-            subject: e.subject || '',
-            body: e.body_text || '',
-            date: e.received_date || '',
-          }))
-        )
+        const loanEmails = emailsToStore.map(e => ({
+          from: `${e.sender_name || ''} <${e.sender_email || ''}>`,
+          subject: e.subject || '',
+          body: e.body_text || '',
+          date: e.received_date || '',
+        }))
+
+        let loanUpdate: { updated: boolean; reason?: string }
+        try {
+          loanUpdate = await detectAndUpdateLoanStatus(projectId, loanEmails)
+        } catch {
+          // AI failed — fall back to rule-based
+          loanUpdate = await detectAndUpdateLoanStatusRuleBased(projectId, loanEmails)
+        }
+
         if (loanUpdate.updated) {
           console.log(`Loan status auto-updated: ${loanUpdate.reason}`)
         }
