@@ -21,6 +21,7 @@ const PUBLIC_ROUTES = [
   '/api/auth/',         // OAuth callbacks + /api/auth/me
   '/api/gmail/auth',    // OAuth initiation
   '/api/cron/',         // Has Bearer token auth
+  '/api/intelligence/', // Has Bearer token auth
   '/api/admin/',        // Has Bearer token auth
   '/api/plaid/webhook', // Has JWK signature verification
   '/api/vendors/invite/accept', // Public invitation validation
