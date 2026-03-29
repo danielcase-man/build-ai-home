@@ -452,15 +452,8 @@ export async function updateProjectStatus(projectId: string): Promise<void> {
     ai_summary: snapshot.ai_summary
   })
 
-  // Cascade AI action items into the tasks table
-  await db.syncAIInsightsToTasks(projectId, snapshot.action_items)
-
-  // Notify for new high-priority action items
-  for (const item of snapshot.action_items) {
-    if (item.action_type === 'draft_email' && item.status !== 'completed') {
-      await createActionItemNotification(projectId, item.text)
-    }
-  }
+  // Note: AI task sync removed — deterministic generator derives action items
+  // from DB state for display only. Tasks are managed manually or by orchestrator.
 
   console.log(`Project status updated for project ${projectId}`)
 }

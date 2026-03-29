@@ -757,8 +757,7 @@ describe('updateProjectStatus', () => {
       ai_summary: 'New bid from vendor.',
     }))
 
-    // Verify task sync was triggered
-    expect(db.syncAIInsightsToTasks).toHaveBeenCalledWith('proj-1', mockSnapshot.action_items)
+    // Task sync removed — deterministic generator derives action items for display only
   })
 
   it('produces snapshot even with no emails (deterministic)', async () => {
@@ -845,7 +844,7 @@ describe('updateProjectStatus', () => {
     expect(call[0]).toHaveProperty('budget')
   })
 
-  it('creates notifications only for draft_email action items that are not completed', async () => {
+  it('does not sync AI tasks or create notifications (deterministic mode)', async () => {
     const project = {
       id: 'proj-1',
       name: 'Test House',
@@ -864,16 +863,12 @@ describe('updateProjectStatus', () => {
       writable: true, configurable: true,
     })
 
-    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([
-      { message_id: 'm1', subject: 'Test', sender_email: 'v@test.com', body_text: 'Hi', received_date: '2026-02-28' } as any,
-    ])
+    vi.mocked(db.getRecentEmails).mockResolvedValueOnce([])
 
     const mockSnapshot = {
       hot_topics: [],
       action_items: [
         { status: 'pending', text: 'Draft email to vendor', action_type: 'draft_email' as const },
-        { status: 'completed', text: 'Old draft', action_type: 'draft_email' as const },
-        { status: 'pending', text: 'Call inspector', action_type: null },
       ],
       recent_decisions: [],
       next_steps: [],
@@ -885,9 +880,9 @@ describe('updateProjectStatus', () => {
 
     await updateProjectStatus('proj-1')
 
-    // Only the first item should trigger notification (draft_email + not completed)
-    expect(createActionItemNotification).toHaveBeenCalledTimes(1)
-    expect(createActionItemNotification).toHaveBeenCalledWith('proj-1', 'Draft email to vendor')
+    // AI task sync and notifications are disabled in deterministic mode
+    expect(db.syncAIInsightsToTasks).not.toHaveBeenCalled()
+    expect(createActionItemNotification).not.toHaveBeenCalled()
   })
 
   it('computes budget_status as Over Budget when spent exceeds total', async () => {
