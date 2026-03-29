@@ -1031,8 +1031,8 @@ CREATE TABLE IF NOT EXISTS source_watermarks (
 );
 
 ALTER TABLE source_watermarks ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage source_watermarks" ON source_watermarks
-    FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Allow all access" ON source_watermarks
+    FOR ALL USING (true);
 
 -- File Inventory — track every file in the Dropbox project directory
 CREATE TABLE IF NOT EXISTS file_inventory (
@@ -1059,8 +1059,8 @@ CREATE INDEX IF NOT EXISTS idx_file_inventory_path ON file_inventory(file_path);
 CREATE INDEX IF NOT EXISTS idx_file_inventory_domain ON file_inventory(agent_domain);
 
 ALTER TABLE file_inventory ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage file_inventory" ON file_inventory
-    FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Allow all access" ON file_inventory
+    FOR ALL USING (true);
 
 CREATE TRIGGER update_file_inventory_updated_at BEFORE UPDATE ON file_inventory
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -1082,5 +1082,5 @@ CREATE TABLE IF NOT EXISTS intelligence_runs (
 );
 
 ALTER TABLE intelligence_runs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can manage intelligence_runs" ON intelligence_runs
-    FOR ALL USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Allow all access" ON intelligence_runs
+    FOR ALL USING (true);
