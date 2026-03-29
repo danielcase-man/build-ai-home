@@ -416,6 +416,20 @@ export class DatabaseService {
               .eq('id', existing.id)
           }
         } else if (!existingTitles.has(titleLower) && item.status !== 'completed') {
+          // Skip "Select vendor for X" tasks when selections already exist for that category
+          const vendorSelectMatch = item.text.match(/select vendor for (\w[\w\s&]*)/i)
+          if (vendorSelectMatch) {
+            const bidCategory = vendorSelectMatch[1].trim()
+            const { data: existingSelections } = await supabase
+              .from('selections')
+              .select('id')
+              .eq('project_id', projectId)
+              .ilike('category', `%${bidCategory.toLowerCase().replace(/s$/, '')}%`)
+              .not('status', 'in', '("alternative","considering")')
+              .limit(1)
+            if (existingSelections && existingSelections.length > 0) continue
+          }
+
           // Create new task for pending/in-progress items only
           const priority = item.action_type === 'draft_email' ? 'high' : 'medium'
           const notes = item.action_context
