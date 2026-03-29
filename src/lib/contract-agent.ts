@@ -159,11 +159,10 @@ async function handleContract(events: ChangeEvent[], projectId: string): Promise
           category: 'Contracts',
           file_url: filePath,
           file_type: ext,
-          notes: JSON.stringify({
-            extracted: extracted || null,
-            source: 'intelligence_engine',
-            cataloged_at: new Date().toISOString(),
-          }),
+          source_path: filePath,
+          ai_classification: 'contract',
+          ai_summary: extracted ? `${extracted.title}: ${extracted.vendor_name || 'unknown vendor'}, $${extracted.total_amount || 0}` : null,
+          description: extracted?.description || `Contract document — cataloged by intelligence engine`,
         })
 
       // If we got good extraction, create a contract record

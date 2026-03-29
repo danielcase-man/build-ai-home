@@ -118,12 +118,9 @@ async function handleTakeoff(events: ChangeEvent[], projectId: string): Promise<
           file_url: filePath,
           file_type: fileType,
           file_size: fileSize,
-          notes: JSON.stringify({
-            plan_type: planType,
-            confidence,
-            source: 'intelligence_engine',
-            cataloged_at: new Date().toISOString(),
-          }),
+          source_path: filePath,
+          ai_classification: `plan_type:${planType}; confidence:${confidence}`,
+          description: `${planType} plan — cataloged by intelligence engine`,
         })
 
       if (insertError) {

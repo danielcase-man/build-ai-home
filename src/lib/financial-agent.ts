@@ -121,11 +121,9 @@ async function processFinancialFile(
         category: 'Financial',
         file_url: filePath,
         file_type: ext,
-        notes: JSON.stringify({
-          financial_type: subType,
-          source: 'intelligence_engine',
-          cataloged_at: new Date().toISOString(),
-        }),
+        source_path: filePath,
+        ai_classification: `financial_type:${subType}`,
+        description: `${subType} document — cataloged by intelligence engine`,
       })
 
     return error
@@ -158,12 +156,10 @@ async function processFinancialFile(
         category: 'Financial',
         file_url: filePath,
         file_type: ext,
-        notes: JSON.stringify({
-          financial_type: subType,
-          extracted: extracted || null,
-          source: 'intelligence_engine',
-          cataloged_at: new Date().toISOString(),
-        }),
+        source_path: filePath,
+        ai_classification: `financial_type:${subType}`,
+        ai_summary: extracted ? `${extracted.vendor_name || 'Unknown'}: $${extracted.amount || 0} (${extracted.date || 'no date'})` : null,
+        description: extracted?.description || `${subType} document — cataloged by intelligence engine`,
       })
 
     // If it's an invoice with enough data, create an invoice record
@@ -201,11 +197,9 @@ async function processFinancialFile(
       category: 'Financial',
       file_url: filePath,
       file_type: ext,
-      notes: JSON.stringify({
-        financial_type: subType,
-        source: 'intelligence_engine',
-        cataloged_at: new Date().toISOString(),
-      }),
+      source_path: filePath,
+      ai_classification: `financial_type:${subType}`,
+      description: `${subType} document — cataloged by intelligence engine`,
     })
 
   return { success: true, action: 'cataloged' }
