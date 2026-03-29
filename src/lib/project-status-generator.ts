@@ -68,6 +68,39 @@ function deriveHotTopics(ctx: FullProjectContext): ProjectStatusSnapshot['hot_to
     })
   }
 
+  // Stale bids — pending/under_review for 30+ days need a decision
+  const thirtyDaysAgo = DAYS_AGO(30)
+  const staleBids = ctx.bids.filter(b =>
+    (b.status === 'pending' || b.status === 'under_review') &&
+    b.received_date && b.received_date < thirtyDaysAgo
+  )
+  if (staleBids.length > 0) {
+    // Group by category for cleaner output
+    const staleByCategory: Record<string, typeof staleBids> = {}
+    for (const b of staleBids) {
+      if (!staleByCategory[b.category]) staleByCategory[b.category] = []
+      staleByCategory[b.category].push(b)
+    }
+    for (const [cat, bids] of Object.entries(staleByCategory)) {
+      const oldest = Math.max(...bids.map(b => Math.floor((Date.now() - new Date(b.received_date).getTime()) / 86400000)))
+      topics.push({
+        priority: oldest > 90 ? 'high' : 'medium',
+        text: `${bids.length} stale ${cat} bid${bids.length > 1 ? 's' : ''} (${bids.map(b => b.vendor_name).join(', ')}) — ${oldest > 90 ? `${oldest}+ days` : '30+ days'} with no decision`
+      })
+    }
+  }
+
+  // Critical trades with NO bids at all
+  const criticalTrades = ['Framing', 'HVAC', 'Plumbing', 'Electrical', 'Roofing', 'Insulation', 'Drywall', 'Cabinetry']
+  const categoriesWithBids = new Set(ctx.bids.filter(b => b.status !== 'rejected').map(b => b.category))
+  const missingBids = criticalTrades.filter(t => !categoriesWithBids.has(t))
+  if (missingBids.length > 0) {
+    topics.push({
+      priority: 'medium',
+      text: `No bids yet for critical trades: ${missingBids.join(', ')}`
+    })
+  }
+
   // Permits pending
   const pendingPermits = ctx.permits.filter(p => p.status === 'pending' || p.status === 'submitted')
   if (pendingPermits.length > 0) {

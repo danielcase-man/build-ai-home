@@ -37,10 +37,10 @@ describe('project-status-generator', () => {
         milestones: [{ name: 'Grading', description: null, target_date: null, completed_date: null, status: 'blocked', notes: 'Waiting on Arredondo' }],
       })
       const result = generateProjectStatusFromData(ctx)
-      expect(result.hot_topics).toHaveLength(1)
-      expect(result.hot_topics[0].priority).toBe('high')
-      expect(result.hot_topics[0].text).toContain('Grading')
-      expect(result.hot_topics[0].text).toContain('Arredondo')
+      const blockedTopic = result.hot_topics.find(t => t.text.includes('Grading'))
+      expect(blockedTopic).toBeDefined()
+      expect(blockedTopic!.priority).toBe('high')
+      expect(blockedTopic!.text).toContain('Arredondo')
     })
 
     it('flags overdue tasks', () => {
@@ -86,10 +86,12 @@ describe('project-status-generator', () => {
       expect(loanTopic).toBeUndefined()
     })
 
-    it('returns empty for clean project', () => {
+    it('flags missing critical trade bids for clean project', () => {
       const ctx = makeContext()
       const result = generateProjectStatusFromData(ctx)
-      expect(result.hot_topics).toHaveLength(0)
+      // A clean project with no bids should flag missing critical trades
+      const missingTopic = result.hot_topics.find(t => t.text.includes('No bids yet'))
+      expect(missingTopic).toBeDefined()
     })
   })
 
