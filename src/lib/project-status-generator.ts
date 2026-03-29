@@ -179,10 +179,19 @@ function deriveActionItems(ctx: FullProjectContext): ProjectStatusSnapshot['acti
     })
   }
 
-  // Categories with bids but no selection
+  // Categories with bids but no selection — check BOTH bid status and selections table
+  const categoriesWithSelections = new Set(
+    ctx.selections
+      .filter(s => s.status !== 'alternative' && s.status !== 'considering')
+      .map(s => s.category)
+  )
   const bidCategories = [...new Set(ctx.bids.map(b => b.category))]
-  const selectedCategories = new Set(ctx.bids.filter(b => b.status === 'selected').map(b => b.category))
-  const needsDecision = bidCategories.filter(c => !selectedCategories.has(c) && ctx.bids.some(b => b.category === c && b.status !== 'rejected'))
+  const selectedBidCategories = new Set(ctx.bids.filter(b => b.status === 'selected').map(b => b.category))
+  const needsDecision = bidCategories.filter(c =>
+    !selectedBidCategories.has(c) &&
+    !categoriesWithSelections.has(c.toLowerCase()) &&
+    ctx.bids.some(b => b.category === c && b.status !== 'rejected')
+  )
 
   for (const cat of needsDecision) {
     const catBids = ctx.bids.filter(b => b.category === cat && b.status !== 'rejected')
@@ -261,6 +270,13 @@ function deriveRecentDecisions(ctx: FullProjectContext): ProjectStatusSnapshot['
 function deriveNextSteps(ctx: FullProjectContext): string[] {
   const steps: string[] = []
 
+  // Categories that already have a selected vendor (via selections table)
+  const categoriesWithSelections = new Set(
+    ctx.selections
+      .filter(s => s.status !== 'alternative' && s.status !== 'considering')
+      .map(s => s.category)
+  )
+
   // Next upcoming milestone
   const upcomingMilestones = ctx.milestones
     .filter(m => m.status === 'pending' || m.status === 'in_progress')
@@ -271,19 +287,23 @@ function deriveNextSteps(ctx: FullProjectContext): string[] {
     steps.push(`Next milestone: ${next.name}${next.target_date ? ` (target: ${next.target_date})` : ''}`)
   }
 
-  // High-priority pending tasks
+  // High-priority pending tasks — skip AI-generated cruft
   const highPriority = ctx.tasks
     .filter(t => t.priority === 'high' && t.status !== 'completed')
+    .filter(t => !t.notes?.includes('[ai-generated]'))
+    .filter(t => !t.notes?.includes('[auto-closed'))
     .slice(0, 3)
 
   for (const task of highPriority) {
     steps.push(task.title)
   }
 
-  // Vendor decisions needed
+  // Vendor decisions needed — exclude categories that already have selections
   const bidCategories = [...new Set(ctx.bids.map(b => b.category))]
-  const selectedCategories = new Set(ctx.bids.filter(b => b.status === 'selected').map(b => b.category))
-  const needsDecision = bidCategories.filter(c => !selectedCategories.has(c))
+  const selectedBidCategories = new Set(ctx.bids.filter(b => b.status === 'selected').map(b => b.category))
+  const needsDecision = bidCategories.filter(c =>
+    !selectedBidCategories.has(c) && !categoriesWithSelections.has(c.toLowerCase())
+  )
   if (needsDecision.length > 0) {
     steps.push(`Make vendor selections for: ${needsDecision.join(', ')}`)
   }
