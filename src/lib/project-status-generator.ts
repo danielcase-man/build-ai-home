@@ -14,6 +14,7 @@
  */
 
 import type { FullProjectContext, ProjectStatusSnapshot } from './ai-summarization'
+import { getSelectionCategoryForBidCategory } from './category-mapping'
 
 const TODAY = () => new Date().toISOString().split('T')[0]
 const DAYS_AGO = (n: number) => {
@@ -187,11 +188,12 @@ function deriveActionItems(ctx: FullProjectContext): ProjectStatusSnapshot['acti
   )
   const bidCategories = [...new Set(ctx.bids.map(b => b.category))]
   const selectedBidCategories = new Set(ctx.bids.filter(b => b.status === 'selected').map(b => b.category))
-  const needsDecision = bidCategories.filter(c =>
-    !selectedBidCategories.has(c) &&
-    !categoriesWithSelections.has(c.toLowerCase()) &&
-    ctx.bids.some(b => b.category === c && b.status !== 'rejected')
-  )
+  const needsDecision = bidCategories.filter(c => {
+    if (selectedBidCategories.has(c)) return false
+    const selCat = getSelectionCategoryForBidCategory(c)
+    if (selCat && categoriesWithSelections.has(selCat)) return false
+    return ctx.bids.some(b => b.category === c && b.status !== 'rejected')
+  })
 
   for (const cat of needsDecision) {
     const catBids = ctx.bids.filter(b => b.category === cat && b.status !== 'rejected')
@@ -301,9 +303,13 @@ function deriveNextSteps(ctx: FullProjectContext): string[] {
   // Vendor decisions needed — exclude categories that already have selections
   const bidCategories = [...new Set(ctx.bids.map(b => b.category))]
   const selectedBidCategories = new Set(ctx.bids.filter(b => b.status === 'selected').map(b => b.category))
-  const needsDecision = bidCategories.filter(c =>
-    !selectedBidCategories.has(c) && !categoriesWithSelections.has(c.toLowerCase())
-  )
+  const needsDecision = bidCategories.filter(c => {
+    if (selectedBidCategories.has(c)) return false
+    // Map bid category ("Appliances") to selection category ("appliance") via mapping table
+    const selCat = getSelectionCategoryForBidCategory(c)
+    if (selCat && categoriesWithSelections.has(selCat)) return false
+    return true
+  })
   if (needsDecision.length > 0) {
     steps.push(`Make vendor selections for: ${needsDecision.join(', ')}`)
   }
