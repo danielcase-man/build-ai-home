@@ -136,6 +136,13 @@ export function registerAgent(domain: AgentDomain, handler: AgentHandler): void 
 }
 
 /**
+ * Get all domains that have registered agent handlers.
+ */
+export function getRegisteredDomains(): AgentDomain[] {
+  return [...agentHandlers.keys()]
+}
+
+/**
  * Route change events to the appropriate domain agents.
  * Groups events by domain and dispatches to registered handlers.
  */

@@ -13,7 +13,7 @@ import { supabase } from './supabase'
 import { getProject } from './project-service'
 import { getAllWatermarks, shouldProcess, updateWatermark } from './source-watermarks'
 import { scanDropboxIncremental, getPendingFiles } from './dropbox-watcher'
-import { dispatchToAgents } from './agent-router'
+import { dispatchToAgents, getRegisteredDomains } from './agent-router'
 import { generateProjectStatusFromData } from './project-status-generator'
 import { getFullProjectContext } from './project-service'
 import type {
@@ -25,6 +25,11 @@ import type {
 
 // Import agents to trigger registration
 import './bid-analysis-agent'
+import './takeoff-agent'
+import './financial-agent'
+import './contract-agent'
+import './scheduling-agent'
+import './follow-up-agent'
 
 // Minimum interval between source checks (minutes)
 const SOURCE_INTERVALS: Record<IntelligenceSource, number> = {
@@ -172,19 +177,22 @@ export async function runIntelligenceEngine(options: {
   // ═══════════════════════════════════════════════════════════
 
   if (options.processBacklog) {
-    const pending = await getPendingFiles(projectId, undefined, 50)
-    for (const file of pending) {
-      // Only add if not already in allChanges
-      const alreadyQueued = allChanges.some(c => c.file_path === file.file_path)
-      if (!alreadyQueued) {
-        allChanges.push({
-          source: 'dropbox',
-          domain: (file.agent_domain as ChangeEvent['domain']) || 'general',
-          file_path: file.file_path,
-          file_name: file.file_name,
-          file_type: file.file_type,
-          detected_at: new Date().toISOString(),
-        })
+    // Only process backlog for domains that have registered agent handlers
+    const registeredDomains = getRegisteredDomains()
+    for (const domain of registeredDomains) {
+      const pending = await getPendingFiles(projectId, domain, 20)
+      for (const file of pending) {
+        const alreadyQueued = allChanges.some(c => c.file_path === file.file_path)
+        if (!alreadyQueued) {
+          allChanges.push({
+            source: 'dropbox',
+            domain: (file.agent_domain as ChangeEvent['domain']) || domain,
+            file_path: file.file_path,
+            file_name: file.file_name,
+            file_type: file.file_type,
+            detected_at: new Date().toISOString(),
+          })
+        }
       }
     }
   }

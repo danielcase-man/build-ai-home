@@ -45,10 +45,16 @@ vi.mock('./agent-router', () => ({
   dispatchToAgents: (...args: unknown[]) => mockDispatch(...args),
   classifyEmail: vi.fn().mockReturnValue('general'),
   registerAgent: vi.fn(),
+  getRegisteredDomains: vi.fn().mockReturnValue(['bid_analysis', 'takeoff', 'financial', 'contract']),
 }))
 
-// Mock bid-analysis-agent (just needs to not error on import)
+// Mock all agents (just need to not error on import)
 vi.mock('./bid-analysis-agent', () => ({}))
+vi.mock('./takeoff-agent', () => ({}))
+vi.mock('./financial-agent', () => ({}))
+vi.mock('./contract-agent', () => ({}))
+vi.mock('./scheduling-agent', () => ({}))
+vi.mock('./follow-up-agent', () => ({}))
 
 // Mock project-status-generator
 vi.mock('./project-status-generator', () => ({
@@ -144,12 +150,15 @@ describe('intelligence-engine', () => {
   })
 
   it('processes backlog when option is set', async () => {
-    mockGetPendingFiles.mockResolvedValueOnce([{
-      file_path: '/pending.pdf',
-      file_name: 'pending.pdf',
-      file_type: 'pdf',
-      agent_domain: 'bid_analysis',
-    }])
+    // First domain (bid_analysis) returns a pending file; others return empty
+    mockGetPendingFiles
+      .mockResolvedValueOnce([{
+        file_path: '/pending.pdf',
+        file_name: 'pending.pdf',
+        file_type: 'pdf',
+        agent_domain: 'bid_analysis',
+      }])
+      .mockResolvedValue([]) // remaining domains: empty
 
     // Override scan to return nothing new
     mockScanDropbox.mockResolvedValueOnce({
@@ -165,7 +174,8 @@ describe('intelligence-engine', () => {
       processBacklog: true,
     })
 
-    expect(mockGetPendingFiles).toHaveBeenCalled()
+    // Called once per registered domain
+    expect(mockGetPendingFiles).toHaveBeenCalledTimes(4)
     expect(result.changes_detected).toBe(1)
   })
 
