@@ -16,6 +16,7 @@ import { AuthenticationError } from '@/lib/errors'
 import { env } from '@/lib/env'
 import { generateProjectStatusFromData } from '@/lib/project-status-generator'
 import { getFullProjectContext } from '@/lib/project-service'
+import { reconcileTasksFromEmails } from '@/lib/task-reconciler'
 
 const TODAY = new Date().toISOString().split('T')[0]
 
@@ -44,7 +45,135 @@ export async function POST(request: NextRequest) {
     const alerts: Array<{ priority: string; message: string }> = []
     const errors: Array<{ message: string }> = []
 
-    // Step 1: Check overdue vendor follow-ups
+    // ═══════════════════════════════════════════════════════════
+    // Step 1: Check EXISTING tasks for overdue + high priority
+    // ═══════════════════════════════════════════════════════════
+    try {
+      const { data: overdueTasks } = await supabase
+        .from('tasks')
+        .select('title, due_date, priority, status')
+        .eq('project_id', project.id)
+        .in('status', ['pending', 'in_progress'])
+        .lt('due_date', TODAY)
+        .not('due_date', 'is', null)
+        .order('due_date', { ascending: true })
+
+      if (overdueTasks && overdueTasks.length > 0) {
+        alerts.push({
+          priority: 'high',
+          message: `${overdueTasks.length} OVERDUE task(s): ${overdueTasks.slice(0, 5).map(t => `"${t.title}" (due ${t.due_date})`).join('; ')}${overdueTasks.length > 5 ? ` +${overdueTasks.length - 5} more` : ''}`
+        })
+      }
+
+      // High-priority tasks with no due date (need attention)
+      const { data: undatedHighTasks } = await supabase
+        .from('tasks')
+        .select('title, priority')
+        .eq('project_id', project.id)
+        .eq('priority', 'high')
+        .in('status', ['pending', 'in_progress'])
+        .is('due_date', null)
+
+      if (undatedHighTasks && undatedHighTasks.length > 5) {
+        alerts.push({
+          priority: 'medium',
+          message: `${undatedHighTasks.length} high-priority tasks have no due date — consider scheduling: ${undatedHighTasks.slice(0, 3).map(t => `"${t.title}"`).join(', ')}...`
+        })
+      }
+    } catch (e) { errors.push({ message: `Task check failed: ${e}` }) }
+
+    // ═══════════════════════════════════════════════════════════
+    // Step 2: Check EXISTING bids — stale, under review, pending
+    // ═══════════════════════════════════════════════════════════
+    try {
+      // Bids stuck in "under_review" or "pending" for 30+ days
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split('T')[0]
+      const { data: staleBids } = await supabase
+        .from('bids')
+        .select('vendor_name, category, total_amount, status, received_date, lead_time_weeks')
+        .eq('project_id', project.id)
+        .in('status', ['pending', 'under_review'])
+        .lt('received_date', thirtyDaysAgo)
+
+      if (staleBids && staleBids.length > 0) {
+        for (const bid of staleBids) {
+          const age = Math.floor((Date.now() - new Date(bid.received_date).getTime()) / 86400000)
+          alerts.push({
+            priority: age > 90 ? 'high' : 'medium',
+            message: `STALE BID: ${bid.vendor_name} ${bid.category} ($${Number(bid.total_amount).toLocaleString()}) — ${bid.status} for ${age} days. Decision needed.`
+          })
+        }
+      }
+
+      // Bids with lead times that aren't selected yet — ordering risk
+      const { data: leadTimeBids } = await supabase
+        .from('bids')
+        .select('vendor_name, category, lead_time_weeks, status')
+        .eq('project_id', project.id)
+        .in('status', ['pending', 'under_review'])
+        .not('lead_time_weeks', 'is', null)
+
+      if (leadTimeBids && leadTimeBids.length > 0) {
+        for (const bid of leadTimeBids) {
+          if (bid.lead_time_weeks && bid.lead_time_weeks >= 8) {
+            alerts.push({
+              priority: 'medium',
+              message: `${bid.vendor_name} ${bid.category} has ${bid.lead_time_weeks}-week lead time but no vendor selected yet. Delay risk.`
+            })
+          }
+        }
+      }
+
+      // Expiring bids (if valid_until is set)
+      const sevenDaysOut = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
+      const { data: expiringBids } = await supabase
+        .from('bids')
+        .select('vendor_name, category, valid_until')
+        .eq('project_id', project.id)
+        .eq('status', 'pending')
+        .not('valid_until', 'is', null)
+        .lte('valid_until', sevenDaysOut)
+
+      if (expiringBids) {
+        for (const bid of expiringBids) {
+          alerts.push({
+            priority: bid.valid_until < TODAY ? 'high' : 'medium',
+            message: `${bid.vendor_name} ${bid.category} bid ${bid.valid_until < TODAY ? 'EXPIRED' : 'expiring'} ${bid.valid_until}`
+          })
+        }
+      }
+    } catch (e) { errors.push({ message: `Bid check failed: ${e}` }) }
+
+    // ═══════════════════════════════════════════════════════════
+    // Step 3: Check milestones — blocked, overdue
+    // ═══════════════════════════════════════════════════════════
+    try {
+      const { data: milestones } = await supabase
+        .from('milestones')
+        .select('name, status, target_date, notes')
+        .eq('project_id', project.id)
+        .in('status', ['blocked', 'in_progress', 'pending'])
+
+      if (milestones) {
+        for (const m of milestones) {
+          if (m.status === 'blocked') {
+            alerts.push({
+              priority: 'high',
+              message: `BLOCKED MILESTONE: ${m.name}${m.notes ? ` — ${m.notes}` : ''}`
+            })
+          } else if (m.target_date && m.target_date < TODAY && m.status !== 'completed') {
+            alerts.push({
+              priority: 'high',
+              message: `OVERDUE MILESTONE: ${m.name} — target was ${m.target_date}`
+            })
+          }
+        }
+      }
+    } catch (e) { errors.push({ message: `Milestone check failed: ${e}` }) }
+
+    // ═══════════════════════════════════════════════════════════
+    // Step 4: Check vendor follow-ups (new tracking table)
+    // ═══════════════════════════════════════════════════════════
     try {
       const { data: overdue } = await supabase
         .from('vendor_follow_ups')
@@ -78,29 +207,9 @@ export async function POST(request: NextRequest) {
       }
     } catch (e) { errors.push({ message: `Follow-up check failed: ${e}` }) }
 
-    // Step 2: Check bid deadlines
-    try {
-      const sevenDaysOut = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
-      const { data: expiringBids } = await supabase
-        .from('bids')
-        .select('vendor_name, category, valid_until')
-        .eq('project_id', project.id)
-        .eq('status', 'pending')
-        .not('valid_until', 'is', null)
-        .lte('valid_until', sevenDaysOut)
-
-      if (expiringBids) {
-        for (const bid of expiringBids) {
-          const expired = bid.valid_until < TODAY
-          alerts.push({
-            priority: expired ? 'high' : 'medium',
-            message: `${bid.vendor_name} ${bid.category} bid ${expired ? 'EXPIRED' : 'expiring'} ${bid.valid_until}`
-          })
-        }
-      }
-    } catch (e) { errors.push({ message: `Bid deadline check failed: ${e}` }) }
-
-    // Step 3: Check lead times
+    // ═══════════════════════════════════════════════════════════
+    // Step 5: Check lead times on selections
+    // ═══════════════════════════════════════════════════════════
     try {
       const { data: selections } = await supabase
         .from('selections')
@@ -125,7 +234,48 @@ export async function POST(request: NextRequest) {
       }
     } catch (e) { errors.push({ message: `Lead time check failed: ${e}` }) }
 
-    // Step 4: Update project status (deterministic)
+    // ═══════════════════════════════════════════════════════════
+    // Step 6: Categories missing bids entirely
+    // ═══════════════════════════════════════════════════════════
+    try {
+      const criticalCategories = ['Framing', 'HVAC', 'Plumbing', 'Electrical', 'Roofing', 'Insulation', 'Drywall', 'Cabinetry']
+      const { data: existingBids } = await supabase
+        .from('bids')
+        .select('category')
+        .eq('project_id', project.id)
+        .not('status', 'eq', 'rejected')
+
+      const categoriesWithBids = new Set((existingBids || []).map(b => b.category))
+      const missingBids = criticalCategories.filter(c => !categoriesWithBids.has(c))
+
+      if (missingBids.length > 0) {
+        alerts.push({
+          priority: 'medium',
+          message: `No bids yet for critical trades: ${missingBids.join(', ')}`
+        })
+      }
+    } catch (e) { errors.push({ message: `Missing bids check failed: ${e}` }) }
+
+    // ═══════════════════════════════════════════════════════════
+    // Step 7: Reconcile tasks against email evidence
+    // ═══════════════════════════════════════════════════════════
+    try {
+      const reconciliation = await reconcileTasksFromEmails(project.id)
+      if (reconciliation.tasksUpdated > 0 || reconciliation.tasksDeduplicated > 0) {
+        actions.push({
+          type: 'tasks_reconciled',
+          detail: `Reconciled ${reconciliation.tasksUpdated} task(s) from email evidence, deduplicated ${reconciliation.tasksDeduplicated}`,
+          timestamp: new Date().toISOString(),
+        })
+        for (const d of reconciliation.details.filter(d => d.action !== 'deduplicated').slice(0, 5)) {
+          alerts.push({ priority: 'low', message: `Task "${d.title.substring(0, 60)}..." → ${d.action}: ${d.reason}` })
+        }
+      }
+    } catch (e) { errors.push({ message: `Task reconciliation failed: ${e}` }) }
+
+    // ═══════════════════════════════════════════════════════════
+    // Step 8: Update project status (deterministic from all data)
+    // ═══════════════════════════════════════════════════════════
     try {
       const fullContext = await getFullProjectContext(project.id)
       if (fullContext) {
