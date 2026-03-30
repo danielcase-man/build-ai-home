@@ -944,6 +944,8 @@ export interface TakeoffItem {
   source_detail?: string
   knowledge_id?: string
   budget_item_id?: string
+  selection_id?: string | null
+  room?: string
   sort_order?: number
   notes?: string
   created_at?: string
