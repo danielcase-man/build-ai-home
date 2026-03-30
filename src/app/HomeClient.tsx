@@ -97,6 +97,26 @@ interface LeadTimeAlertData {
   message: string
 }
 
+interface IntelligenceDiffData {
+  since: string
+  bids_extracted: number
+  documents_cataloged: number
+  contracts_found: number
+  invoices_created: number
+  tasks_created: number
+  follow_ups_tracked: number
+  total_files_processed: number
+  items: Array<{
+    type: 'bid' | 'document' | 'contract' | 'invoice' | 'task' | 'follow_up'
+    title: string
+    detail?: string
+    amount?: number
+    created_at: string
+  }>
+  last_run_at: string | null
+  runs_since: number
+}
+
 interface HomeClientProps {
   initialData: DashboardData
   initialStatus: StatusSnapshot | null
@@ -106,6 +126,7 @@ interface HomeClientProps {
   vendorFollowUps?: VendorFollowUp[]
   coverageGaps?: CoverageGap[]
   leadTimeAlerts?: LeadTimeAlertData[]
+  intelligenceDiff?: IntelligenceDiffData | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -150,6 +171,7 @@ export default function HomeClient({
   vendorFollowUps = [],
   coverageGaps = [],
   leadTimeAlerts = [],
+  intelligenceDiff,
 }: HomeClientProps) {
   const [projectData, setProjectData] = useState<DashboardData>(initialData)
   const [hotTopics, setHotTopics] = useState<string[]>(() => {
@@ -595,6 +617,75 @@ export default function HomeClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* ── Intelligence Diff (since yesterday) ── */}
+      {intelligenceDiff && (intelligenceDiff.bids_extracted > 0 || intelligenceDiff.documents_cataloged > 0 || intelligenceDiff.contracts_found > 0 || intelligenceDiff.tasks_created > 0) && (
+        <Card className="animate-fade-in border-primary/20 bg-primary/[0.02]" style={{ animationDelay: '275ms' }}>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" />
+                Since Yesterday
+              </CardTitle>
+              <span className="text-xs text-muted-foreground">
+                {intelligenceDiff.runs_since} scan{intelligenceDiff.runs_since !== 1 ? 's' : ''} ·{' '}
+                {intelligenceDiff.total_files_processed} file{intelligenceDiff.total_files_processed !== 1 ? 's' : ''} processed
+              </span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3 mb-3">
+              {intelligenceDiff.bids_extracted > 0 && (
+                <Link href="/bids" className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  {intelligenceDiff.bids_extracted} bid{intelligenceDiff.bids_extracted !== 1 ? 's' : ''} extracted
+                </Link>
+              )}
+              {intelligenceDiff.documents_cataloged > 0 && (
+                <Link href="/documents" className="flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80">
+                  <FileText className="h-3.5 w-3.5" />
+                  {intelligenceDiff.documents_cataloged} doc{intelligenceDiff.documents_cataloged !== 1 ? 's' : ''} cataloged
+                </Link>
+              )}
+              {intelligenceDiff.contracts_found > 0 && (
+                <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                  <Gavel className="h-3.5 w-3.5" />
+                  {intelligenceDiff.contracts_found} contract{intelligenceDiff.contracts_found !== 1 ? 's' : ''} found
+                </span>
+              )}
+              {intelligenceDiff.invoices_created > 0 && (
+                <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  {intelligenceDiff.invoices_created} invoice{intelligenceDiff.invoices_created !== 1 ? 's' : ''} created
+                </span>
+              )}
+              {intelligenceDiff.tasks_created > 0 && (
+                <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                  <ListTodo className="h-3.5 w-3.5" />
+                  {intelligenceDiff.tasks_created} task{intelligenceDiff.tasks_created !== 1 ? 's' : ''} created
+                </span>
+              )}
+            </div>
+            {intelligenceDiff.items.length > 0 && (
+              <div className="space-y-1">
+                {intelligenceDiff.items.slice(0, 5).map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="truncate mr-2">{item.title}</span>
+                    {item.amount != null && item.amount > 0 && (
+                      <span className="shrink-0 font-medium">${item.amount.toLocaleString()}</span>
+                    )}
+                  </div>
+                ))}
+                {intelligenceDiff.items.length > 5 && (
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    +{intelligenceDiff.items.length - 5} more items
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Hot Topics (compact) ── */}
       {hotTopics.length > 0 && (
