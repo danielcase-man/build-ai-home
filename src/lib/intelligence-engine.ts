@@ -215,7 +215,10 @@ export async function runIntelligenceEngine(options: {
   // Phase 3: Update project status (always, if agents ran)
   // ═══════════════════════════════════════════════════════════
 
-  if (allResults.some(r => r.records_created > 0 || r.records_updated > 0)) {
+  const shouldUpdateStatus = options.force ||
+    allResults.some(r => r.records_created > 0 || r.records_updated > 0)
+
+  if (shouldUpdateStatus) {
     try {
       console.log('[intelligence] Updating project status snapshot...')
       const fullContext = await getFullProjectContext(projectId)
