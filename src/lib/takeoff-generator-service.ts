@@ -101,14 +101,13 @@ export async function generateFinishTakeoff(
     room: sel.room,
   }))
 
-  // insertTakeoffItems omits total_cost from its parameter type,
-  // but we want the DB to have it. Cast to include the extra field.
-  const itemsWithTotals = items.map((item, idx) => ({
-    ...item,
-    total_cost: selections[idx].total_price,
-  })) as unknown as Omit<TakeoffItem, 'id' | 'created_at' | 'updated_at' | 'quantity_with_waste' | 'total_cost'>[]
-
-  await insertTakeoffItems(itemsWithTotals)
+  // total_cost and quantity_with_waste are GENERATED columns in DB —
+  // do NOT include them in the insert. They auto-compute from unit_cost + quantity.
+  const insertResult = await insertTakeoffItems(items)
+  if (insertResult.errors.length > 0) {
+    console.error(`[takeoff-gen] Insert errors for ${trade}:`, insertResult.errors)
+  }
+  console.log(`[takeoff-gen] ${trade}: ${insertResult.inserted} items inserted from ${selections.length} selections`)
 
   return run
 }

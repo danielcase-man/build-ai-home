@@ -118,6 +118,8 @@ export async function insertTakeoffItems(
       .insert(batch)
 
     if (error) {
+      console.error(`[takeoff-service] Insert error:`, error.message, error.details, error.hint)
+      console.error(`[takeoff-service] Sample item:`, JSON.stringify(batch[0]).substring(0, 500))
       errors.push(`Batch ${Math.floor(i / 100) + 1}: ${error.message}`)
     } else {
       inserted += batch.length

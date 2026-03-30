@@ -172,7 +172,7 @@ describe('generateFinishTakeoff', () => {
     expect(item0.quantity).toBe(2)
     expect(item0.unit).toBe('EA')
     expect(item0.unit_cost).toBe(320)
-    expect(item0.total_cost).toBe(640)
+    // total_cost is a GENERATED column in DB — not included in insert
     expect(item0.source).toBe('vendor_spec')
     expect(item0.confidence).toBe('verified')
     expect(item0.source_detail).toBe('Selection: Primary Bathroom — Delta Trinsic Faucet')

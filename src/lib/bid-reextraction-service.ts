@@ -88,20 +88,45 @@ export async function normalizeExistingLineItems(
     }
 
     try {
-      const items = bid.line_items as LineItem[]
+      const items = bid.line_items as Record<string, unknown>[]
       const category = bid.category as string
 
-      const mapped: ExtractedLineItem[] = items.map((item) => ({
-        item_name: item.item || 'Unknown Item',
-        item_description: item.specs || undefined,
-        quantity: item.quantity || 1,
-        unit: 'EA',
-        unit_price: item.unit_price || undefined,
-        total_price: item.total || 0,
-        specs: item.specs || undefined,
-        notes: item.notes || undefined,
-        category: category,
-      }))
+      // Auto-detect format: v2 has 'item_name', v1 has 'item'
+      const isV2 = items.length > 0 && 'item_name' in items[0]
+
+      const mapped: ExtractedLineItem[] = items.map((item) => isV2
+        ? {
+            // V2 format (ExtractedLineItem) — pass through directly
+            item_name: (item.item_name as string) || 'Unknown Item',
+            item_description: (item.item_description as string) || undefined,
+            room: (item.room as string) || undefined,
+            quantity: (item.quantity as number) || 1,
+            unit: (item.unit as string) || 'EA',
+            unit_price: (item.unit_price as number) || undefined,
+            total_price: (item.total_price as number) || 0,
+            brand: (item.brand as string) || undefined,
+            model_number: (item.model_number as string) || undefined,
+            finish: (item.finish as string) || undefined,
+            color: (item.color as string) || undefined,
+            material: (item.material as string) || undefined,
+            specs: (item.specs as string) || undefined,
+            notes: (item.notes as string) || undefined,
+            category: (item.category as string) || category,
+            subcategory: (item.subcategory as string) || undefined,
+          }
+        : {
+            // V1 format (LineItem) — map field names
+            item_name: (item.item as string) || 'Unknown Item',
+            item_description: (item.specs as string) || undefined,
+            quantity: (item.quantity as number) || 1,
+            unit: 'EA',
+            unit_price: (item.unit_price as number) || undefined,
+            total_price: (item.total as number) || 0,
+            specs: (item.specs as string) || undefined,
+            notes: (item.notes as string) || undefined,
+            category: category,
+          }
+      )
 
       const created = await createLineItemsFromExtraction(bidId, mapped, category)
       if (created.length > 0) {
