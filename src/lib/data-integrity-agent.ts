@@ -947,6 +947,45 @@ const RULES: IntegrityRule[] = [
 ]
 
 // ---------------------------------------------------------------------------
+// Action Item Creation — unfixed issues become human tasks
+// ---------------------------------------------------------------------------
+
+async function createActionItemsForUnfixedIssues(projectId: string, issues: IntegrityIssue[]): Promise<void> {
+  for (const iss of issues) {
+    // Build a concise task title from the issue
+    const title = `[Data Quality] ${iss.description}`.slice(0, 200)
+
+    // Check if a task already exists for this issue (avoid duplicates)
+    const { data: existing } = await supabase.from('tasks')
+      .select('id')
+      .eq('project_id', projectId)
+      .ilike('title', `[Data Quality] %${iss.rule_id}%`)
+      .in('status', ['pending', 'in_progress'])
+      .limit(1)
+
+    if (existing && existing.length > 0) continue // Already has a task
+
+    // Find milestone to attach to (use Pre-construction as default for data quality)
+    const { data: milestone } = await supabase.from('milestones')
+      .select('id')
+      .eq('project_id', projectId)
+      .ilike('name', '%pre-construction%')
+      .limit(1)
+
+    await supabase.from('tasks').insert({
+      project_id: projectId,
+      milestone_id: milestone?.[0]?.id || null,
+      title: `${title} (${iss.rule_id})`,
+      description: `Auto-fix failed or not applicable. ${iss.fix_description || iss.description}`,
+      priority: iss.severity === 'critical' ? 'high' : iss.severity === 'high' ? 'high' : 'medium',
+      status: 'pending',
+      notes: `[integrity-agent] Rule: ${iss.rule_id} | Severity: ${iss.severity} | Category: ${iss.category}`,
+    })
+    console.log(`[integrity] Created action item for ${iss.rule_id}: ${title.slice(0, 60)}...`)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Issue Persistence
 // ---------------------------------------------------------------------------
 
@@ -1090,6 +1129,17 @@ export async function runIntegrityCheck(
     const msg = `Issue persistence failed: ${e instanceof Error ? e.message : String(e)}`
     console.error(`[integrity] ${msg}`)
     errors.push(msg)
+  }
+
+  // Create action items for issues that failed to auto-fix
+  // If the system couldn't fix it, the human needs to know
+  const unfixedIssues = allIssues.filter(i => i.resolution_status === 'open' && i.severity !== 'low')
+  if (unfixedIssues.length > 0) {
+    try {
+      await createActionItemsForUnfixedIssues(projectId, unfixedIssues)
+    } catch (e) {
+      console.error(`[integrity] Action item creation failed: ${e instanceof Error ? e.message : String(e)}`)
+    }
   }
 
   // Calculate score
