@@ -1210,6 +1210,61 @@ export interface FileInventoryRecord {
   updated_at?: string
 }
 
+// --- Coverage Scoring Types ---
+
+export interface BidCoverageScore {
+  bidId: string
+  vendorName: string
+  category: string
+  bidTotal: number
+  bidDate: string
+  coveragePct: number           // matchedItems / takeoffItemCount * 100
+  matchedItems: number
+  missingItems: number          // takeoff items with no match in this bid
+  extraItems: number            // bid items with no match in takeoff
+  takeoffTotal: number          // sum of takeoff item costs
+  priceVariance: number         // bidTotal - takeoffTotal
+  latestVersion: boolean        // most recent bid from this vendor for this category
+  matchDetails: Array<{
+    takeoffItemName: string
+    takeoffRoom: string
+    bidItemName: string
+    bidItemPrice: number
+    confidence: number
+    matchType: string
+  }>
+  missingItemDetails: Array<{
+    takeoffItemName: string
+    takeoffRoom: string
+    estimatedCost: number
+  }>
+}
+
+export interface CategoryCoverageSummary {
+  category: string
+  selectionCategory: string
+  trade: string
+  phase: number
+  takeoffItemCount: number
+  takeoffTotalCost: number
+  bidCount: number
+  bestCoverageBid: { vendorName: string; coveragePct: number; bidTotal: number } | null
+  gapCount: number              // takeoff items that NO bid covers
+  gapItems: Array<{ name: string; room: string; estimatedCost: number }>
+  scores: BidCoverageScore[]
+  /** Takeoff items for drill-down view — included by getProjectCoverageSummary */
+  takeoffItems?: Array<{
+    id: string
+    name: string
+    room: string
+    materialSpec: string
+    quantity: number
+    unit: string
+    unitCost: number
+    totalCost: number
+  }>
+}
+
 // --- Coverage Match Types ---
 
 export interface CoverageMatch {
