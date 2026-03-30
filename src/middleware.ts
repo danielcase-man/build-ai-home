@@ -24,6 +24,7 @@ const PUBLIC_ROUTES = [
   '/api/intelligence/', // Has Bearer token auth
   '/api/admin/',        // Has Bearer token auth
   '/api/plaid/webhook', // Has JWK signature verification
+  '/api/webhooks/',     // Has HMAC signature verification
   '/api/vendors/invite/accept', // Public invitation validation
 ]
 
