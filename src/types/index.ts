@@ -1210,6 +1210,23 @@ export interface FileInventoryRecord {
   updated_at?: string
 }
 
+// --- Coverage Match Types ---
+
+export interface CoverageMatch {
+  id: string
+  project_id: string
+  takeoff_item_id: string
+  bid_line_item_id: string
+  selection_id?: string | null
+  match_type: 'exact_model' | 'name_match' | 'ai_inferred' | 'manual' | 'room_inferred'
+  match_confidence: number
+  match_reasoning?: string
+  status: 'proposed' | 'confirmed' | 'rejected'
+  reviewed_at?: string
+  created_at?: string
+  updated_at?: string
+}
+
 // --- API Response Types ---
 
 export interface ApiResponse<T> {
