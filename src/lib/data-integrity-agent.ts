@@ -52,6 +52,16 @@ function minutesBetween(a: string | Date, b: string | Date): number {
   return Math.abs(new Date(a).getTime() - new Date(b).getTime()) / (1000 * 60)
 }
 
+function pickCanonicalName(names: string[]): string {
+  // Prefer names without parentheticals, then shorter names
+  return names.sort((a, b) => {
+    const aParens = (a.match(/\(/g) || []).length
+    const bParens = (b.match(/\(/g) || []).length
+    if (aParens !== bParens) return aParens - bParens
+    return a.length - b.length
+  })[0]
+}
+
 // ---------------------------------------------------------------------------
 // Context Loader
 // ---------------------------------------------------------------------------
@@ -136,7 +146,7 @@ function calculateIntegrityScore(issues: IntegrityIssue[]): { score: number; bre
 const RULES: IntegrityRule[] = [
   // ---- BUDGET ----
   {
-    id: 'BUD-001', name: 'Budget Total Mismatch', severity: 'critical', category: 'budget', autoFixable: false,
+    id: 'BUD-001', name: 'Budget Total Mismatch', severity: 'critical', category: 'budget', autoFixable: true,
     async check(ctx) {
       const itemsSum = ctx.budgetItems.reduce((s, b) => s + (b.estimated_cost > 0 ? b.estimated_cost : 0), 0)
       const delta = Math.abs(ctx.project.budget_total - itemsSum)
@@ -146,6 +156,16 @@ const RULES: IntegrityRule[] = [
         })]
       }
       return []
+    },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { items_sum: number } | undefined
+        if (!meta) return { fixed: false, description: 'No metadata' }
+        await supabase.from('projects').update({ budget_total: meta.items_sum }).eq('id', iss.project_id)
+        return { fixed: true, description: `Updated budget total to $${meta.items_sum.toLocaleString()} (sum of line items)` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
     },
   },
   {
@@ -198,7 +218,7 @@ const RULES: IntegrityRule[] = [
 
   // ---- BIDS ----
   {
-    id: 'BID-001', name: 'Fragmented Bids', severity: 'critical', category: 'bids', autoFixable: false,
+    id: 'BID-001', name: 'Fragmented Bids', severity: 'critical', category: 'bids', autoFixable: true,
     async check(ctx) {
       const byCategory = new Map<string, typeof ctx.bids>()
       for (const b of ctx.bids) {
@@ -241,6 +261,38 @@ const RULES: IntegrityRule[] = [
         }
       }
       return issues
+    },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { cluster_bid_ids: string[]; cluster_total: number } | undefined
+        if (!meta?.cluster_bid_ids?.length) return { fixed: false, description: 'No metadata or cluster_bid_ids' }
+
+        // Find the parent bid (highest total_amount in the cluster)
+        const { data: clusterBids } = await supabase.from('bids')
+          .select('id, total_amount, vendor_name')
+          .in('id', meta.cluster_bid_ids)
+          .order('total_amount', { ascending: false })
+        if (!clusterBids?.length) return { fixed: false, description: 'Could not load cluster bids' }
+
+        const parentBid = clusterBids[0]
+        const fragmentIds = clusterBids.slice(1).map(b => b.id)
+
+        // Mark fragments as superseded
+        await supabase.from('bids').update({
+          status: 'superseded',
+          selection_notes: `[auto-consolidated: merged into bid ${parentBid.id}]`,
+        }).in('id', fragmentIds)
+
+        // Move line items from fragments to parent
+        await supabase.from('bid_line_items').update({ bid_id: parentBid.id }).in('bid_id', fragmentIds)
+
+        // Update parent total to cluster total
+        await supabase.from('bids').update({ total_amount: meta.cluster_total }).eq('id', parentBid.id)
+
+        return { fixed: true, description: `Consolidated ${fragmentIds.length} fragment(s) into parent bid ${parentBid.id} ("${parentBid.vendor_name}"), total $${meta.cluster_total.toLocaleString()}` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
     },
   },
   {
@@ -309,7 +361,7 @@ const RULES: IntegrityRule[] = [
     },
   },
   {
-    id: 'BID-004', name: 'Bid Total vs Line Items Mismatch', severity: 'medium', category: 'bids', autoFixable: false,
+    id: 'BID-004', name: 'Bid Total vs Line Items Mismatch', severity: 'medium', category: 'bids', autoFixable: true,
     async check(ctx) {
       const issues: IntegrityIssue[] = []
       const lineItemsByBid = new Map<string, number>()
@@ -330,6 +382,16 @@ const RULES: IntegrityRule[] = [
         }
       }
       return issues
+    },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { bid_id: string; line_items_sum: number; vendor_name: string } | undefined
+        if (!meta) return { fixed: false, description: 'No metadata' }
+        await supabase.from('bids').update({ total_amount: meta.line_items_sum }).eq('id', meta.bid_id)
+        return { fixed: true, description: `Updated bid total for "${meta.vendor_name}" to $${meta.line_items_sum.toLocaleString()} (sum of line items)` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
     },
   },
   {
@@ -353,7 +415,7 @@ const RULES: IntegrityRule[] = [
     },
   },
   {
-    id: 'BID-006', name: 'Duplicate Vendor Names', severity: 'high', category: 'bids', autoFixable: false,
+    id: 'BID-006', name: 'Duplicate Vendor Names', severity: 'high', category: 'bids', autoFixable: true,
     async check(ctx) {
       const vendorNames = [...new Set(ctx.bids.map(b => b.vendor_name).filter(Boolean))]
       // Group by first 3 chars of normalized name to avoid O(n^2)
@@ -386,6 +448,19 @@ const RULES: IntegrityRule[] = [
         }
       }
       return issues
+    },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { vendor_names: string[] } | undefined
+        if (!meta?.vendor_names?.length) return { fixed: false, description: 'No metadata or vendor_names' }
+        const bidIds = iss.entity_ids || []
+        if (bidIds.length === 0) return { fixed: false, description: 'No bid IDs to update' }
+        const canonicalName = pickCanonicalName([...meta.vendor_names])
+        await supabase.from('bids').update({ vendor_name: canonicalName }).in('id', bidIds)
+        return { fixed: true, description: `Normalized ${bidIds.length} bid(s) to vendor name "${canonicalName}"` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
     },
   },
 
@@ -519,7 +594,7 @@ const RULES: IntegrityRule[] = [
 
   // ---- MILESTONES ----
   {
-    id: 'MIL-001', name: 'Impossible Milestone Ordering', severity: 'critical', category: 'milestones', autoFixable: false,
+    id: 'MIL-001', name: 'Impossible Milestone Ordering', severity: 'critical', category: 'milestones', autoFixable: true,
     async check(ctx) {
       const ordering = [
         'Design Finalization', 'Permitting', 'Pre-construction', 'Procurement',
@@ -550,6 +625,16 @@ const RULES: IntegrityRule[] = [
         }
       }
       return issues
+    },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { milestone_name: string; milestone_status: string } | undefined
+        if (!meta) return { fixed: false, description: 'No metadata' }
+        await supabase.from('milestones').update({ status: 'pending' }).eq('id', iss.entity_id)
+        return { fixed: true, description: `Reset milestone "${meta.milestone_name}" from "${meta.milestone_status}" to "pending" (prerequisite not complete)` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
     },
   },
   {
@@ -604,7 +689,7 @@ const RULES: IntegrityRule[] = [
     },
   },
   {
-    id: 'VND-002', name: 'Duplicate Vendor Names in Vendors Table', severity: 'medium', category: 'vendors', autoFixable: false,
+    id: 'VND-002', name: 'Duplicate Vendor Names in Vendors Table', severity: 'medium', category: 'vendors', autoFixable: true,
     async check(ctx) {
       const issues: IntegrityIssue[] = []
       const reported = new Set<string>()
@@ -623,11 +708,34 @@ const RULES: IntegrityRule[] = [
       }
       return issues
     },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { vendor_names: string[] } | undefined
+        const vendorIds = iss.entity_ids || []
+        if (!meta?.vendor_names?.length || vendorIds.length < 2) return { fixed: false, description: 'No metadata or vendor IDs' }
+
+        // Pick canonical name and assign IDs accordingly
+        const canonicalName = pickCanonicalName([...meta.vendor_names])
+        const canonicalIdx = meta.vendor_names.indexOf(canonicalName)
+        const canonicalId = canonicalIdx >= 0 ? vendorIds[canonicalIdx] : vendorIds[0]
+        const mergeAwayId = vendorIds.find(id => id !== canonicalId) || vendorIds[1]
+
+        // Reassign bids from the non-canonical vendor to the canonical one
+        await supabase.from('bids').update({ vendor_id: canonicalId }).eq('vendor_id', mergeAwayId)
+
+        // Delete the non-canonical vendor record
+        await supabase.from('vendors').delete().eq('id', mergeAwayId)
+
+        return { fixed: true, description: `Merged vendor "${meta.vendor_names.find(n => n !== canonicalName) || mergeAwayId}" into "${canonicalName}" and deleted duplicate` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
+    },
   },
 
   // ---- PERMITS ----
   {
-    id: 'PRM-001', name: 'Missing Known Permits', severity: 'high', category: 'permits', autoFixable: false,
+    id: 'PRM-001', name: 'Missing Known Permits', severity: 'high', category: 'permits', autoFixable: true,
     async check(ctx) {
       const issues: IntegrityIssue[] = []
       const permitTypes = ctx.permits.map(p => (p.type || '').toLowerCase())
@@ -652,6 +760,20 @@ const RULES: IntegrityRule[] = [
       }
 
       return issues
+    },
+    async fix(iss) {
+      try {
+        const meta = iss.metadata as { missing_permit: string } | undefined
+        if (!meta) return { fixed: false, description: 'No metadata' }
+        await supabase.from('permits').insert({
+          project_id: iss.project_id,
+          type: meta.missing_permit,
+          status: 'not_started',
+        })
+        return { fixed: true, description: `Created permit record for "${meta.missing_permit}" with status "not_started"` }
+      } catch (e) {
+        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
+      }
     },
   },
 
