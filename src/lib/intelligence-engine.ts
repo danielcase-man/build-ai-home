@@ -212,6 +212,28 @@ export async function runIntelligenceEngine(options: {
   }
 
   // ═══════════════════════════════════════════════════════════
+  // Phase 3.5: Data Integrity Check
+  // ═══════════════════════════════════════════════════════════
+
+  const shouldRunIntegrity = options.force ||
+    allResults.some(r => r.records_created > 0 || r.records_updated > 0)
+
+  if (shouldRunIntegrity) {
+    try {
+      console.log('[intelligence] Running data integrity checks...')
+      const { runIntegrityCheck } = await import('./data-integrity-agent')
+      const integrityResult = await runIntegrityCheck(projectId, {
+        triggerType: 'intelligence_engine',
+      })
+      console.log(`[intelligence] Integrity: ${integrityResult.issues_found} issues, ${integrityResult.issues_auto_fixed} auto-fixed, score: ${integrityResult.integrity_score}`)
+    } catch (err) {
+      const msg = `Integrity check failed: ${err instanceof Error ? err.message : 'Unknown'}`
+      errors.push(msg)
+      console.error(`[intelligence] ${msg}`)
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
   // Phase 3: Update project status (always, if agents ran)
   // ═══════════════════════════════════════════════════════════
 

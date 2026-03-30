@@ -1282,6 +1282,83 @@ export interface CoverageMatch {
   updated_at?: string
 }
 
+// --- Data Integrity Types ---
+
+export type IntegritySeverity = 'critical' | 'high' | 'medium' | 'low'
+export type IntegrityResolution = 'open' | 'auto_fixed' | 'manually_fixed' | 'dismissed' | 'wont_fix'
+export type IntegrityTrigger = 'intelligence_engine' | 'cron' | 'manual' | 'post_sync'
+export type IntegrityCategory = 'budget' | 'bids' | 'tasks' | 'milestones' | 'vendors' | 'permits' | 'selections' | 'project' | 'status'
+
+export interface IntegrityIssue {
+  id?: string
+  project_id: string
+  run_id?: string
+  rule_id: string
+  rule_name: string
+  severity: IntegritySeverity
+  category: IntegrityCategory
+  description: string
+  entity_type?: string
+  entity_id?: string
+  entity_ids?: string[]
+  auto_fixable: boolean
+  fix_applied: boolean
+  fix_description?: string
+  fix_applied_at?: string
+  resolution_status: IntegrityResolution
+  metadata?: Record<string, unknown>
+  first_detected_at?: string
+  last_detected_at?: string
+}
+
+export interface IntegrityRunResult {
+  run_id?: string
+  project_id: string
+  trigger_type: IntegrityTrigger
+  started_at: string
+  completed_at: string
+  rules_checked: number
+  issues_found: number
+  issues_auto_fixed: number
+  issues_flagged: number
+  integrity_score: number
+  score_breakdown: Record<string, number>
+  errors: string[]
+  duration_ms: number
+}
+
+export interface IntegrityRule {
+  id: string
+  name: string
+  severity: IntegritySeverity
+  category: IntegrityCategory
+  autoFixable: boolean
+  check: (ctx: IntegrityContext) => Promise<IntegrityIssue[]>
+  fix?: (issue: IntegrityIssue) => Promise<{ fixed: boolean; description: string }>
+}
+
+export interface IntegrityContext {
+  projectId: string
+  project: {
+    id: string
+    budget_total: number
+    square_footage: number
+    updated_at: string
+    phase: string
+    current_step: number
+  }
+  budgetItems: Array<{ id: string; category: string; estimated_cost: number; actual_cost: number; source: string; description: string }>
+  bids: Array<{ id: string; vendor_name: string; category: string; total_amount: number; status: string; created_at: string; ai_extracted: boolean; needs_review: boolean; source: string; valid_until?: string; received_date?: string; vendor_id?: string }>
+  bidLineItems: Array<{ id: string; bid_id: string; total_price: number }>
+  tasks: Array<{ id: string; title: string; status: string; due_date: string | null; priority: string; notes: string | null; created_at: string }>
+  milestones: Array<{ id: string; name: string; status: string; target_date: string | null }>
+  vendors: Array<{ id: string; company_name: string; category: string; status: string }>
+  selections: Array<{ id: string; category: string; status: string; bid_id: string | null }>
+  permits: Array<{ id: string; type: string; status: string }>
+  statusRows: Array<{ id: string; date: string; ai_summary: string; last_updated: string }>
+  vendorAliases: Array<{ canonical_name: string; alias: string }>
+}
+
 // --- API Response Types ---
 
 export interface ApiResponse<T> {

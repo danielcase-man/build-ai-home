@@ -23,6 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import IntegrityScoreCard from '@/components/IntegrityScoreCard'
 import type { DashboardData } from '@/types'
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -127,6 +128,11 @@ interface HomeClientProps {
   coverageGaps?: CoverageGap[]
   leadTimeAlerts?: LeadTimeAlertData[]
   intelligenceDiff?: IntelligenceDiffData | null
+  integrityScore?: number | null
+  integrityIssueCount?: number
+  integrityCriticalCount?: number
+  integrityHighCount?: number
+  integrityLastRunAt?: string | null
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -172,6 +178,11 @@ export default function HomeClient({
   coverageGaps = [],
   leadTimeAlerts = [],
   intelligenceDiff,
+  integrityScore,
+  integrityIssueCount = 0,
+  integrityCriticalCount = 0,
+  integrityHighCount = 0,
+  integrityLastRunAt,
 }: HomeClientProps) {
   const [projectData, setProjectData] = useState<DashboardData>(initialData)
   const [hotTopics, setHotTopics] = useState<string[]>(() => {
@@ -685,6 +696,19 @@ export default function HomeClient({
             )}
           </CardContent>
         </Card>
+      )}
+
+      {/* ── Data Integrity Score ── */}
+      {integrityScore !== undefined && integrityScore !== null && (
+        <div className="animate-fade-in" style={{ animationDelay: '290ms' }}>
+          <IntegrityScoreCard
+            score={integrityScore}
+            issueCount={integrityIssueCount}
+            criticalCount={integrityCriticalCount}
+            highCount={integrityHighCount}
+            lastRunAt={integrityLastRunAt}
+          />
+        </div>
       )}
 
       {/* ── Hot Topics (compact) ── */}

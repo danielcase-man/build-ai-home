@@ -7,6 +7,7 @@ import { getSelections } from '@/lib/selections-service'
 import { CONSTRUCTION_PHASES } from '@/lib/construction-phases'
 import { getLeadTimeAlerts } from '@/lib/construction-expertise'
 import { getIntelligenceDiff } from '@/lib/intelligence-diff'
+import { getLatestIntegrityReport, getOpenIssues } from '@/lib/data-integrity-agent'
 import HomeClient from './HomeClient'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -60,7 +61,7 @@ function DashboardSkeleton() {
 async function DashboardData() {
   const project = await getProject()
 
-  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth, deadlines, vendorFollowUps, bids, selections, intelligenceDiff] = await Promise.all([
+  const [dashboardData, latestStatus, emailPreviews, hasGmailAuth, deadlines, vendorFollowUps, bids, selections, intelligenceDiff, integrityReport, integrityIssues] = await Promise.all([
     getProjectDashboard(),
     project?.id ? db.getLatestProjectStatus(project.id) : Promise.resolve(null),
     db.getRecentEmailPreviews(3),
@@ -70,6 +71,8 @@ async function DashboardData() {
     project?.id ? getBids(project.id).catch(() => []) : Promise.resolve([]),
     project?.id ? getSelections(project.id).catch(() => []) : Promise.resolve([]),
     project?.id ? getIntelligenceDiff(project.id).catch(() => null) : Promise.resolve(null),
+    project?.id ? getLatestIntegrityReport(project.id).catch(() => null) : Promise.resolve(null),
+    project?.id ? getOpenIssues(project.id).catch(() => []) : Promise.resolve([]),
   ])
 
   // Compute coverage gaps: trades that have zero bids
@@ -101,6 +104,11 @@ async function DashboardData() {
       coverageGaps={uncoveredTrades.slice(0, 5)}
       leadTimeAlerts={leadTimeAlerts}
       intelligenceDiff={intelligenceDiff}
+      integrityScore={integrityReport?.integrity_score ?? null}
+      integrityIssueCount={integrityIssues.length}
+      integrityCriticalCount={integrityIssues.filter((i: { severity: string }) => i.severity === 'critical').length}
+      integrityHighCount={integrityIssues.filter((i: { severity: string }) => i.severity === 'high').length}
+      integrityLastRunAt={integrityReport?.completed_at ?? null}
     />
   )
 }
