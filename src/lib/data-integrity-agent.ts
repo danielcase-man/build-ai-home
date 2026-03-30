@@ -813,14 +813,10 @@ const RULES: IntegrityRule[] = [
 // Issue Persistence
 // ---------------------------------------------------------------------------
 
-function hashEntityIds(ids?: string[]): string | null {
-  if (!ids || ids.length === 0) return null
-  return ids.sort().join(',')
-}
-
-async function persistIssues(runId: string, projectId: string, issues: IntegrityIssue[]): Promise<void> {
+async function persistIssues(runId: string | null, projectId: string, issues: IntegrityIssue[]): Promise<void> {
   for (const iss of issues) {
-    const entityKey = iss.entity_id || hashEntityIds(iss.entity_ids) || null
+    // entity_id must be a valid UUID or null — don't use hashed entity_ids
+    const entityKey = iss.entity_id || null
     const now = new Date().toISOString()
 
     // Look for existing open issue with same dedup key
@@ -856,7 +852,7 @@ async function persistIssues(runId: string, projectId: string, issues: Integrity
       // Insert new
       await supabase.from('integrity_issues').insert({
         project_id: projectId,
-        run_id: runId,
+        run_id: runId || null,
         rule_id: iss.rule_id,
         rule_name: iss.rule_name,
         severity: iss.severity,
@@ -891,14 +887,17 @@ export async function runIntegrityCheck(
   console.log(`[integrity] Starting integrity check for project ${projectId} (trigger: ${triggerType})`)
 
   // Create run record
-  const { data: runRow } = await supabase.from('integrity_runs').insert({
+  const { data: runRow, error: runInsertError } = await supabase.from('integrity_runs').insert({
     project_id: projectId,
     trigger_type: triggerType,
     started_at: startedAt.toISOString(),
-    status: 'running',
   }).select('id').single()
 
-  const runId = options?.runId ?? runRow?.id ?? crypto.randomUUID()
+  if (runInsertError) {
+    console.error(`[integrity] Failed to create run record: ${runInsertError.message}`)
+  }
+
+  const runId = options?.runId ?? runRow?.id ?? null
 
   // Load context
   const ctx = await loadIntegrityContext(projectId)
@@ -912,7 +911,7 @@ export async function runIntegrityCheck(
     try {
       const found = await rule.check(ctx)
       for (const iss of found) {
-        iss.run_id = runId
+        iss.run_id = runId ?? undefined
         allIssues.push(iss)
       }
     } catch (e) {
@@ -947,9 +946,9 @@ export async function runIntegrityCheck(
     }
   }
 
-  // Persist issues
+  // Persist issues (even if run record creation failed)
   try {
-    await persistIssues(runId, projectId, allIssues)
+    await persistIssues(runId ?? null, projectId, allIssues)
   } catch (e) {
     const msg = `Issue persistence failed: ${e instanceof Error ? e.message : String(e)}`
     console.error(`[integrity] ${msg}`)
@@ -962,7 +961,7 @@ export async function runIntegrityCheck(
   const durationMs = completedAt.getTime() - startedAt.getTime()
 
   const result: IntegrityRunResult = {
-    run_id: runId,
+    run_id: runId ?? undefined,
     project_id: projectId,
     trigger_type: triggerType,
     started_at: startedAt.toISOString(),
@@ -977,19 +976,20 @@ export async function runIntegrityCheck(
     duration_ms: durationMs,
   }
 
-  // Update run record
-  await supabase.from('integrity_runs').update({
-    completed_at: completedAt.toISOString(),
-    status: 'completed',
-    rules_checked: result.rules_checked,
-    issues_found: result.issues_found,
-    issues_auto_fixed: result.issues_auto_fixed,
-    issues_flagged: result.issues_flagged,
-    integrity_score: score,
-    score_breakdown: breakdown,
-    errors,
-    duration_ms: durationMs,
-  }).eq('id', runId)
+  // Update run record (if it was created successfully)
+  if (runId) {
+    await supabase.from('integrity_runs').update({
+      completed_at: completedAt.toISOString(),
+      rules_checked: result.rules_checked,
+      issues_found: result.issues_found,
+      issues_auto_fixed: result.issues_auto_fixed,
+      issues_flagged: result.issues_flagged,
+      integrity_score: score,
+      score_breakdown: breakdown,
+      errors,
+      duration_ms: durationMs,
+    }).eq('id', runId)
+  }
 
   console.log(`[integrity] Complete. Score: ${score}/100 | Found: ${allIssues.length} | Fixed: ${autoFixedCount} | Flagged: ${result.issues_flagged} | ${durationMs}ms`)
   return result
