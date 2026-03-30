@@ -65,3 +65,29 @@ export async function POST(request: NextRequest) {
     return errorResponse(error, 'Bid re-extraction failed')
   }
 }
+
+// GET handler for Vercel cron — runs full normalization + re-extraction
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('authorization')
+    const isAuthed = env.cronSecret && authHeader === `Bearer ${env.cronSecret}`
+    const isDev = process.env.NODE_ENV === 'development'
+
+    if (!isAuthed && !isDev) {
+      return errorResponse(new Error('Unauthorized'), 'Unauthorized')
+    }
+
+    const project = await getProject()
+    if (!project) return errorResponse(new Error('No project'), 'No project found')
+
+    const normalizeResult = await normalizeExistingLineItems(project.id)
+    const reextractResult = await reextractAllBids(project.id)
+
+    return successResponse({
+      normalize: normalizeResult,
+      reextract: reextractResult,
+    })
+  } catch (error) {
+    return errorResponse(error, 'Bid re-extraction failed')
+  }
+}

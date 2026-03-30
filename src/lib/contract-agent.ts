@@ -40,7 +40,7 @@ async function extractContractData(
     const { getAnthropicClient } = await import('./ai-clients')
 
     const response = await getAnthropicClient().messages.create({
-      model: 'claude-sonnet-4-6-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       messages: [{
         role: 'user',

@@ -29,16 +29,20 @@ export async function POST(request: NextRequest) {
       return errorResponse(new Error('Unauthorized'), 'Unauthorized')
     }
 
-    // Parse body
+    // Parse options from body (POST) or query params (GET/cron)
     let category: string | undefined
     let force = false
 
+    const { searchParams } = new URL(request.url)
+    if (searchParams.has('category')) category = searchParams.get('category') || undefined
+    if (searchParams.get('force') === 'true') force = true
+
     try {
       const body = await request.json()
-      category = body.category || undefined
-      force = body.force === true
+      if (body.category) category = body.category
+      if (body.force === true) force = true
     } catch {
-      // Empty body is fine — run all categories without force
+      // Empty body is fine — query params already parsed
     }
 
     // Get project ID (single-user assumption)
@@ -69,4 +73,9 @@ export async function POST(request: NextRequest) {
     console.error('[coverage/pipeline] Error:', error)
     return errorResponse(error, 'Coverage pipeline failed')
   }
+}
+
+// GET handler for Vercel cron
+export async function GET(request: NextRequest) {
+  return POST(request)
 }

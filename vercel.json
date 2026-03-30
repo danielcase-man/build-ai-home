@@ -12,6 +12,12 @@
     "src/app/api/bids/upload/**/*.ts": {
       "maxDuration": 60
     },
+    "src/app/api/bids/reextract/**/*.ts": {
+      "maxDuration": 120
+    },
+    "src/app/api/coverage/**/*.ts": {
+      "maxDuration": 120
+    },
     "src/app/api/assistant/**/*.ts": {
       "maxDuration": 60
     }
@@ -32,6 +38,14 @@
     {
       "path": "/api/intelligence/run?sources=dropbox&backlog=true",
       "schedule": "30 8 * * *"
+    },
+    {
+      "path": "/api/coverage/pipeline?force=false",
+      "schedule": "0 9,14,19 * * *"
+    },
+    {
+      "path": "/api/bids/reextract?all=true",
+      "schedule": "15 9 * * *"
     },
     {
       "path": "/api/cron/daily-status",

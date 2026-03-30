@@ -407,7 +407,7 @@ If no matches found, return an empty array: []`
     const anthropic = getAnthropicClient()
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     })
@@ -446,8 +446,8 @@ If no matches found, return an empty array: []`
       usedBid.add(m.bid_id)
     }
   } catch (err) {
-    console.error('Tier 3 AI matching failed:', err)
-    // Graceful degradation — return whatever we have (likely empty)
+    console.error('Tier 3 AI matching failed:', err instanceof Error ? err.message : err)
+    console.error('Tier 3 details:', err instanceof Error ? err.stack : 'no stack')
   }
 
   return matches
@@ -550,6 +550,7 @@ export async function matchBidToTakeoff(
   // ── Tier 3: AI ────────────────────────────────────────────────────────────
   let tier3Matches = new Map<string, MatchEntry>()
   if (unmatchedTakeoff.length > 0 && unmatchedBid.length > 0) {
+    console.log(`[coverage-match] Tier 3 AI: ${unmatchedTakeoff.length} unmatched takeoff, ${unmatchedBid.length} unmatched bid items for ${category}`)
     tier3Matches = await tier3AIMatch(unmatchedTakeoff, unmatchedBid, category)
 
     for (const [tiId, entry] of tier3Matches) {
