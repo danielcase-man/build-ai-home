@@ -26,7 +26,7 @@ const PUBLIC_ROUTES = [
   '/api/plaid/webhook', // Has JWK signature verification
   '/api/webhooks/',     // Has HMAC signature verification
   '/api/coverage/',     // Has Bearer token auth / dev mode
-  '/api/integrity/',    // Has Bearer token auth / dev mode
+  '/api/integrity',     // Has Bearer token auth / dev mode (no trailing slash — root route)
   '/api/bids/reextract', // Has Bearer token auth / dev mode
   '/api/vendors/invite/accept', // Public invitation validation
 ]
