@@ -97,6 +97,18 @@ async function processBidFile(
   const ext = fileName.toLowerCase().split('.').pop()
   const { vendorHint, category } = inferVendorContext(filePath)
 
+  // Pre-filter: skip files that are clearly not vendor bids
+  const lowerName = fileName.toLowerCase()
+  const skipPatterns = [
+    /budget/i, /comprehensive.*budget/i, /construction.*budget/i,
+    /terms.*conditions/i, /site.*requirements/i, /standard.*installation/i,
+    /pricing.*workflow/i, /instructions/i, /pricing.*request/i,
+    /^all.*bids.*summary/i, /bill.*of.*materials/i,
+  ]
+  if (skipPatterns.some(p => p.test(lowerName))) {
+    return { success: false, error: 'Skipped: filename indicates non-bid document' }
+  }
+
   let extractedText: string | null = null
 
   if (ext === 'pdf') {
