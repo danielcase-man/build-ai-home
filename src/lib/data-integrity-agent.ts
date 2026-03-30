@@ -284,17 +284,25 @@ const RULES: IntegrityRule[] = [
       try {
         const meta = iss.metadata as { vendor_name: string; category: string } | undefined
         if (!meta) return { fixed: false, description: 'No metadata' }
-        const { data: vendor } = await supabase.from('vendors').insert({
-          project_id: iss.project_id,
-          company_name: meta.vendor_name,
-          category: meta.category || 'General',
-          status: 'potential',
-        }).select('id').single()
-        if (vendor) {
-          await supabase.from('bids').update({ vendor_id: vendor.id }).eq('id', iss.entity_id)
-          return { fixed: true, description: `Created vendor "${meta.vendor_name}" and linked to bid` }
+        // Check if vendor exists first (may have been created by VND-001 or earlier in this run)
+        const { data: existingVendor } = await supabase.from('vendors')
+          .select('id').eq('project_id', iss.project_id)
+          .ilike('company_name', meta.vendor_name).limit(1)
+        let vendorId: string | null = existingVendor?.[0]?.id ?? null
+        if (!vendorId) {
+          const { data: vendor } = await supabase.from('vendors').insert({
+            project_id: iss.project_id,
+            company_name: meta.vendor_name,
+            category: meta.category || 'General',
+            status: 'potential',
+          }).select('id').single()
+          vendorId = vendor?.id ?? null
         }
-        return { fixed: false, description: 'Failed to create vendor' }
+        if (vendorId) {
+          await supabase.from('bids').update({ vendor_id: vendorId }).eq('id', iss.entity_id)
+          return { fixed: true, description: `Linked bid to vendor "${meta.vendor_name}"` }
+        }
+        return { fixed: false, description: 'Failed to find or create vendor' }
       } catch (e) {
         return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
       }
@@ -576,6 +584,13 @@ const RULES: IntegrityRule[] = [
       try {
         const meta = iss.metadata as { vendor_name: string; category: string } | undefined
         if (!meta) return { fixed: false, description: 'No metadata' }
+        // Check if vendor exists RIGHT NOW (may have been created earlier in this run)
+        const { data: existing } = await supabase.from('vendors')
+          .select('id').eq('project_id', iss.project_id)
+          .ilike('company_name', meta.vendor_name).limit(1)
+        if (existing && existing.length > 0) {
+          return { fixed: true, description: `Vendor "${meta.vendor_name}" already exists` }
+        }
         await supabase.from('vendors').insert({
           project_id: iss.project_id,
           company_name: meta.vendor_name,
