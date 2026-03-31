@@ -146,26 +146,30 @@ function calculateIntegrityScore(issues: IntegrityIssue[]): { score: number; bre
 const RULES: IntegrityRule[] = [
   // ---- BUDGET ----
   {
-    id: 'BUD-001', name: 'Budget Total Mismatch', severity: 'critical', category: 'budget', autoFixable: true,
+    // NEVER auto-fix budget total. The raw sum includes land, alternatives, $0 placeholders,
+    // and JobTread noise. The actual budget (~$1.5M) is a human decision, not a SUM().
+    // This rule only detects the mismatch; action item routing creates a task for the owner.
+    id: 'BUD-001', name: 'Budget Total Mismatch', severity: 'medium', category: 'budget', autoFixable: false,
     async check(ctx) {
-      const itemsSum = ctx.budgetItems.reduce((s, b) => s + (b.estimated_cost > 0 ? b.estimated_cost : 0), 0)
-      const delta = Math.abs(ctx.project.budget_total - itemsSum)
-      if (delta > 1000) {
-        return [issue(ctx, this, `Budget total ($${ctx.project.budget_total.toLocaleString()}) differs from sum of items ($${itemsSum.toLocaleString()}) by $${delta.toLocaleString()}`, {
-          metadata: { project_total: ctx.project.budget_total, items_sum: itemsSum, delta },
+      // Exclude land, HOA/tax, software, $0 items, and JobTread uncategorized from comparison
+      const excludeCategories = ['land acquisition', 'hoa & property tax', 'software & tools']
+      const constructionItems = ctx.budgetItems.filter(b =>
+        b.estimated_cost > 0 &&
+        b.source !== 'jobtread' &&
+        !excludeCategories.includes((b.category || '').toLowerCase())
+      )
+      const constructionSum = constructionItems.reduce((s, b) => s + b.estimated_cost, 0)
+      const delta = Math.abs(ctx.project.budget_total - constructionSum)
+      // Only flag if drift is >20% — alternatives in the table inflate the sum
+      const driftPct = ctx.project.budget_total > 0 ? (delta / ctx.project.budget_total) * 100 : 0
+      if (driftPct > 20) {
+        return [issue(ctx, this, `Budget total ($${ctx.project.budget_total.toLocaleString()}) differs from construction items ($${constructionSum.toLocaleString()}) by ${Math.round(driftPct)}% — review needed (table contains alternatives)`, {
+          entity_id: ctx.project.id,
+          entity_type: 'project',
+          metadata: { project_total: ctx.project.budget_total, construction_sum: constructionSum, delta, drift_pct: driftPct },
         })]
       }
       return []
-    },
-    async fix(iss) {
-      try {
-        const meta = iss.metadata as { items_sum: number } | undefined
-        if (!meta) return { fixed: false, description: 'No metadata' }
-        await supabase.from('projects').update({ budget_total: meta.items_sum }).eq('id', iss.project_id)
-        return { fixed: true, description: `Updated budget total to $${meta.items_sum.toLocaleString()} (sum of line items)` }
-      } catch (e) {
-        return { fixed: false, description: `Error: ${e instanceof Error ? e.message : String(e)}` }
-      }
     },
   },
   {
