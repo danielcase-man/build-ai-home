@@ -28,7 +28,7 @@ export function createMockSupabase(resolveWith: { data?: unknown; error?: unknow
   const chain: SupabaseChain = {} as SupabaseChain
 
   // Every chainable method returns the chain itself
-  for (const method of ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'in', 'gte', 'lte', 'gt', 'lt', 'order', 'limit', 'ilike', 'not', 'is', 'or', 'range', 'match', 'contains', 'containedBy', 'filter', 'textSearch'] as const) {
+  for (const method of ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'neq', 'in', 'gte', 'lte', 'gt', 'lt', 'order', 'limit', 'like', 'ilike', 'not', 'is', 'or', 'range', 'match', 'contains', 'containedBy', 'filter', 'textSearch'] as const) {
     (chain as Record<string, ReturnType<typeof vi.fn>>)[method] = vi.fn().mockReturnValue(chain)
   }
 

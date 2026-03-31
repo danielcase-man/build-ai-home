@@ -727,7 +727,7 @@ function emptyExtraction(
 // Storage
 // ---------------------------------------------------------------------------
 
-async function storeExtraction(extraction: DocumentExtraction): Promise<DocumentExtraction | null> {
+export async function storeExtraction(extraction: DocumentExtraction): Promise<DocumentExtraction | null> {
   const { data, error } = await supabase
     .from('document_extractions')
     .insert({

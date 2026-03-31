@@ -46,6 +46,25 @@ vi.mock('./agent-router', () => ({
   classifyFileByPath: vi.fn().mockReturnValue('general'),
 }))
 
+// Mock plan-discovery-service (used by takeoff-agent)
+vi.mock('./plan-discovery-service', () => ({
+  discoverLatestPlans: vi.fn().mockResolvedValue({ plans: {}, allVersions: [], missingTypes: [] }),
+}))
+
+// Mock plan-takeoff-service (used by takeoff-agent)
+vi.mock('./plan-takeoff-service', () => ({
+  runTradeExtractors: vi.fn().mockResolvedValue([]),
+  storeExtraction: vi.fn().mockResolvedValue(null),
+}))
+
+// Mock takeoff-service (used by takeoff-agent)
+vi.mock('./takeoff-service', () => ({
+  createTakeoffRun: vi.fn().mockResolvedValue(null),
+  insertTakeoffItems: vi.fn().mockResolvedValue({ inserted: 0, errors: [] }),
+  getTakeoffRuns: vi.fn().mockResolvedValue([]),
+  updateTakeoffRunStatus: vi.fn().mockResolvedValue(true),
+}))
+
 const PROJECT_ID = 'test-project-id'
 
 function makeFileEvent(overrides: Partial<ChangeEvent> = {}): ChangeEvent {
@@ -102,7 +121,7 @@ describe('takeoff-agent', () => {
     const result = await handleTakeoff(events, PROJECT_ID)
 
     expect(result.domain).toBe('takeoff')
-    expect(result.action).toBe('catalog_plans')
+    expect(result.action).toBe('structural_takeoff')
     expect(chain.from).toHaveBeenCalledWith('documents')
   })
 
