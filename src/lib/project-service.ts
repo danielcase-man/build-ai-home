@@ -9,6 +9,7 @@ import { getBudgetItems } from './budget-service'
 import { getBids } from './bids-service'
 import { getSelections } from './selections-service'
 import { getConstructionLoan } from './loan-service'
+import { CONSTRUCTION_PHASES } from './construction-phases'
 import { createActionItemNotification } from './notification-service'
 import { getKnowledgeStateSummary } from './knowledge-graph'
 import { getChangeOrders } from './change-order-service'
@@ -49,6 +50,65 @@ export const getProject = cache(async () => {
 
   return data
 })
+
+/**
+ * Compute smart budget total: one choice per trade category.
+ * For each construction trade: use selected bid, else lowest active bid, else phase estimate.
+ * Excludes land, HOA/tax, software, and JobTread noise.
+ * Also includes pre-construction actuals (already spent).
+ */
+function computeSmartBudgetTotal(
+  bids: Array<{ category: string; total_amount: number; status: string }>,
+  budgetItems: Array<{ category: string; estimated_cost: number; actual_cost: number; source: string }>,
+): number {
+  let total = 0
+
+  // Step 1: For each construction phase trade, pick the best number
+  const allTrades = CONSTRUCTION_PHASES.flatMap(p => p.trades)
+  const coveredCategories = new Set<string>()
+
+  for (const trade of allTrades) {
+    const cat = trade.bidCategory
+    coveredCategories.add(cat.toLowerCase())
+    const tradeBids = bids.filter(b =>
+      b.category.toLowerCase() === cat.toLowerCase() &&
+      b.status !== 'rejected' && b.status !== 'superseded'
+    )
+
+    const selectedBid = tradeBids.find(b => b.status === 'selected')
+    if (selectedBid) {
+      total += selectedBid.total_amount
+    } else if (tradeBids.length > 0) {
+      // Use lowest active bid
+      const lowest = tradeBids.reduce((min, b) => b.total_amount < min.total_amount ? b : min)
+      total += lowest.total_amount
+    } else if (trade.budgetEstimate) {
+      // No bids yet — use phase estimate
+      total += trade.budgetEstimate
+    }
+  }
+
+  // Step 2: Add pre-construction actuals (already spent, not trade bids)
+  const preconCategories = ['architectural design', 'civil engineering', 'foundation engineering',
+    'structural engineering', 'surveying', 'consulting', 'pool design', 'septic', 'building materials']
+  for (const item of budgetItems) {
+    const catLower = (item.category || '').toLowerCase()
+    if (item.source === 'jobtread') continue
+    if (coveredCategories.has(catLower)) continue // Already counted via trades
+    if (preconCategories.some(pc => catLower.includes(pc)) && item.actual_cost > 0) {
+      total += item.actual_cost
+      coveredCategories.add(catLower)
+    }
+  }
+
+  // Step 3: Add contingency from budget items if it exists
+  const contingency = budgetItems.find(b => (b.category || '').toLowerCase().includes('contingency'))
+  if (contingency && contingency.estimated_cost > 0) {
+    total += contingency.estimated_cost
+  }
+
+  return total
+}
 
 export async function getFullProjectContext(projectId: string): Promise<FullProjectContext | null> {
   const { data: project } = await supabase
@@ -114,7 +174,12 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
   ])
 
   const spent = budgetItems.reduce((sum, item) => sum + (item.actual_cost ?? 0), 0)
-  const total = parseFloat(project.budget_total) || 450000
+  // Smart budget: one choice per trade — selected bid, else lowest bid, else phase estimate.
+  // Only use smart computation when there are real bids in the system.
+  // Falls back to projects.budget_total for empty/early-stage projects.
+  const activeBids = bids.filter(b => b.status !== 'rejected' && b.status !== 'superseded')
+  const staticTotal = parseFloat(project.budget_total) || 450000
+  const total = activeBids.length > 0 ? computeSmartBudgetTotal(bids, budgetItems) : staticTotal
 
   const { currentStep, totalSteps } = calculateCurrentStep(planningSteps)
 
