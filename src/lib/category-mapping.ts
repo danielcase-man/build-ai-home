@@ -21,6 +21,18 @@ const CATEGORY_MAP: CategoryMapping[] = [
   { selectionCategory: 'flooring', bidCategory: 'Flooring', knowledgeTrade: 'Flooring', phase: 6 },
   { selectionCategory: 'cabinetry', bidCategory: 'Cabinetry', knowledgeTrade: 'Cabinetry', phase: 6 },
   { selectionCategory: 'windows', bidCategory: 'Windows & Doors', knowledgeTrade: 'Windows & Doors', phase: 5 },
+
+  // Structural trades (from plans, not selections)
+  { selectionCategory: 'foundation', bidCategory: 'Foundation', knowledgeTrade: 'Foundation (Pad Prep + PT Slab)', phase: 2 },
+  { selectionCategory: 'framing', bidCategory: 'Framing', knowledgeTrade: 'Framing (Lumber + Labor)', phase: 3 },
+  { selectionCategory: 'roofing', bidCategory: 'Roofing', knowledgeTrade: 'Roofing', phase: 3 },
+  { selectionCategory: 'insulation', bidCategory: 'Insulation', knowledgeTrade: 'Insulation', phase: 5 },
+  { selectionCategory: 'site_work', bidCategory: 'Site Work', knowledgeTrade: 'Site Clearing & Grading', phase: 1 },
+  { selectionCategory: 'well_septic', bidCategory: 'Well & Septic', knowledgeTrade: 'Well Drilling', phase: 1 },
+  { selectionCategory: 'drywall', bidCategory: 'Drywall', knowledgeTrade: 'Drywall', phase: 6 },
+  { selectionCategory: 'exterior_siding', bidCategory: 'Siding', knowledgeTrade: 'Exterior Siding / Cladding', phase: 5 },
+  { selectionCategory: 'garage_doors', bidCategory: 'Garage Doors', knowledgeTrade: 'Garage Doors', phase: 8 },
+  { selectionCategory: 'exterior_lighting', bidCategory: 'Exterior Lighting', knowledgeTrade: 'Exterior Lighting', phase: 8 },
 ]
 
 /** Get the full mapping for a selection category */

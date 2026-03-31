@@ -53,7 +53,7 @@ describe('getSelectionDecisionQueue', () => {
     const result = await getSelectionDecisionQueue(PROJECT_ID)
     expect(result.decisionQueue).toEqual([])
     expect(result.lockedIn).toEqual([])
-    expect(result.future).toHaveLength(10) // all 10 mapped categories are "future"
+    expect(result.future).toHaveLength(20) // all 20 mapped categories are "future"
     expect(result.activePhase).toBe(1)
   })
 
@@ -83,7 +83,7 @@ describe('getSelectionDecisionQueue', () => {
   it('puts categories with no bids in future', async () => {
     const result = await getSelectionDecisionQueue(PROJECT_ID)
     // All categories have no bids → all in future
-    expect(result.future).toHaveLength(10)
+    expect(result.future).toHaveLength(20)
     expect(result.future.every(c => c.zone === 'future')).toBe(true)
   })
 

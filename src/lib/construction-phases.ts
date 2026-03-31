@@ -9,6 +9,7 @@ export interface Trade {
   bidCategory: string      // matches bids.category
   budgetEstimate?: number  // rough estimate for reference
   required: boolean
+  planTypes?: string[]     // which PlanSource types feed this trade's takeoff
 }
 
 export interface ConstructionPhase {
@@ -22,9 +23,9 @@ export const CONSTRUCTION_PHASES: ConstructionPhase[] = [
     phase: 1,
     name: 'Pre-Construction',
     trades: [
-      { name: 'Site Clearing & Grading', bidCategory: 'Site Work', budgetEstimate: 15000, required: true },
-      { name: 'Well Drilling', bidCategory: 'Well & Septic', budgetEstimate: 55000, required: true },
-      { name: 'Septic System', bidCategory: 'Well & Septic', budgetEstimate: 25000, required: true },
+      { name: 'Site Clearing & Grading', bidCategory: 'Site Work', budgetEstimate: 15000, required: true, planTypes: ['site'] },
+      { name: 'Well Drilling', bidCategory: 'Well & Septic', budgetEstimate: 55000, required: true, planTypes: ['site'] },
+      { name: 'Septic System', bidCategory: 'Well & Septic', budgetEstimate: 25000, required: true, planTypes: ['plumbing'] },
       { name: 'Foundation Engineering', bidCategory: 'Foundation Engineering', budgetEstimate: 2500, required: true },
       { name: 'Civil Engineering', bidCategory: 'Civil Engineering', budgetEstimate: 5275, required: true },
       { name: 'Survey / Staking', bidCategory: 'Surveying', budgetEstimate: 3000, required: true },
@@ -35,26 +36,26 @@ export const CONSTRUCTION_PHASES: ConstructionPhase[] = [
     phase: 2,
     name: 'Foundation',
     trades: [
-      { name: 'Foundation (Pad Prep + PT Slab)', bidCategory: 'Foundation', budgetEstimate: 85000, required: true },
+      { name: 'Foundation (Pad Prep + PT Slab)', bidCategory: 'Foundation', budgetEstimate: 85000, required: true, planTypes: ['foundation'] },
     ],
   },
   {
     phase: 3,
     name: 'Framing & Structure',
     trades: [
-      { name: 'Framing (Lumber + Labor)', bidCategory: 'Framing', budgetEstimate: 120000, required: true },
-      { name: 'Trusses / Engineered Lumber', bidCategory: 'Trusses', budgetEstimate: 35000, required: true },
-      { name: 'Roofing', bidCategory: 'Roofing', budgetEstimate: 30000, required: true },
-      { name: 'WRB & Flashings', bidCategory: 'WRB & Flashings', budgetEstimate: 8000, required: true },
+      { name: 'Framing (Lumber + Labor)', bidCategory: 'Framing', budgetEstimate: 120000, required: true, planTypes: ['structural'] },
+      { name: 'Trusses / Engineered Lumber', bidCategory: 'Trusses', budgetEstimate: 35000, required: true, planTypes: ['structural'] },
+      { name: 'Roofing', bidCategory: 'Roofing', budgetEstimate: 30000, required: true, planTypes: ['structural', 'architectural'] },
+      { name: 'WRB & Flashings', bidCategory: 'WRB & Flashings', budgetEstimate: 8000, required: true, planTypes: ['detail'] },
     ],
   },
   {
     phase: 4,
     name: 'Rough-Ins (MEP)',
     trades: [
-      { name: 'HVAC Rough-In', bidCategory: 'HVAC', budgetEstimate: 45000, required: true },
-      { name: 'Plumbing Rough-In', bidCategory: 'Plumbing Rough', budgetEstimate: 35000, required: true },
-      { name: 'Electrical Rough-In', bidCategory: 'Electrical', budgetEstimate: 40000, required: true },
+      { name: 'HVAC Rough-In', bidCategory: 'HVAC', budgetEstimate: 45000, required: true, planTypes: ['mechanical'] },
+      { name: 'Plumbing Rough-In', bidCategory: 'Plumbing Rough', budgetEstimate: 35000, required: true, planTypes: ['plumbing'] },
+      { name: 'Electrical Rough-In', bidCategory: 'Electrical', budgetEstimate: 40000, required: true, planTypes: ['electrical'] },
       { name: 'ERV / Indoor Air Quality', bidCategory: 'ERV & IAQ', budgetEstimate: 8000, required: false },
     ],
   },
@@ -62,9 +63,9 @@ export const CONSTRUCTION_PHASES: ConstructionPhase[] = [
     phase: 5,
     name: 'Building Envelope',
     trades: [
-      { name: 'Windows & Doors', bidCategory: 'Windows & Doors', budgetEstimate: 68000, required: true },
-      { name: 'Exterior Siding / Cladding', bidCategory: 'Siding', budgetEstimate: 45000, required: true },
-      { name: 'Insulation', bidCategory: 'Insulation', budgetEstimate: 18000, required: true },
+      { name: 'Windows & Doors', bidCategory: 'Windows & Doors', budgetEstimate: 68000, required: true, planTypes: ['architectural'] },
+      { name: 'Exterior Siding / Cladding', bidCategory: 'Siding', budgetEstimate: 45000, required: true, planTypes: ['architectural', 'detail'] },
+      { name: 'Insulation', bidCategory: 'Insulation', budgetEstimate: 18000, required: true, planTypes: ['detail'] },
       { name: 'Stone / Masonry Accents', bidCategory: 'Stone & Masonry', budgetEstimate: 25000, required: false },
     ],
   },
@@ -94,7 +95,7 @@ export const CONSTRUCTION_PHASES: ConstructionPhase[] = [
     phase: 8,
     name: 'Exterior & Site',
     trades: [
-      { name: 'Driveway / Flatwork', bidCategory: 'Driveway', budgetEstimate: 20000, required: true },
+      { name: 'Driveway / Flatwork', bidCategory: 'Driveway', budgetEstimate: 20000, required: true, planTypes: ['site'] },
       { name: 'Garage Doors', bidCategory: 'Garage Doors', budgetEstimate: 8000, required: true },
       { name: 'Exterior Lighting', bidCategory: 'Exterior Lighting', budgetEstimate: 15000, required: true },
       { name: 'Pool', bidCategory: 'Pool', budgetEstimate: 80000, required: false },

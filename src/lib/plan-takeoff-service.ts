@@ -28,6 +28,13 @@ export type ExtractionType =
   | 'electrical_schedule'
   | 'plumbing_schedule'
   | 'general'
+  // Structural / trade-specific types:
+  | 'foundation_takeoff'
+  | 'framing_takeoff'
+  | 'roofing_takeoff'
+  | 'insulation_takeoff'
+  | 'site_work_takeoff'
+  | 'window_door_schedule'
 
 export interface DocumentExtraction {
   id?: string
@@ -403,6 +410,243 @@ Return JSON with whatever structured data you can extract:
   "notes": "relevant observations"
 }`,
   })
+}
+
+// ---------------------------------------------------------------------------
+// Trade-Specific Extractors
+// ---------------------------------------------------------------------------
+
+export async function extractFoundationTakeoff(
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction> {
+  return runExtractor({
+    extractionType: 'foundation_takeoff',
+    content: text,
+    filename,
+    documentId,
+    projectId,
+    prompt: `Extract foundation quantities from this construction document. Look for:
+- Slab area (sqft), perimeter (LF)
+- Concrete volume (CY), concrete spec (PSI)
+- Rebar spec + quantity (LF or tons)
+- Post-tension cable count and spec
+- Pier/footing locations, count, dimensions
+- Grade beam specs (size, quantity)
+- Vapor barrier area (sqft)
+
+Return JSON:
+{
+  "slab": { "area_sqft": null, "perimeter_lf": null, "concrete_cy": null, "concrete_psi": null },
+  "rebar": { "spec": null, "quantity_lf": null },
+  "post_tension": { "cable_count": null, "spec": null },
+  "piers": [{ "location": "", "count": 0, "dimensions": "" }],
+  "grade_beams": [{ "size": "", "quantity": 0 }],
+  "vapor_barrier_sqft": null,
+  "notes": "any relevant notes"
+}`,
+  })
+}
+
+export async function extractFramingTakeoff(
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction> {
+  return runExtractor({
+    extractionType: 'framing_takeoff',
+    content: text,
+    filename,
+    documentId,
+    projectId,
+    prompt: `Extract framing quantities from this structural plan. Look for:
+- Exterior wall length (LF) and height
+- Interior wall length (LF) and height
+- Stud spacing (16" or 24" OC)
+- Header schedule: each header with size, span, quantity
+- Beam schedule: each beam with size, span, quantity
+- Rafter/truss spec
+- Roof sheathing area (sqft)
+- Wall sheathing area (sqft)
+- Plate material (2x4, 2x6) and total LF
+
+Return JSON:
+{
+  "walls": { "exterior_lf": null, "interior_lf": null, "height": null, "stud_spacing": null },
+  "headers": [{ "size": "", "span": "", "quantity": 0 }],
+  "beams": [{ "size": "", "span": "", "quantity": 0 }],
+  "rafters": { "spec": null, "count": null },
+  "sheathing": { "roof_sqft": null, "wall_sqft": null },
+  "plates": { "material": null, "total_lf": null },
+  "notes": "any relevant notes"
+}`,
+  })
+}
+
+export async function extractRoofingTakeoff(
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction> {
+  return runExtractor({
+    extractionType: 'roofing_takeoff',
+    content: text,
+    filename,
+    documentId,
+    projectId,
+    prompt: `Extract roofing quantities from this construction document. Look for:
+- Roof area (sqft)
+- Pitch/slope
+- Ridge length (LF), valley length (LF), hip length (LF)
+- Eave length (LF)
+- Material type (metal, shingle, tile)
+- Flashing (LF), drip edge (LF)
+- Vent count and type
+- Gutter/downspout (LF)
+
+Return JSON:
+{
+  "roof_sqft": null,
+  "pitch": null,
+  "ridge_lf": null,
+  "valley_lf": null,
+  "hip_lf": null,
+  "eave_lf": null,
+  "material": null,
+  "flashing_lf": null,
+  "drip_edge_lf": null,
+  "vents": [{ "type": "", "count": 0 }],
+  "gutter_lf": null,
+  "downspout_count": null,
+  "notes": "any relevant notes"
+}`,
+  })
+}
+
+export async function extractInsulationTakeoff(
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction> {
+  return runExtractor({
+    extractionType: 'insulation_takeoff',
+    content: text,
+    filename,
+    documentId,
+    projectId,
+    prompt: `Extract insulation specifications from this construction document. Look for:
+- Wall assembly description
+- Exterior wall R-value and material
+- Interior wall insulation (if any)
+- Ceiling/attic R-value and material
+- Floor insulation (if any)
+- Rigid insulation spec and area
+- Spray foam areas
+- Air barrier spec
+
+Return JSON:
+{
+  "exterior_walls": { "r_value": null, "material": null, "area_sqft": null },
+  "ceiling": { "r_value": null, "material": null, "area_sqft": null },
+  "rigid": { "spec": null, "area_sqft": null },
+  "spray_foam": { "area_sqft": null },
+  "air_barrier": { "spec": null, "area_sqft": null },
+  "notes": "any relevant notes"
+}`,
+  })
+}
+
+export async function extractSiteWorkTakeoff(
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction> {
+  return runExtractor({
+    extractionType: 'site_work_takeoff',
+    content: text,
+    filename,
+    documentId,
+    projectId,
+    prompt: `Extract site work quantities from this civil/grading plan. Look for:
+- Cut volume (CY), fill volume (CY)
+- Driveway area (sqft) and material
+- Utility trenching (LF) by type
+- Drainage features: swales (LF), culverts, drains
+- Retaining walls (LF x height)
+- Erosion control measures
+
+Return JSON:
+{
+  "earthwork": { "cut_cy": null, "fill_cy": null },
+  "driveway": { "area_sqft": null, "material": null },
+  "utilities": [{ "type": "", "trench_lf": 0 }],
+  "drainage": [{ "type": "", "length_lf": 0 }],
+  "retaining_walls": [{ "length_lf": 0, "height_ft": 0 }],
+  "erosion_control": [{ "measure": "", "quantity": "" }],
+  "notes": "any relevant notes"
+}`,
+  })
+}
+
+export async function extractWindowDoorSchedule(
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction> {
+  return runExtractor({
+    extractionType: 'window_door_schedule',
+    content: text,
+    filename,
+    documentId,
+    projectId,
+    prompt: `Extract the combined window and door schedule from this architectural document. For each item extract all available fields.
+
+Windows: mark, width, height, type (fixed/casement/double-hung/slider), quantity, room
+Doors: mark, width, height, type (interior/exterior/pocket/barn), material, hardware, quantity, location
+
+Return JSON:
+{
+  "windows": [{ "mark": "", "width": null, "height": null, "type": "", "quantity": 0, "room": "" }],
+  "doors": [{ "mark": "", "width": null, "height": null, "type": "", "material": "", "hardware": "", "quantity": 0, "location": "" }],
+  "total_windows": 0,
+  "total_doors": 0,
+  "notes": "any relevant notes"
+}`,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Trade Extractor Orchestrator
+// ---------------------------------------------------------------------------
+
+/**
+ * Run the appropriate trade-specific extractors based on plan type.
+ * Maps plan types to extractors and runs them in parallel.
+ */
+export async function runTradeExtractors(
+  planType: string,
+  text: string,
+  filename: string,
+  documentId: string,
+  projectId: string
+): Promise<DocumentExtraction[]> {
+  const extractorMap: Record<string, Array<(t: string, f: string, d: string, p: string) => Promise<DocumentExtraction>>> = {
+    foundation: [extractFoundationTakeoff],
+    structural: [extractFramingTakeoff, extractRoofingTakeoff],
+    architectural: [extractWindowDoorSchedule, extractRoomSchedule],
+    site: [extractSiteWorkTakeoff],
+    detail: [extractInsulationTakeoff],
+  }
+
+  const extractors = extractorMap[planType] || [extractGeneral]
+  return Promise.all(extractors.map(fn => fn(text, filename, documentId, projectId)))
 }
 
 // ---------------------------------------------------------------------------

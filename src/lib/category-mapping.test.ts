@@ -40,9 +40,9 @@ describe('getCategoryMapping', () => {
     expect(getCategoryMapping('unknown')).toBeNull()
   })
 
-  it('handles all 10 categories', () => {
+  it('handles all 20 categories', () => {
     const all = getAllCategoryMappings()
-    expect(all).toHaveLength(10)
+    expect(all).toHaveLength(20)
   })
 })
 

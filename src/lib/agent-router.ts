@@ -93,6 +93,11 @@ const EMAIL_PATTERNS: Array<{ pattern: RegExp; domain: AgentDomain }> = [
   { pattern: /\b(checking.?in|status.?update|circling.?back)\b/i, domain: 'follow_up' },
   { pattern: /\b(response.?needed|waiting|overdue)\b/i, domain: 'follow_up' },
 
+  // Plan-related emails (before bid patterns — "revised structural plans" is a plan, not a bid)
+  { pattern: /\b(plan|drawing|design)\b.*\b(revised|updated|attached|enclosed)\b/i, domain: 'takeoff' },
+  { pattern: /\b(revised|updated)\b.*\b(plan|drawing|design)\b/i, domain: 'takeoff' },
+  { pattern: /\b(structural|foundation|architectural|grading|civil|engineering)\b.*\b(plan|drawing|set)\b/i, domain: 'takeoff' },
+
   // Bid-related
   { pattern: /\b(bid|quote|estimate|proposal|pricing)\b/i, domain: 'bid_analysis' },
 
