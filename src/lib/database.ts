@@ -391,16 +391,26 @@ export class DatabaseService {
         .eq('project_id', projectId)
         .like('notes', '%[ai-generated]%')
 
-      const existingTitles = new Set(
-        (existingTasks || []).map(t => t.title.toLowerCase())
-      )
+      // Normalize task text for fuzzy matching — strip prices, dates, quantities, parentheticals
+      const normalizeForMatch = (s: string) => s.toLowerCase()
+        .replace(/\$[\d,]+(\.\d+)?/g, '')           // prices
+        .replace(/20\d{2}[-/]\d{1,2}[-/]\d{1,2}/g, '') // dates
+        .replace(/\d+ (bids?|days?|weeks?|months?|runs?)/g, '') // quantities
+        .replace(/\([^)]*\)/g, '')                    // parentheticals
+        .replace(/\s+/g, ' ').trim()
+        .slice(0, 80) // Compare first 80 chars to handle truncation differences
+
+      const existingNormalized = (existingTasks || []).map(t => ({
+        ...t,
+        normalized: normalizeForMatch(t.title),
+      }))
 
       for (const item of actionItems) {
-        const titleLower = item.text.toLowerCase()
+        const itemNorm = normalizeForMatch(item.text)
 
-        // Check if a matching task already exists
-        const existing = (existingTasks || []).find(
-          t => t.title.toLowerCase() === titleLower
+        // Check if a matching task already exists (fuzzy: first 80 chars after normalization)
+        const existing = existingNormalized.find(
+          t => t.normalized === itemNorm || t.title.toLowerCase() === item.text.toLowerCase()
         )
 
         if (existing) {
@@ -415,7 +425,7 @@ export class DatabaseService {
               })
               .eq('id', existing.id)
           }
-        } else if (!existingTitles.has(titleLower) && item.status !== 'completed') {
+        } else if (!existingNormalized.some(t => t.normalized === itemNorm) && item.status !== 'completed') {
           // Skip "Select vendor for X" tasks when selections already exist for that category
           const vendorSelectMatch = item.text.match(/select vendor for (\w[\w\s&]*)/i)
           if (vendorSelectMatch) {
@@ -446,7 +456,7 @@ export class DatabaseService {
               notes,
             })
 
-          existingTitles.add(titleLower)
+          existingNormalized.push({ id: 'new', title: item.text, status: 'pending', notes: '', normalized: itemNorm })
 
           // Fire notification for high-priority new items
           if (priority === 'high') {
