@@ -163,6 +163,7 @@ function deriveActionItems(ctx: FullProjectContext): ProjectStatusSnapshot['acti
     items.push({
       status: task.status === 'in_progress' ? 'in-progress' : 'pending',
       text: `${task.title}${isOverdue ? ' (OVERDUE)' : ''}${task.due_date ? ` — due ${task.due_date}` : ''}`,
+      task_id: task.id,
       action_type: null,
       action_context: undefined,
     })

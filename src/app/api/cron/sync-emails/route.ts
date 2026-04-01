@@ -178,6 +178,27 @@ export async function POST(request: NextRequest) {
       await createEmailSyncNotification(projectId, emailsToStore.length)
     }
 
+    // Auto-resolve follow-up tasks when the person emailed back
+    if (emailsToStore.length > 0) {
+      try {
+        let totalResolved = 0
+        for (const email of emailsToStore) {
+          const resolved = await db.resolveTasksFromEmail(
+            projectId,
+            email.sender_email || '',
+            email.sender_name || '',
+            email.subject || ''
+          )
+          totalResolved += resolved
+        }
+        if (totalResolved > 0) {
+          console.log(`Auto-resolved ${totalResolved} task(s) from incoming emails`)
+        }
+      } catch (resolveError) {
+        console.error('Task auto-resolution failed (non-fatal):', resolveError)
+      }
+    }
+
     // Update last sync time
     await db.updateLastSync(emailAccount.email_address)
 

@@ -148,7 +148,7 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
       .order('target_date', { ascending: true }),
     supabase
       .from('tasks')
-      .select('title, description, due_date, priority, status, notes')
+      .select('id, title, description, due_date, priority, status, notes')
       .eq('project_id', projectId)
       .in('status', ['pending', 'in_progress'])
       .order('due_date', { ascending: true })
@@ -216,6 +216,7 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
       notes: m.notes || null,
     })),
     tasks: (tasks || []).map(t => ({
+      id: t.id,
       title: t.title,
       description: t.description || null,
       due_date: t.due_date || null,

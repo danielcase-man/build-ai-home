@@ -35,7 +35,7 @@ export interface FullProjectContext {
   }
   planningSteps: Array<{ step_number: number; name: string; status: string; notes: string | null }>
   milestones: Array<{ name: string; description: string | null; target_date: string | null; completed_date: string | null; status: string; notes: string | null }>
-  tasks: Array<{ title: string; description: string | null; due_date: string | null; priority: string; status: string; notes: string | null }>
+  tasks: Array<{ id?: string; title: string; description: string | null; due_date: string | null; priority: string; status: string; notes: string | null }>
   permits: Array<{ type: string; permit_number: string | null; status: string; application_date: string | null; approval_date: string | null; notes: string | null }>
   contacts: Array<{ name: string; company: string | null; role: string | null; type: string | null }>
   vendors: Array<{ company_name: string; category: string | null; status: string | null }>
@@ -315,6 +315,7 @@ Write a 2-3 paragraph summary that:
 export interface ActionItemSnapshot {
   status: string
   text: string
+  task_id?: string
   action_type?: 'draft_email' | null
   action_context?: {
     to?: string

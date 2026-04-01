@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
   Calendar, CheckCircle2, DollarSign, Mail, FileText,
   Users, RefreshCw, AlertTriangle, Landmark, Clock,
   CircleHelp, ListTodo, Zap, ChevronRight, ArrowRight,
-  BarChart3, Gavel, Upload,
+  BarChart3, Gavel, Upload, Circle, Check, Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
 import FileUpload from '@/components/FileUpload'
@@ -22,6 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import IntegrityScoreCard from '@/components/IntegrityScoreCard'
 import type { DashboardData } from '@/types'
@@ -39,6 +40,7 @@ interface EmailPreview {
 interface ActionItemData {
   status: string
   text: string
+  task_id?: string
   action_type?: 'draft_email' | null
   action_context?: {
     to?: string
@@ -68,6 +70,7 @@ interface AttentionItem {
   text: string
   detail?: string
   link: string
+  task_id?: string
 }
 
 interface VendorFollowUp {
@@ -191,7 +194,7 @@ export default function HomeClient({
       .map(t => typeof t === 'string' ? t : t.text || '')
       .filter(Boolean)
   })
-  const [actionItems] = useState<ActionItemData[]>(() => {
+  const [actionItems, setActionItems] = useState<ActionItemData[]>(() => {
     if (!initialStatus?.action_items) return []
     return (initialStatus.action_items as ActionItemData[]).filter(i => i.text)
   })
@@ -205,6 +208,48 @@ export default function HomeClient({
   const [emails, setEmails] = useState<EmailPreview[]>(initialEmails)
   const [loading, setLoading] = useState(false)
   const [healthIssues, setHealthIssues] = useState<Array<{ source: string; message: string }>>([])
+
+  // ── Task completion state ──
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null)
+  const [completionNote, setCompletionNote] = useState('')
+  const [completionLoading, setCompletionLoading] = useState(false)
+  const [completedTaskId, setCompletedTaskId] = useState<string | null>(null)
+  const noteInputRef = useRef<HTMLInputElement>(null)
+
+  const handleCompleteTask = useCallback(async (taskId: string) => {
+    setCompletionLoading(true)
+    try {
+      const res = await fetch(`/api/tasks/${taskId}/complete`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: completionNote || undefined }),
+      })
+      if (!res.ok) throw new Error('Failed to complete task')
+
+      // Show the green check briefly, then remove the item
+      setCompletedTaskId(taskId)
+      setCompletingTaskId(null)
+      setCompletionNote('')
+
+      // After fade-out animation completes, remove from state
+      setTimeout(() => {
+        setActionItems(prev => prev.filter(i => i.task_id !== taskId))
+        setCompletedTaskId(null)
+      }, 600)
+    } catch {
+      // Revert UI — keep the item visible
+      setCompletingTaskId(null)
+    } finally {
+      setCompletionLoading(false)
+    }
+  }, [completionNote])
+
+  // Auto-focus the note input when it appears
+  useEffect(() => {
+    if (completingTaskId && noteInputRef.current) {
+      noteInputRef.current.focus()
+    }
+  }, [completingTaskId])
 
   useEffect(() => {
     fetch('/api/health')
@@ -250,6 +295,7 @@ export default function HomeClient({
           ? `Email to ${item.action_context?.to_name || item.action_context?.to || 'contact'}`
           : undefined,
         link: item.action_type === 'draft_email' ? '/emails' : '/project-status',
+        task_id: item.task_id,
       })
     }
 
@@ -452,6 +498,110 @@ export default function HomeClient({
           <div className="divide-y">
             {attentionItems.slice(0, 8).map((item, i) => {
               const Icon = ATTENTION_ICONS[item.type]
+              const isCompleted = item.task_id === completedTaskId
+              const isExpanded = item.task_id === completingTaskId
+
+              // Items with a task_id get an interactive completion row
+              if (item.task_id) {
+                return (
+                  <div
+                    key={item.task_id}
+                    className={cn(
+                      'transition-all duration-500',
+                      isCompleted && 'opacity-0 max-h-0 overflow-hidden',
+                      !isCompleted && 'max-h-40',
+                    )}
+                  >
+                    <div className="flex items-center gap-3 px-6 py-3 group">
+                      {/* Check button */}
+                      <button
+                        onClick={() => {
+                          if (isExpanded) {
+                            // Collapse without completing
+                            setCompletingTaskId(null)
+                            setCompletionNote('')
+                          } else {
+                            setCompletingTaskId(item.task_id!)
+                            setCompletionNote('')
+                          }
+                        }}
+                        className={cn(
+                          'shrink-0 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                          isCompleted
+                            ? 'text-green-500'
+                            : isExpanded
+                              ? 'text-primary'
+                              : 'text-muted-foreground/40 hover:text-primary',
+                        )}
+                        aria-label={isExpanded ? 'Cancel completion' : 'Complete task'}
+                      >
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-5 w-5" />
+                        ) : (
+                          <Circle className="h-5 w-5" />
+                        )}
+                      </button>
+                      <div className={cn(
+                        'h-2 w-2 rounded-full shrink-0',
+                        URGENCY_DOT_COLORS[item.urgency],
+                      )} />
+                      <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className={cn(
+                          'text-sm truncate transition-colors',
+                          isCompleted && 'line-through text-muted-foreground',
+                        )}>{item.text}</p>
+                        {item.detail && (
+                          <p className="text-xs text-muted-foreground truncate">{item.detail}</p>
+                        )}
+                      </div>
+                      <Link
+                        href={item.link}
+                        className="shrink-0"
+                        aria-label="View details"
+                      >
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />
+                      </Link>
+                    </div>
+                    {/* Inline note input — slides down when expanded */}
+                    {isExpanded && (
+                      <div className="px-6 pb-3 flex items-center gap-2 animate-fade-in">
+                        <div className="w-5 shrink-0" /> {/* spacer to align with content */}
+                        <Input
+                          ref={noteInputRef}
+                          value={completionNote}
+                          onChange={e => setCompletionNote(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleCompleteTask(item.task_id!)
+                            if (e.key === 'Escape') {
+                              setCompletingTaskId(null)
+                              setCompletionNote('')
+                            }
+                          }}
+                          placeholder="Add a note (optional) then press Enter"
+                          className="h-8 text-sm flex-1"
+                          disabled={completionLoading}
+                        />
+                        <Button
+                          size="sm"
+                          className="h-8 px-3"
+                          onClick={() => handleCompleteTask(item.task_id!)}
+                          disabled={completionLoading}
+                        >
+                          {completionLoading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Check className="h-3.5 w-3.5 mr-1" />
+                          )}
+                          {completionLoading ? '' : 'Done'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )
+              }
+
+              // Items without task_id keep the original link behavior
               return (
                 <Link
                   key={i}

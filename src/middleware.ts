@@ -29,6 +29,7 @@ const PUBLIC_ROUTES = [
   '/api/integrity',     // Has Bearer token auth / dev mode (no trailing slash — root route)
   '/api/bids/reextract', // Has Bearer token auth / dev mode
   '/api/vendors/invite/accept', // Public invitation validation
+  '/api/tasks/',         // Single-user; called from dashboard client component
 ]
 
 function isPublicRoute(pathname: string): boolean {

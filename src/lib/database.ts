@@ -678,6 +678,128 @@ export class DatabaseService {
     }
   }
 
+  /**
+   * Auto-resolve AI-generated follow-up tasks when the person being followed up
+   * with emails back. Matches sender name/email against task text.
+   * Returns count of tasks resolved.
+   */
+  async resolveTasksFromEmail(
+    projectId: string,
+    senderEmail: string,
+    senderName: string,
+    subject: string
+  ): Promise<number> {
+    try {
+      // Get open AI-generated tasks
+      const { data: openTasks, error } = await supabase
+        .from('tasks')
+        .select('id, title, notes')
+        .eq('project_id', projectId)
+        .like('notes', '%[ai-generated]%')
+        .in('status', ['pending', 'in_progress'])
+
+      if (error || !openTasks || openTasks.length === 0) return 0
+
+      const normalize = (s: string) =>
+        s.toLowerCase()
+          .replace(/\b(llc|inc|corp|ltd|co|group)\b/gi, '')
+          .replace(/[^a-z0-9 ]/g, '')
+          .trim()
+
+      const senderNameNorm = normalize(senderName || '')
+      const senderEmailLower = (senderEmail || '').toLowerCase()
+      const senderDomain = senderEmailLower.split('@')[1] || ''
+
+      // Extract a meaningful domain label: "riverbearfinancial.com" → "riverbear financial"
+      const domainLabel = senderDomain
+        ? normalize(senderDomain.split('.')[0].replace(/([a-z])([A-Z])/g, '$1 $2'))
+        : ''
+
+      // Patterns to extract person/company name from task text
+      const namePatterns = [
+        /follow\s*up\s+with\s+(.+?)(?:\s+(?:about|on|re|regarding|for)\b|$)/i,
+        /from\s+(.+?)(?:\s+(?:about|on|re|regarding)\b|$)/i,
+        /(?:email|contact|reach out to|write to|message)\s+(.+?)(?:\s+(?:about|on|re|regarding|for)\b|$)/i,
+        /with\s+(.+?)(?:\s+(?:about|on|re|regarding|for)\b|$)/i,
+        /(?:to|from)\s+(.+?)(?:\s+at\b|$)/i,
+      ]
+
+      let resolvedCount = 0
+
+      for (const task of openTasks) {
+        const taskText = `${task.title} ${task.notes || ''}`.toLowerCase()
+
+        let matched = false
+
+        // 1. Direct sender email or name match in task text
+        if (senderEmailLower && taskText.includes(senderEmailLower)) {
+          matched = true
+        }
+
+        // 2. Try extracting name from task and matching against sender
+        if (!matched && senderNameNorm) {
+          for (const pattern of namePatterns) {
+            const m = task.title.match(pattern)
+            if (m) {
+              const extractedName = normalize(m[1])
+              if (!extractedName) continue
+              // Partial match both ways (handles "David Wilson" vs "David" or "Wilson")
+              if (
+                senderNameNorm.includes(extractedName) ||
+                extractedName.includes(senderNameNorm)
+              ) {
+                matched = true
+                break
+              }
+              // Check individual words (at least 2 chars) for partial name matches
+              const extractedWords = extractedName.split(/\s+/).filter(w => w.length >= 2)
+              const senderWords = senderNameNorm.split(/\s+/).filter(w => w.length >= 2)
+              if (extractedWords.some(ew => senderWords.some(sw => sw === ew))) {
+                matched = true
+                break
+              }
+            }
+          }
+        }
+
+        // 3. Domain-based match: task mentions company name that maps to sender domain
+        if (!matched && domainLabel) {
+          // Split domain label into words and check if any appear in task text
+          const domainWords = domainLabel.split(/\s+/).filter(w => w.length >= 4)
+          if (domainWords.some(dw => taskText.includes(dw))) {
+            matched = true
+          }
+        }
+
+        if (matched) {
+          const resolveNote = `[auto-resolved: reply received from ${senderName || senderEmail} on ${new Date().toISOString().split('T')[0]}]`
+          const updatedNotes = task.notes ? `${task.notes}\n${resolveNote}` : resolveNote
+
+          await supabase
+            .from('tasks')
+            .update({
+              status: 'completed',
+              completed_date: new Date().toISOString(),
+              notes: updatedNotes,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', task.id)
+
+          resolvedCount++
+        }
+      }
+
+      if (resolvedCount > 0) {
+        console.log(`Auto-resolved ${resolvedCount} task(s) from email by ${senderName} <${senderEmail}>`)
+      }
+
+      return resolvedCount
+    } catch (error) {
+      console.error('Error resolving tasks from email:', error)
+      return 0
+    }
+  }
+
   /** Check whether a Gmail account with OAuth tokens exists. */
   async hasEmailAccountConfigured(): Promise<boolean> {
     try {
