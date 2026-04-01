@@ -177,9 +177,11 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
   // Smart budget: one choice per trade — selected bid, else lowest bid, else phase estimate.
   // Only use smart computation when there are real bids in the system.
   // Falls back to projects.budget_total for empty/early-stage projects.
-  const activeBids = bids.filter(b => b.status !== 'rejected' && b.status !== 'superseded')
+  const activeBids = bids.filter(b => b.status !== 'rejected' && (b.status as string) !== 'superseded')
   const staticTotal = parseFloat(project.budget_total) || 450000
-  const total = activeBids.length > 0 ? computeSmartBudgetTotal(bids, budgetItems) : staticTotal
+  const total = activeBids.length > 0
+    ? computeSmartBudgetTotal(bids as Parameters<typeof computeSmartBudgetTotal>[0], budgetItems as Parameters<typeof computeSmartBudgetTotal>[1])
+    : staticTotal
 
   const { currentStep, totalSteps } = calculateCurrentStep(planningSteps)
 
