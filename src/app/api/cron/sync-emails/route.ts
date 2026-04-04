@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Try incremental sync first using Gmail history API
     const storedHistoryId = await db.getGmailHistoryId(emailAccount.email_address)
-    let gmailEmails: Array<{ id: string; threadId: string; subject: string; from: string; date: string; body: string; snippet: string }> = []
+    let gmailEmails: Array<{ id: string; threadId: string; subject: string; from: string; date: string; body: string; snippet: string; recipients?: Record<string, string[]> }> = []
     let usedIncremental = false
 
     if (storedHistoryId) {
@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
         thread_id: email.threadId,
         sender_email: extractEmailAddress(email.from),
         sender_name: extractSenderName(email.from),
+        recipients: Object.keys(email.recipients || {}).length > 0 ? email.recipients : undefined,
         subject: email.subject,
         body_text: email.body,
         received_date: email.date,

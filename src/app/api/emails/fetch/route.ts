@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       id: string; threadId: string; subject: string; from: string;
       date: string; body: string; snippet: string;
       attachments?: Array<{ filename: string; mimeType: string; attachmentId: string; size: number }>;
+      recipients?: Record<string, string[]>;
       classification: ReturnType<typeof classifyEmail>;
       aiSummary: string;
     }> = []
@@ -103,6 +104,7 @@ export async function GET(request: NextRequest) {
           thread_id: email.threadId,
           sender_email: extractEmailAddress(email.from),
           sender_name: extractSenderName(email.from),
+          recipients: Object.keys(email.recipients || {}).length > 0 ? email.recipients : undefined,
           subject: email.subject,
           body_text: email.body,
           received_date: email.date,
