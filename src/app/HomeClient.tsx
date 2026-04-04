@@ -6,6 +6,7 @@ import {
   Users, RefreshCw, AlertTriangle, Landmark, Clock,
   CircleHelp, ListTodo, Zap, ChevronRight, ArrowRight,
   BarChart3, Gavel, Upload, Circle, Check, Loader2,
+  Send, Edit3, X,
 } from 'lucide-react'
 import Link from 'next/link'
 import FileUpload from '@/components/FileUpload'
@@ -18,14 +19,18 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import IntegrityScoreCard from '@/components/IntegrityScoreCard'
-import type { DashboardData } from '@/types'
+import type { DashboardData, DraftEmail } from '@/types'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,6 +76,13 @@ interface AttentionItem {
   detail?: string
   link: string
   task_id?: string
+  action_type?: 'draft_email' | null
+  action_context?: {
+    to?: string
+    to_name?: string
+    subject_hint?: string
+    context?: string
+  }
 }
 
 interface VendorFollowUp {
@@ -244,6 +256,75 @@ export default function HomeClient({
     }
   }, [completionNote])
 
+  // ── Email draft state ──
+  const [generatingDraftFor, setGeneratingDraftFor] = useState<string | null>(null)
+  const [activeDraft, setActiveDraft] = useState<DraftEmail | null>(null)
+  const [editingDraft, setEditingDraft] = useState<DraftEmail | null>(null)
+  const [sendingDraft, setSendingDraft] = useState(false)
+  const [draftSourceTaskId, setDraftSourceTaskId] = useState<string | null>(null)
+
+  const handleGenerateDraft = useCallback(async (item: AttentionItem) => {
+    const key = item.task_id || item.text
+    setGeneratingDraftFor(key)
+    try {
+      const response = await fetch('/api/emails/drafts/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: item.action_context?.to,
+          toName: item.action_context?.to_name,
+          subjectHint: item.action_context?.subject_hint,
+          context: item.action_context?.context || item.text,
+        }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to generate draft')
+      setActiveDraft(data.data.draft)
+      setDraftSourceTaskId(item.task_id || null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate draft')
+    } finally {
+      setGeneratingDraftFor(null)
+    }
+  }, [])
+
+  const handleSendDraft = useCallback(async (draft: DraftEmail) => {
+    setSendingDraft(true)
+    try {
+      const response = await fetch('/api/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: draft.to, subject: draft.subject, body: draft.body }),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Failed to send email')
+      toast.success(`Email sent to ${draft.toName || draft.to}`)
+      setActiveDraft(null)
+      setEditingDraft(null)
+
+      // Auto-complete the related task
+      if (draftSourceTaskId) {
+        try {
+          await fetch(`/api/tasks/${draftSourceTaskId}/complete`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ note: `Email sent to ${draft.toName || draft.to}: ${draft.subject}` }),
+          })
+          setCompletedTaskId(draftSourceTaskId)
+          setTimeout(() => {
+            setActionItems(prev => prev.filter(i => i.task_id !== draftSourceTaskId))
+            setCompletedTaskId(null)
+          }, 600)
+        } catch { /* task completion is non-fatal */ }
+        setDraftSourceTaskId(null)
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send email')
+    } finally {
+      setSendingDraft(false)
+    }
+  }, [draftSourceTaskId])
+
   // Auto-focus the note input when it appears
   useEffect(() => {
     if (completingTaskId && noteInputRef.current) {
@@ -296,6 +377,8 @@ export default function HomeClient({
           : undefined,
         link: item.action_type === 'draft_email' ? '/emails' : '/project-status',
         task_id: item.task_id,
+        action_type: item.action_type,
+        action_context: item.action_context,
       })
     }
 
@@ -555,13 +638,30 @@ export default function HomeClient({
                           <p className="text-xs text-muted-foreground truncate">{item.detail}</p>
                         )}
                       </div>
-                      <Link
-                        href={item.link}
-                        className="shrink-0"
-                        aria-label="View details"
-                      >
-                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />
-                      </Link>
+                      {item.action_type === 'draft_email' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="shrink-0 h-7 px-2.5 text-xs"
+                          disabled={generatingDraftFor === (item.task_id || item.text)}
+                          onClick={() => handleGenerateDraft(item)}
+                        >
+                          {generatingDraftFor === (item.task_id || item.text) ? (
+                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          ) : (
+                            <Mail className="h-3 w-3 mr-1" />
+                          )}
+                          Draft
+                        </Button>
+                      ) : (
+                        <Link
+                          href={item.link}
+                          className="shrink-0"
+                          aria-label="View details"
+                        >
+                          <ChevronRight className="h-4 w-4 text-muted-foreground/40 hover:text-muted-foreground transition-colors" />
+                        </Link>
+                      )}
                     </div>
                     {/* Inline note input — slides down when expanded */}
                     {isExpanded && (
@@ -601,7 +701,42 @@ export default function HomeClient({
                 )
               }
 
-              // Items without task_id keep the original link behavior
+              // Items without task_id: email actions get draft button, others get link
+              if (item.action_type === 'draft_email') {
+                return (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 px-6 py-3 hover:bg-accent/50 transition-colors group"
+                  >
+                    <div className={cn(
+                      'h-2 w-2 rounded-full shrink-0',
+                      URGENCY_DOT_COLORS[item.urgency],
+                    )} />
+                    <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{item.text}</p>
+                      {item.detail && (
+                        <p className="text-xs text-muted-foreground truncate">{item.detail}</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 h-7 px-2.5 text-xs"
+                      disabled={generatingDraftFor === item.text}
+                      onClick={() => handleGenerateDraft(item)}
+                    >
+                      {generatingDraftFor === item.text ? (
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                      ) : (
+                        <Mail className="h-3 w-3 mr-1" />
+                      )}
+                      Draft
+                    </Button>
+                  </div>
+                )
+              }
+
               return (
                 <Link
                   key={i}
@@ -946,6 +1081,90 @@ export default function HomeClient({
           <Link href="/project-status"><BarChart3 className="h-3.5 w-3.5 mr-1.5" />Status</Link>
         </Button>
       </div>
+
+      {/* ── Draft Email Review Dialog ── */}
+      <Dialog open={!!activeDraft && !editingDraft} onOpenChange={(open) => { if (!open) { setActiveDraft(null); setDraftSourceTaskId(null) } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Review Draft Email
+            </DialogTitle>
+            <DialogDescription>AI-generated draft for your review</DialogDescription>
+          </DialogHeader>
+          {activeDraft && (
+            <div className="space-y-3">
+              <div className="text-sm">
+                <span className="text-muted-foreground">To: </span>
+                {activeDraft.toName ? `${activeDraft.toName} <${activeDraft.to}>` : activeDraft.to}
+              </div>
+              <div className="text-sm">
+                <span className="text-muted-foreground">Subject: </span>
+                {activeDraft.subject}
+              </div>
+              {activeDraft.reason && (
+                <div className="text-xs text-primary/80 italic">{activeDraft.reason}</div>
+              )}
+              <div className="border rounded p-3 bg-white text-sm max-h-64 overflow-y-auto">
+                <div dangerouslySetInnerHTML={{ __html: activeDraft.body }} />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => { setActiveDraft(null); setDraftSourceTaskId(null) }}>
+              <X className="h-3 w-3 mr-1" />Dismiss
+            </Button>
+            <Button variant="outline" onClick={() => setEditingDraft(activeDraft)}>
+              <Edit3 className="h-3 w-3 mr-1" />Edit
+            </Button>
+            <Button onClick={() => activeDraft && handleSendDraft(activeDraft)} disabled={sendingDraft}>
+              {sendingDraft ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Draft Dialog ── */}
+      <Dialog open={!!editingDraft} onOpenChange={(open) => { if (!open) setEditingDraft(null) }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit3 className="h-5 w-5" />Edit Draft Email
+            </DialogTitle>
+            <DialogDescription>Modify before sending</DialogDescription>
+          </DialogHeader>
+          {editingDraft && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="dash-draft-to">To</Label>
+                <Input id="dash-draft-to" value={editingDraft.to} onChange={e => setEditingDraft({ ...editingDraft, to: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dash-draft-subject">Subject</Label>
+                <Input id="dash-draft-subject" value={editingDraft.subject} onChange={e => setEditingDraft({ ...editingDraft, subject: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dash-draft-body">Body (HTML)</Label>
+                <Textarea id="dash-draft-body" value={editingDraft.body} onChange={e => setEditingDraft({ ...editingDraft, body: e.target.value })} rows={12} className="font-mono text-xs" />
+              </div>
+              <div>
+                <Label>Preview</Label>
+                <div className="mt-1 border rounded p-3 bg-white text-sm max-h-48 overflow-y-auto">
+                  <div dangerouslySetInnerHTML={{ __html: editingDraft.body }} />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingDraft(null)}>Cancel</Button>
+            <Button onClick={() => editingDraft && handleSendDraft(editingDraft)} disabled={sendingDraft}>
+              {sendingDraft ? <Loader2 className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
+              Send
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

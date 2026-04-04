@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { getProject } from '@/lib/project-service'
 import { getBudgetItems } from '@/lib/budget-service'
+import { getBids } from '@/lib/bids-service'
+import { getSelections } from '@/lib/selections-service'
 import BudgetClient from './BudgetClient'
 import LoadingSpinner from '@/components/ui/LoadingSpinner'
 import ErrorCard from '@/components/ui/ErrorCard'
@@ -12,9 +14,13 @@ async function BudgetData() {
     return <ErrorCard message="No project found. Create a project first." />
   }
 
-  const items = await getBudgetItems(project.id)
+  const [items, bids, selections] = await Promise.all([
+    getBudgetItems(project.id),
+    getBids(project.id),
+    getSelections(project.id),
+  ])
 
-  return <BudgetClient initialItems={items} budgetTotal={parseFloat(project.budget_total) || 1200000} projectStartDate={project.created_at} />
+  return <BudgetClient initialItems={items} bids={bids} selections={selections} budgetTotal={parseFloat(project.budget_total) || 1200000} projectStartDate={project.created_at} />
 }
 
 export default function BudgetPage() {

@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Building2,
   Users,
@@ -31,7 +32,11 @@ import {
   XCircle,
   Loader2,
   Copy,
+  MessageSquare,
 } from 'lucide-react'
+import VendorTimeline from './VendorTimeline'
+import type { VendorThread, FollowUpNeeded } from '@/lib/vendor-thread-service'
+import type { Bid } from '@/types'
 
 interface Vendor {
   id: string
@@ -85,6 +90,9 @@ interface VendorsClientProps {
   invitations?: VendorInvitation[]
   contacts?: Contact[]
   projectId: string
+  threads?: VendorThread[]
+  followUps?: FollowUpNeeded[]
+  bids?: Bid[]
 }
 
 function getStatusColor(status: string): string {
@@ -302,7 +310,7 @@ function VendorCard({
   )
 }
 
-export default function VendorsClient({ vendors, invitations = [], contacts = [], projectId }: VendorsClientProps) {
+export default function VendorsClient({ vendors, invitations = [], contacts = [], projectId, threads = [], followUps = [], bids = [] }: VendorsClientProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [inviteVendorId, setInviteVendorId] = useState<string | null>(null)
@@ -492,62 +500,84 @@ export default function VendorsClient({ vendors, invitations = [], contacts = []
         </Card>
       </div>
 
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search by company name, category, or contact..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      {/* Tabs: Directory / Communication */}
+      <Tabs defaultValue={threads.length > 0 ? 'communication' : 'directory'}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="communication" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Communication ({threads.length})
+          </TabsTrigger>
+          <TabsTrigger value="directory" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" />
+            Directory ({vendors.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Vendor Grid */}
-      {filteredVendors.length > 0 ? (
-        <>
-          {searchQuery && (
-            <p className="text-sm text-muted-foreground">
-              Showing {filteredVendors.length} of {vendors.length} vendors
-            </p>
-          )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filteredVendors.map((vendor) => (
-              <VendorCard
-                key={vendor.id}
-                vendor={vendor}
-                vendorInvitations={invitationsByVendor.get(vendor.id) || []}
-                onInvite={(vendorId, email) => {
-                  setInviteVendorId(vendorId)
-                  setInviteEmail(email)
-                  setInviteDialogOpen(true)
-                }}
-                onLinkContact={openLinkDialog}
-              />
-            ))}
+        {/* Communication Timeline Tab */}
+        <TabsContent value="communication" className="mt-4">
+          <VendorTimeline threads={threads} followUps={followUps} bids={bids} />
+        </TabsContent>
+
+        {/* Directory Tab */}
+        <TabsContent value="directory" className="space-y-4 mt-4">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by company name, category, or contact..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
-        </>
-      ) : vendors.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Building2 className="h-12 w-12 text-muted-foreground/40 mb-4" />
-            <h3 className="text-lg font-semibold mb-1">No vendors yet</h3>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Vendors will appear here once they are added to the project or synced from JobTread.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Search className="h-10 w-10 text-muted-foreground/40 mb-3" />
-            <h3 className="text-lg font-semibold mb-1">No matching vendors</h3>
-            <p className="text-sm text-muted-foreground">
-              No vendors match &ldquo;{searchQuery}&rdquo;. Try a different search term.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+
+          {/* Vendor Grid */}
+          {filteredVendors.length > 0 ? (
+            <>
+              {searchQuery && (
+                <p className="text-sm text-muted-foreground">
+                  Showing {filteredVendors.length} of {vendors.length} vendors
+                </p>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredVendors.map((vendor) => (
+                  <VendorCard
+                    key={vendor.id}
+                    vendor={vendor}
+                    vendorInvitations={invitationsByVendor.get(vendor.id) || []}
+                    onInvite={(vendorId, email) => {
+                      setInviteVendorId(vendorId)
+                      setInviteEmail(email)
+                      setInviteDialogOpen(true)
+                    }}
+                    onLinkContact={openLinkDialog}
+                  />
+                ))}
+              </div>
+            </>
+          ) : vendors.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Building2 className="h-12 w-12 text-muted-foreground/40 mb-4" />
+                <h3 className="text-lg font-semibold mb-1">No vendors yet</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-sm">
+                  Vendors will appear here once they are added to the project or synced from JobTread.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Search className="h-10 w-10 text-muted-foreground/40 mb-3" />
+                <h3 className="text-lg font-semibold mb-1">No matching vendors</h3>
+                <p className="text-sm text-muted-foreground">
+                  No vendors match &ldquo;{searchQuery}&rdquo;. Try a different search term.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Active Invitations */}
       {invitations.length > 0 && (

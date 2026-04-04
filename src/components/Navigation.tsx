@@ -26,6 +26,7 @@ import {
   PanelLeft,
   History,
   LogOut,
+  Scale,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -92,6 +93,7 @@ const navSections: NavSection[] = [
       { href: '/budget', label: 'Budget', icon: DollarSign, roles: ['owner'] },
       { href: '/bids', label: 'Bids', icon: Gavel },
       { href: '/selections', label: 'Selections', icon: ClipboardList, roles: ['owner', 'consultant'] },
+      { href: '/decisions', label: 'Decisions', icon: Scale, roles: ['owner'] },
       { href: '/coverage', label: 'Coverage', icon: Grid3X3, roles: ['owner', 'consultant'] },
       { href: '/financing', label: 'Financing', icon: Landmark, roles: ['owner'] },
     ],
@@ -102,6 +104,12 @@ const navSections: NavSection[] = [
       { href: '/vendors', label: 'Vendors', icon: Users, roles: ['owner', 'consultant'] },
       { href: '/documents', label: 'Documents', icon: FolderOpen },
       { href: '/change-orders', label: 'Change Orders', icon: FileText },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { href: '/map', label: 'Architecture Map', icon: History, roles: ['owner'] },
     ],
   },
 ]
