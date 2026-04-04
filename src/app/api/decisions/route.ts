@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getProject } from '@/lib/project-service'
 import { logDecision, getDecisions } from '@/lib/decision-log-service'
+import { postPipelineRefresh } from '@/lib/post-pipeline-refresh'
 import { supabase } from '@/lib/supabase'
 import type { DecisionType, OutcomeStatus } from '@/types'
 
@@ -118,6 +119,9 @@ export async function POST(request: Request) {
           .in('status', ['pending', 'under_review'])
       }
     }
+
+    // 4. Cascade: refresh cross-cutting data
+    await postPipelineRefresh(project.id, 'decision').catch(() => {})
 
     return NextResponse.json({
       data: {

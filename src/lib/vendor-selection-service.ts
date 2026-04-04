@@ -9,11 +9,11 @@ import type { BidLineItem, Selection } from '@/types'
 export async function selectVendorForCategory(
   projectId: string,
   bidId: string
-): Promise<{ selections_created: number; error?: string }> {
+): Promise<{ selections_created: number; error?: string; bid?: { id: string; vendor_name: string; category: string; total_amount: number; description: string } }> {
   // Get the bid
   const { data: bid, error: bidError } = await supabase
     .from('bids')
-    .select('id, vendor_name, vendor_id, category, total_amount')
+    .select('id, vendor_name, vendor_id, category, total_amount, description')
     .eq('id', bidId)
     .single()
 
@@ -114,7 +114,10 @@ export async function selectVendorForCategory(
     .neq('id', bidId)
     .in('status', ['pending', 'under_review'])
 
-  return { selections_created: created?.length || 0 }
+  return {
+    selections_created: created?.length || 0,
+    bid: { id: bid.id, vendor_name: bid.vendor_name, category: bid.category, total_amount: bid.total_amount, description: bid.description || '' },
+  }
 }
 
 /**

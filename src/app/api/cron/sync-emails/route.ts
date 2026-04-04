@@ -224,6 +224,51 @@ export async function POST(request: NextRequest) {
       console.error('Reconciler failed (non-fatal):', reconcileErr)
     }
 
+    // Auto-link emails to vendor threads (creates/updates vendor threads from contact data)
+    try {
+      const { autoLinkEmails } = await import('@/lib/vendor-thread-service')
+      const linkResult = await autoLinkEmails(projectId)
+      if (linkResult.created > 0 || linkResult.linked > 0) {
+        console.log(`Vendor threads: ${linkResult.created} created, ${linkResult.linked} linked`)
+      }
+    } catch (linkError) {
+      console.error('Vendor thread auto-link failed (non-fatal):', linkError)
+    }
+
+    // Bridge emails to communications table (so vendor timeline and other pages see them)
+    if (emailsToStore.length > 0) {
+      try {
+        const { supabase: sb } = await import('@/lib/supabase')
+        let bridged = 0
+        for (const email of emailsToStore) {
+          if (email.category === 'other' || email.category === 'spam') continue
+          // Find matching contact for this sender
+          const { data: contact } = await sb
+            .from('contacts')
+            .select('id')
+            .eq('project_id', projectId)
+            .ilike('email', email.sender_email || '')
+            .limit(1)
+            .single()
+
+          await sb.from('communications').upsert({
+            project_id: projectId,
+            date: email.received_date || new Date().toISOString(),
+            type: 'email',
+            subject: email.subject,
+            summary: email.ai_summary,
+            contact_id: contact?.id || null,
+          }, { onConflict: 'project_id,date,subject', ignoreDuplicates: true })
+          bridged++
+        }
+        if (bridged > 0) {
+          console.log(`Bridged ${bridged} emails to communications table`)
+        }
+      } catch (bridgeError) {
+        console.error('Email-to-communications bridge failed (non-fatal):', bridgeError)
+      }
+    }
+
     // Detect loan status changes from new emails (AI first, rule-based fallback)
     if (emailsToStore.length > 0) {
       try {

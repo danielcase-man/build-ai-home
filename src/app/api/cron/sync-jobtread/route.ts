@@ -50,6 +50,14 @@ export async function POST(request: NextRequest) {
       console.error('Failed to update project status after JT sync (non-fatal):', e)
     }
 
+    // Cross-cutting refresh: vendor threads, deterministic status
+    try {
+      const { postPipelineRefresh } = await import('@/lib/post-pipeline-refresh')
+      await postPipelineRefresh(project.id, 'jobtread-sync')
+    } catch {
+      // Non-fatal
+    }
+
     return successResponse({
       message: 'JobTread cron sync completed',
       ...result,
