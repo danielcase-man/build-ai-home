@@ -14,6 +14,7 @@ import { extractTextFromPDF } from './document-analyzer'
 import { supabase } from './supabase'
 import { createBidDocument, updateExtractionStatus } from './bid-documents-service'
 import { createLineItemsFromExtraction } from './bid-line-items-service'
+import { areLikelyDuplicateVendors } from './vendor-name-utils'
 import type { ExtractedBidV2, ExtractedLineItem, BidDocument } from '@/types'
 
 // ─── Room list for AI context (helps with room assignment) ───────────────────
@@ -189,26 +190,72 @@ export async function extractBidV2FromImage(
 
 // ─── Create bid + line items from extraction result ──────────────────────────
 
+/**
+ * Find an existing vendor by fuzzy name match, or create a new one.
+ * Uses areLikelyDuplicateVendors() for fuzzy matching against all project vendors.
+ */
+export async function findOrCreateVendor(
+  projectId: string,
+  vendorName: string,
+  extra?: { contact?: string; email?: string; phone?: string; category?: string }
+): Promise<string | null> {
+  if (!vendorName || vendorName.trim().length === 0) return null
+
+  // Fetch all vendors for this project
+  const { data: vendors } = await supabase
+    .from('vendors')
+    .select('id, company_name')
+    .eq('project_id', projectId)
+
+  if (vendors && vendors.length > 0) {
+    // Fuzzy match against existing vendors
+    for (const v of vendors) {
+      if (areLikelyDuplicateVendors(vendorName, v.company_name)) {
+        return v.id
+      }
+    }
+  }
+
+  // No match — create a new vendor
+  const { data: newVendor, error } = await supabase
+    .from('vendors')
+    .insert({
+      project_id: projectId,
+      company_name: vendorName.trim(),
+      primary_contact: extra?.contact || null,
+      category: extra?.category || null,
+      status: 'active',
+    })
+    .select('id')
+    .single()
+
+  if (error || !newVendor) {
+    console.error('Failed to create vendor:', error)
+    return null
+  }
+
+  return newVendor.id
+}
+
 export async function createBidWithLineItems(
   projectId: string,
   extracted: ExtractedBidV2,
   documentId?: string
 ): Promise<{ bidId: string; lineItemCount: number } | null> {
-  // Check for existing vendor
-  const { data: existingVendor } = await supabase
-    .from('vendors')
-    .select('id')
-    .eq('project_id', projectId)
-    .ilike('company_name', extracted.vendor_name)
-    .limit(1)
-    .single()
+  // Find or create vendor with fuzzy matching
+  const vendorId = await findOrCreateVendor(projectId, extracted.vendor_name, {
+    contact: extracted.vendor_contact,
+    email: extracted.vendor_email,
+    phone: extracted.vendor_phone,
+    category: extracted.category,
+  })
 
   // Create the bid record
   const { data: bid, error: bidError } = await supabase
     .from('bids')
     .insert({
       project_id: projectId,
-      vendor_id: existingVendor?.id || null,
+      vendor_id: vendorId || null,
       vendor_name: extracted.vendor_name,
       vendor_contact: extracted.vendor_contact || null,
       vendor_email: extracted.vendor_email || null,

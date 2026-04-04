@@ -18,6 +18,7 @@ const BID_SELECT_COLUMNS = [
   'lead_time_weeks',
   'status',
   'bid_date',
+  'vendor_id',
   'internal_notes',
   'pros',
   'cons',
