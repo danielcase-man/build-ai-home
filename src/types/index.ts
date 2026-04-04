@@ -357,6 +357,7 @@ export interface Bid {
   needs_review: boolean
   bid_date: string
   received_date: string
+  vendor_id?: string
   source?: string
   source_document?: string
   internal_notes?: string
