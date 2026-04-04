@@ -122,11 +122,44 @@ export class GmailService {
     }
   }
 
+  /**
+   * Parses a raw header value containing one or more email addresses
+   * (e.g. `"John Doe" <john@example.com>, jane@example.com`) into an array
+   * of plain email addresses.
+   */
+  private parseAddressList(headerValue: string | undefined): string[] {
+    if (!headerValue) return []
+    // Split on commas that are NOT inside quotes/angle brackets (simple heuristic:
+    // split on comma, then extract the email from each token).
+    return headerValue.split(',').reduce<string[]>((acc, token) => {
+      const trimmed = token.trim()
+      if (!trimmed) return acc
+      // Try angle-bracket form: "Name" <email@domain>
+      const angleMatch = trimmed.match(/<([^>]+)>/)
+      if (angleMatch) {
+        acc.push(angleMatch[1].toLowerCase())
+      } else if (trimmed.includes('@')) {
+        // Bare email address
+        acc.push(trimmed.toLowerCase())
+      }
+      return acc
+    }, [])
+  }
+
   private parseEmail(email: GmailMessage) {
     const headers = email.payload.headers
     const subject = headers.find((h) => h.name === 'Subject')?.value || ''
     const from = headers.find((h) => h.name === 'From')?.value || ''
     const date = headers.find((h) => h.name === 'Date')?.value || ''
+
+    // Extract recipients from To/Cc/Bcc headers
+    const to = this.parseAddressList(headers.find((h) => h.name === 'To')?.value)
+    const cc = this.parseAddressList(headers.find((h) => h.name === 'Cc')?.value)
+    const bcc = this.parseAddressList(headers.find((h) => h.name === 'Bcc')?.value)
+    const recipients: Record<string, string[]> = {}
+    if (to.length > 0) recipients.to = to
+    if (cc.length > 0) recipients.cc = cc
+    if (bcc.length > 0) recipients.bcc = bcc
 
     // Recursively find a MIME part by type (handles nested multipart structures)
     const findPart = (parts: GmailPayloadPart[] | undefined, mimeType: string): GmailPayloadPart | undefined => {
@@ -189,6 +222,7 @@ export class GmailService {
       body,
       snippet: email.snippet,
       attachments,
+      recipients,
     }
   }
 

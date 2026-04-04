@@ -240,6 +240,101 @@ describe('GmailService', () => {
     })
   })
 
+  describe('recipient parsing', () => {
+    it('extracts To, Cc, and Bcc from headers', async () => {
+      mockMessagesList.mockResolvedValueOnce({ data: { messages: [{ id: 'msg-r1' }] } })
+      mockMessagesGet.mockResolvedValueOnce({
+        data: {
+          id: 'msg-r1', threadId: 'thread-r1', snippet: 'snippet',
+          payload: {
+            headers: [
+              { name: 'Subject', value: 'Recipients Test' },
+              { name: 'From', value: 'sender@test.com' },
+              { name: 'Date', value: '2026-01-15' },
+              { name: 'To', value: '"Alice" <alice@test.com>, bob@test.com' },
+              { name: 'Cc', value: 'Charlie <charlie@test.com>' },
+              { name: 'Bcc', value: 'secret@test.com' },
+            ],
+            body: { data: Buffer.from('body').toString('base64') },
+          },
+        },
+      })
+
+      const emails = await service.getEmails('query')
+      expect(emails[0].recipients).toEqual({
+        to: ['alice@test.com', 'bob@test.com'],
+        cc: ['charlie@test.com'],
+        bcc: ['secret@test.com'],
+      })
+    })
+
+    it('omits empty recipient fields', async () => {
+      mockMessagesList.mockResolvedValueOnce({ data: { messages: [{ id: 'msg-r2' }] } })
+      mockMessagesGet.mockResolvedValueOnce({
+        data: {
+          id: 'msg-r2', threadId: 'thread-r2', snippet: 'snippet',
+          payload: {
+            headers: [
+              { name: 'Subject', value: 'No CC' },
+              { name: 'From', value: 'sender@test.com' },
+              { name: 'Date', value: '2026-01-15' },
+              { name: 'To', value: 'only@test.com' },
+            ],
+            body: { data: Buffer.from('body').toString('base64') },
+          },
+        },
+      })
+
+      const emails = await service.getEmails('query')
+      expect(emails[0].recipients).toEqual({ to: ['only@test.com'] })
+      expect(emails[0].recipients).not.toHaveProperty('cc')
+      expect(emails[0].recipients).not.toHaveProperty('bcc')
+    })
+
+    it('returns empty recipients when no To/Cc/Bcc headers', async () => {
+      mockMessagesList.mockResolvedValueOnce({ data: { messages: [{ id: 'msg-r3' }] } })
+      mockMessagesGet.mockResolvedValueOnce({
+        data: {
+          id: 'msg-r3', threadId: 'thread-r3', snippet: 'snippet',
+          payload: {
+            headers: [
+              { name: 'Subject', value: 'No recipients' },
+              { name: 'From', value: 'sender@test.com' },
+              { name: 'Date', value: '2026-01-15' },
+            ],
+            body: { data: Buffer.from('body').toString('base64') },
+          },
+        },
+      })
+
+      const emails = await service.getEmails('query')
+      expect(emails[0].recipients).toEqual({})
+    })
+
+    it('lowercases email addresses', async () => {
+      mockMessagesList.mockResolvedValueOnce({ data: { messages: [{ id: 'msg-r4' }] } })
+      mockMessagesGet.mockResolvedValueOnce({
+        data: {
+          id: 'msg-r4', threadId: 'thread-r4', snippet: 'snippet',
+          payload: {
+            headers: [
+              { name: 'Subject', value: 'Case test' },
+              { name: 'From', value: 'sender@test.com' },
+              { name: 'Date', value: '2026-01-15' },
+              { name: 'To', value: '"User" <USER@EXAMPLE.COM>, Mixed@Test.Com' },
+            ],
+            body: { data: Buffer.from('body').toString('base64') },
+          },
+        },
+      })
+
+      const emails = await service.getEmails('query')
+      expect(emails[0].recipients).toEqual({
+        to: ['user@example.com', 'mixed@test.com'],
+      })
+    })
+  })
+
   describe('sendEmail', () => {
     it('sends email and returns message id', async () => {
       mockMessagesSend.mockResolvedValueOnce({ data: { id: 'sent-1' } })
