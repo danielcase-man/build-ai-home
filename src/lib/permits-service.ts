@@ -15,7 +15,7 @@ export interface Permit {
   application_date?: string | null
   approval_date?: string | null
   expiration_date?: string | null
-  status: 'not_started' | 'applied' | 'under_review' | 'approved' | 'active' | 'expired' | 'denied'
+  status: 'not_started' | 'preparing' | 'submitted' | 'approved' | 'rejected' | 'expired'
   inspection_dates?: Array<{ date: string; type: string; result?: string; inspector?: string; notes?: string }> | null
   notes?: string | null
   created_at?: string

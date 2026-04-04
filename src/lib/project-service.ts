@@ -159,7 +159,7 @@ export async function getFullProjectContext(projectId: string): Promise<FullProj
       .eq('project_id', projectId),
     supabase
       .from('contacts')
-      .select('name, company, role, type')
+      .select('name, company, role, type, email')
       .eq('project_id', projectId),
     supabase
       .from('vendors')

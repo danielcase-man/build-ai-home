@@ -149,6 +149,51 @@ function deriveActionItems(ctx: FullProjectContext): ProjectStatusSnapshot['acti
   const items: ProjectStatusSnapshot['action_items'] = []
   const today = TODAY()
 
+  // Build contact name → email lookup for draft_email tagging
+  const contactEmailMap = new Map<string, { email: string; name: string; company: string | null }>()
+  if (ctx.contacts) {
+    for (const c of ctx.contacts) {
+      if (c.name) {
+        // Store by full name and first name for matching
+        const key = c.name.toLowerCase()
+        const firstName = c.name.split(' ')[0].toLowerCase()
+        const entry = { email: (c as Record<string, unknown>).email as string || '', name: c.name, company: c.company }
+        if (entry.email) {
+          contactEmailMap.set(key, entry)
+          if (firstName.length > 2) contactEmailMap.set(firstName, entry)
+        }
+      }
+    }
+  }
+
+  // Helper: check if a task title mentions a contact and tag as draft_email
+  function tagEmailAction(title: string, taskId?: string): {
+    action_type: 'draft_email' | null
+    action_context?: { to: string; to_name: string; subject_hint: string; context: string }
+  } {
+    const lower = title.toLowerCase()
+    // Check for email-related keywords
+    const isEmailAction = /follow.?up|email|contact|reach out|send|notify|inform|respond|reply|check.?in/i.test(title)
+    if (!isEmailAction) return { action_type: null }
+
+    // Find the contact mentioned in the title
+    for (const [name, contact] of contactEmailMap) {
+      if (name.length > 2 && lower.includes(name)) {
+        return {
+          action_type: 'draft_email',
+          action_context: {
+            to: contact.email,
+            to_name: contact.name,
+            subject_hint: title.replace(/\s*\(OVERDUE\)/, '').replace(/\s*—\s*due\s*\d{4}-\d{2}-\d{2}/, ''),
+            context: title,
+          },
+        }
+      }
+    }
+
+    return { action_type: null }
+  }
+
   // Pending/in-progress tasks
   const activeTasks = ctx.tasks
     .filter(t => t.status === 'pending' || t.status === 'in_progress')
@@ -160,12 +205,14 @@ function deriveActionItems(ctx: FullProjectContext): ProjectStatusSnapshot['acti
 
   for (const task of activeTasks) {
     const isOverdue = task.due_date && task.due_date < today
+    const text = `${task.title}${isOverdue ? ' (OVERDUE)' : ''}${task.due_date ? ` — due ${task.due_date}` : ''}`
+    const emailTag = tagEmailAction(task.title, task.id)
+
     items.push({
       status: task.status === 'in_progress' ? 'in-progress' : 'pending',
-      text: `${task.title}${isOverdue ? ' (OVERDUE)' : ''}${task.due_date ? ` — due ${task.due_date}` : ''}`,
+      text,
       task_id: task.id,
-      action_type: null,
-      action_context: undefined,
+      ...emailTag,
     })
   }
 
